@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/kubernetes/pkg/util/mount"
+
+	"github.com/joshvanl/cert-manager-csi/pkg/util"
 )
 
 const (
@@ -27,6 +27,7 @@ type nodeServer struct {
 	nodeID   string
 	dataRoot string
 
+	cm      *certmanager
 	volumes map[string]volume
 }
 
@@ -37,24 +38,35 @@ type volume struct {
 	Path string `json:"volPath"`
 }
 
-func NewNodeServer(nodeId, dataRoot string) *nodeServer {
+func NewNodeServer(nodeId, dataRoot string) (*nodeServer, error) {
+	cm, err := NewCertManager()
+	if err != nil {
+		return nil, err
+	}
+
 	return &nodeServer{
 		nodeID:   nodeId,
 		dataRoot: dataRoot,
 
+		cm:      cm,
 		volumes: make(map[string]volume),
-	}
+	}, nil
 }
 
 func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	ephemeralVolume := req.GetVolumeContext()["csi.storage.k8s.io/ephemeral"] == "true" ||
-		req.GetVolumeContext()["csi.storage.k8s.io/ephemeral"] == "" // Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
+	attr := req.GetVolumeContext()
+	targetPath := req.GetTargetPath()
+	readOnly := req.GetReadonly()
 
+	// Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
+	ephemeralVolume := attr["csi.storage.k8s.io/ephemeral"] == "true" || attr["csi.storage.k8s.io/ephemeral"] == ""
 	if !ephemeralVolume {
 		return nil, status.Error(codes.InvalidArgument, "publishing a non-ephemeral volume mount is not supported")
 	}
 
-	targetPath := req.GetTargetPath()
+	if err := ns.cm.validateAttributes(attr); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// Check arguments
 	if req.GetVolumeCapability() == nil {
@@ -70,9 +82,6 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	if req.GetVolumeCapability().GetBlock() != nil {
 		return nil, status.Error(codes.InvalidArgument, "block access type not supported")
 	}
-	if !req.GetReadonly() {
-		return nil, status.Error(codes.InvalidArgument, "volume must be in read only mode")
-	}
 
 	volID := req.GetVolumeId()
 	volName := fmt.Sprintf("cert-manager-csi-%s", volID)
@@ -84,50 +93,41 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	glog.Infof("created volume: %s", vol.Path)
 
-	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
+	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
 		if err = os.MkdirAll(targetPath, 0750); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
-		notMnt = true
+		mntPoint = false
 	}
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if !notMnt {
+	if mntPoint {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
-
-	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
 	deviceId := ""
 	if req.GetPublishContext() != nil {
 		deviceId = req.GetPublishContext()[deviceID]
 	}
 
-	volumeId := req.GetVolumeId()
-	attrib := req.GetVolumeContext()
-	mountFlags := req.GetVolumeCapability().GetMount().GetMountFlags()
+	glog.V(4).Infof("target %v\ndevice %v\nreadonly %v\nvolumeId %v\nattributes %v\n",
+		targetPath, deviceId, readOnly, volID, attr)
 
-	glog.V(4).Infof("target %v\nfstype %v\ndevice %v\nreadonly %v\nvolumeId %v\nattributes %v\nmountflags %v\n",
-		targetPath, fsType, deviceId, true, volumeId, attrib, mountFlags)
+	var options []string
+	if readOnly {
+		options = append(options, "ro")
+	}
 
-	options := []string{"bind"}
-	//if readOnly {
-	options = append(options, "ro")
-	//}
-	mounter := mount.New("")
-
-	if err := mounter.Mount(vol.Path, targetPath, "", options); err != nil {
-		var errList strings.Builder
-		errList.WriteString(err.Error())
+	if err := util.Mount(vol.Path, targetPath, options); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {
-			errList.WriteString(fmt.Sprintf(" :%s", rmErr.Error()))
+			err = fmt.Errorf(" :%s", rmErr)
 		}
 
-		return nil, status.Error(codes.Internal, errList.String())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &csi.NodePublishVolumeResponse{}, nil
@@ -153,7 +153,7 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	}
 
 	// Unmounting the image
-	err := mount.New("").Unmount(targetPath)
+	err := util.Unmount(targetPath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

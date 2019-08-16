@@ -17,14 +17,19 @@ type Driver struct {
 	ns  *nodeServer
 }
 
-func New(driverName, nodeID, endpoint, dataRoot string) *Driver {
+func New(driverName, nodeID, endpoint, dataRoot string) (*Driver, error) {
 	glog.Infof("Driver: %v version: %v", driverName, version)
+
+	ns, err := NewNodeServer(nodeID, dataRoot)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Driver{
 		endpoint: endpoint,
 		ids:      NewIdentityServer(driverName, version),
-		ns:       NewNodeServer(nodeID, dataRoot),
-	}
+		ns:       ns,
+	}, nil
 }
 
 func (d *Driver) Run() {
