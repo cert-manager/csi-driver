@@ -72,12 +72,15 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	if ids != nil {
 		csi.RegisterIdentityServer(server, ids)
+		glog.Info("registered identity server")
 	}
 	if cs != nil {
 		csi.RegisterControllerServer(server, cs)
+		glog.Info("registered controller server")
 	}
 	if ns != nil {
 		csi.RegisterNodeServer(server, ns)
+		glog.Info("registered node server")
 	}
 
 	glog.Infof("Listening for connections on address: %#v", listener.Addr())

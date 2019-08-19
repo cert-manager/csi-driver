@@ -38,14 +38,14 @@ type volume struct {
 	Path string `json:"volPath"`
 }
 
-func NewNodeServer(nodeId, dataRoot string) (*nodeServer, error) {
-	cm, err := NewCertManager()
+func NewNodeServer(nodeID, dataRoot string) (*nodeServer, error) {
+	cm, err := NewCertManager(nodeID, dataRoot)
 	if err != nil {
 		return nil, err
 	}
 
 	return &nodeServer{
-		nodeID:   nodeId,
+		nodeID:   nodeID,
 		dataRoot: dataRoot,
 
 		cm:      cm,
@@ -92,6 +92,11 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	glog.Infof("created volume: %s", vol.Path)
+
+	glog.Infof("creating key/cert pair with cert-manager: %s", vol.Path)
+	if err := ns.cm.createKeyCertPair(volID, attr); err != nil {
+		return nil, err
+	}
 
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
@@ -206,7 +211,10 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 }
 
 func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	glog.Info("getting default node info")
+	return &csi.NodeGetInfoResponse{
+		NodeId: ns.nodeID,
+	}, nil
 }
 
 func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {

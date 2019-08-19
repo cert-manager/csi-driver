@@ -23,7 +23,7 @@ func main() {
 
 	c.PersistentFlags().StringVar(&cmd.DriverName, "driver-name", "cert-manager-csi", "name of the drive")
 
-	c.PersistentFlags().StringVar(&cmd.DataRoot, "data-root", "cert-manager-csi", "directory to store ephemeral data")
+	c.PersistentFlags().StringVar(&cmd.DataRoot, "data-root", "/csi-data-dir", "directory to store ephemeral data")
 
 	if err := c.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())

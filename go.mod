@@ -8,10 +8,12 @@ require (
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/jetstack/cert-manager v0.9.1
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
-	github.com/kubernetes-csi/drivers v1.0.2
+	github.com/kubernetes-csi/csi-test v2.2.0+incompatible
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	google.golang.org/grpc v1.23.0
+	k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
+	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 )
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719

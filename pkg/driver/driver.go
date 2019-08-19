@@ -2,8 +2,6 @@ package driver
 
 import (
 	"github.com/golang/glog"
-
-	csicommon "github.com/kubernetes-csi/drivers/pkg/csi-common"
 )
 
 const (
@@ -33,7 +31,7 @@ func New(driverName, nodeID, endpoint, dataRoot string) (*Driver, error) {
 }
 
 func (d *Driver) Run() {
-	s := csicommon.NewNonBlockingGRPCServer()
+	s := NewNonBlockingGRPCServer()
 	s.Start(d.endpoint, d.ids, nil, d.ns)
 	s.Wait()
 }
