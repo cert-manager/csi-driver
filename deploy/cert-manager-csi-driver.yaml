@@ -3,7 +3,6 @@ kind: CSIDriver
 metadata:
   name: csi.certmanager.k8s.io
 spec:
-  attachRequired: false
   podInfoOnMount: true
 ---
 kind: DaemonSet
@@ -19,21 +18,17 @@ spec:
       labels:
         app: cert-manager-csi
     spec:
-      hostNetwork: true
       containers:
         - name: cert-manager-csi
           image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0
           imagePullPolicy: Always
           args:
             - --driver-name=csi.certmanager.k8s.io
-            - --v=10
-            - --endpoint=$(CSI_ENDPOINT)
+            - --v=5
+            - --endpoint=unix:///csi/csi.sock
             - --node-id=$(KUBE_NODE_NAME)
-            - --default-certificate-request-namespace=cert-manager
             - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi/csi.sock
           env:
-            - name: CSI_ENDPOINT
-              value: unix:///csi/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
