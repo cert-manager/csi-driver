@@ -21,10 +21,9 @@ import (
 )
 
 const (
-	issuerNameKey      = "csi.certmanager.k8s.io/issuer-name"
-	issuerNamespaceKey = "csi.certmanager.k8s.io/issuer-namespace"
-	issuerKindKey      = "csi.certmanager.k8s.io/issuer-kind"
-	issuerGroupKey     = "csi.certmanager.k8s.io/issuer-group"
+	issuerNameKey  = "csi.certmanager.k8s.io/issuer-name"
+	issuerKindKey  = "csi.certmanager.k8s.io/issuer-kind"
+	issuerGroupKey = "csi.certmanager.k8s.io/issuer-group"
 
 	commonNameKey = "csi.certmanager.k8s.io/common-name"
 	dnsNamesKey   = "csi.certmanager.k8s.io/dns-names"
@@ -33,9 +32,9 @@ const (
 	durationKey   = "csi.certmanager.k8s.io/duration"
 	isCAKey       = "csi.certmanager.k8s.io/is-ca"
 
-	certFileKey    = "csi.certmanager.k8s.io/certificate-file"
-	keyFileKey     = "csi.certmanager.k8s.io/privatekey-file"
-	crNamespaceKey = "csi.certmanager.k8s.io/certificaterequest-namespace"
+	certFileKey  = "csi.certmanager.k8s.io/certificate-file"
+	keyFileKey   = "csi.certmanager.k8s.io/privatekey-file"
+	namespaceKey = "csi.certmanager.k8s.io/namespace"
 )
 
 type certmanager struct {
@@ -131,8 +130,8 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		return err
 	}
 
-	name := fmt.Sprintf("cert-manager-csi-%s-%s",
-		c.nodeID, vol.ID)
+	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
+		c.nodeID, vol.PodName, vol.ID)
 
 	issuerKind := attr[issuerKindKey]
 	if issuerKind == "" {
@@ -162,14 +161,20 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		},
 	}
 
+	namespace := attr[namespaceKey]
+	if len(namespace) == 0 {
+		glog.V(4).Infof("certmanager: %s: no namespace specified for key %s so using pod namespace %s",
+			vol.Name, namespaceKey, namespace)
+	}
+
 	glog.Infof("cert-manager: created CertificateRequest %s", name)
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests("").Create(cr)
+	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	if err != nil {
 		return err
 	}
 
 	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", name)
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests("").Create(cr)
+	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	cr, err = c.waitForCertificateRequestReady(cr.Name, "", time.Second*30)
 	if err != nil {
 		return err

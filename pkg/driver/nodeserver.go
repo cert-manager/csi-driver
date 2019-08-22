@@ -21,6 +21,9 @@ const (
 	maxStorageCapacity = 10 * mib
 
 	deviceID = "deviceID"
+
+	podNameKey      = "csi.storage.k8s.io/pod.name"
+	podNamespaceKey = "csi.storage.k8s.io/pod.namespace"
 )
 
 type NodeServer struct {
@@ -36,6 +39,9 @@ type volume struct {
 	ID   string
 	Size int64
 	Path string
+
+	PodName      string
+	PodNamespace string
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
@@ -84,8 +90,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	volID := req.GetVolumeId()
-	volName := fmt.Sprintf("cert-manager-csi-%s", volID)
-	vol, err := ns.createVolume(req.GetVolumeId(), volName, maxStorageCapacity)
+	vol, err := ns.createVolume(volID, attr)
 	if err != nil && !os.IsExist(err) {
 		glog.Error("node: failed to create volume: ", err)
 		return nil, status.Error(codes.Internal, err.Error())
@@ -129,7 +134,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	if err := util.Mount(vol.Path, targetPath, options); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {
-			err = fmt.Errorf(" :%s", rmErr)
+			err = fmt.Errorf("%s,%s", err, rmErr)
 		}
 
 		return nil, status.Error(codes.Internal, err.Error())
@@ -174,7 +179,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
-func (ns *NodeServer) createVolume(id, name string, cap int64) (*volume, error) {
+func (ns *NodeServer) createVolume(id string, attr map[string]string) (*volume, error) {
 	path := filepath.Join(ns.dataRoot, id)
 
 	err := os.MkdirAll(path, 0777)
@@ -183,10 +188,12 @@ func (ns *NodeServer) createVolume(id, name string, cap int64) (*volume, error) 
 	}
 
 	vol := volume{
-		ID:   id,
-		Name: name,
-		Size: cap,
-		Path: path,
+		ID:           id,
+		Name:         fmt.Sprintf("cert-manager-csi-%s", id),
+		Size:         maxStorageCapacity,
+		Path:         path,
+		PodName:      attr[podNameKey],
+		PodNamespace: attr[podNamespaceKey],
 	}
 
 	ns.volumes[id] = vol
