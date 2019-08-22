@@ -21,14 +21,14 @@ func NewIdentityServer(name, version string) *identityServer {
 }
 
 func (ids *identityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
-	glog.V(5).Infof("Using default GetPluginInfo")
+	glog.V(5).Infof("identity: using default GetPluginInfo")
 
 	if ids.name == "" {
-		return nil, status.Error(codes.Unavailable, "Driver name not configured")
+		return nil, status.Error(codes.Unavailable, "driver name not configured")
 	}
 
 	if ids.version == "" {
-		return nil, status.Error(codes.Unavailable, "Driver is missing version")
+		return nil, status.Error(codes.Unavailable, "driver is missing version")
 	}
 
 	return &csi.GetPluginInfoResponse{
@@ -42,7 +42,8 @@ func (ids *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*c
 }
 
 func (ids *identityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default capabilities")
+	glog.V(5).Infof("identity: using default capabilities")
+
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{
 			{

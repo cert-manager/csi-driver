@@ -109,7 +109,7 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 		return err
 	}
 
-	glog.Info("new private key written to file: %s", keyPath)
+	glog.Info("cert-manager: new private key written to file: %s", keyPath)
 
 	csr := &x509.CertificateRequest{
 		Subject: pkix.Name{
@@ -159,13 +159,13 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 		},
 	}
 
-	glog.Info("created CertificateRequest %s", name)
+	glog.Infof("cert-manager: created CertificateRequest %s", name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests("").Create(cr)
 	if err != nil {
 		return err
 	}
 
-	glog.Info("waiting for CertificateRequest to= become ready %s", name)
+	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests("").Create(cr)
 	cr, err = c.waitForCertificateRequestReady(cr.Name, "", time.Second*30)
 	if err != nil {
@@ -182,7 +182,7 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 		return err
 	}
 
-	glog.Info("certificate written to file %s", certPath)
+	glog.Infof("cert-manager: certificate written to file %s", certPath)
 
 	return nil
 }
@@ -192,7 +192,7 @@ func (c *certmanager) waitForCertificateRequestReady(name, ns string, timeout ti
 	err := wait.PollImmediate(time.Second, timeout,
 		func() (bool, error) {
 
-			glog.V(4).Info("polling CertificateRequest %s/%s for ready status", name, ns)
+			glog.V(4).Info("cert-manager: polling CertificateRequest %s/%s for ready status", name, ns)
 
 			var err error
 			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
@@ -232,8 +232,8 @@ func (c *certmanager) validateAttributes(attr map[string]string) error {
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to validate volume attributes: \n* %s",
-			strings.Join(errs, "\n* "))
+		return fmt.Errorf("failed to validate volume attributes: %s",
+			strings.Join(errs, ", "))
 	}
 
 	return nil

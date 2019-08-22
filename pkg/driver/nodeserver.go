@@ -23,7 +23,7 @@ const (
 	deviceID = "deviceID"
 )
 
-type nodeServer struct {
+type NodeServer struct {
 	nodeID   string
 	dataRoot string
 
@@ -38,13 +38,13 @@ type volume struct {
 	Path string `json:"volPath"`
 }
 
-func NewNodeServer(nodeID, dataRoot string) (*nodeServer, error) {
+func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 	cm, err := NewCertManager(nodeID, dataRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	return &nodeServer{
+	return &NodeServer{
 		nodeID:   nodeID,
 		dataRoot: dataRoot,
 
@@ -53,7 +53,7 @@ func NewNodeServer(nodeID, dataRoot string) (*nodeServer, error) {
 	}, nil
 }
 
-func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 	attr := req.GetVolumeContext()
 	targetPath := req.GetTargetPath()
 	readOnly := req.GetReadonly()
@@ -87,13 +87,13 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volName := fmt.Sprintf("cert-manager-csi-%s", volID)
 	vol, err := ns.createVolume(req.GetVolumeId(), volName, maxStorageCapacity)
 	if err != nil && !os.IsExist(err) {
-		glog.Error("failed to create volume: ", err)
+		glog.Error("node: failed to create volume: ", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	glog.Infof("created volume: %s", vol.Path)
+	glog.Infof("node: created volume: %s", vol.Path)
 
-	glog.Infof("creating key/cert pair with cert-manager: %s", vol.Path)
+	glog.Infof("node: creating key/cert pair with cert-manager: %s", vol.Path)
 	if err := ns.cm.createKeyCertPair(volID, attr); err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		deviceId = req.GetPublishContext()[deviceID]
 	}
 
-	glog.V(4).Infof("target %v\ndevice %v\nreadonly %v\nvolumeId %v\nattributes %v\n",
+	glog.V(4).Infof("node: target %v\ndevice %v\nreadonly %v\nvolumeId %v\nattributes %v\n",
 		targetPath, deviceId, readOnly, volID, attr)
 
 	var options []string
@@ -138,7 +138,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
-func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	targetPath := req.GetTargetPath()
 	volumeID := req.GetVolumeId()
 
@@ -162,19 +162,19 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.V(4).Infof("hostpath: volume %s/%s has been unmounted.", targetPath, volumeID)
+	glog.V(4).Infof("node: volume %s/%s has been unmounted.", targetPath, volumeID)
 
-	glog.V(4).Infof("deleting volume %s", volumeID)
-	if err := ns.deleteHostpathVolume(&vol); err != nil && !os.IsNotExist(err) {
+	glog.V(4).Infof("node: deleting volume %s", volumeID)
+	if err := ns.deleteVolume(&vol); err != nil && !os.IsNotExist(err) {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to delete volume: %s", err))
 	}
 
 	return &csi.NodeUnpublishVolumeResponse{}, nil
 }
 
-// createVolume create the directory for the hostpath volume.
-// It returns the volume path or err if one occurs.
-func (ns *nodeServer) createVolume(id, name string, cap int64) (*volume, error) {
+// createVolume create the directory for the volume. It returns the volume
+// path or err if one occurs.
+func (ns *NodeServer) createVolume(id, name string, cap int64) (*volume, error) {
 	path := filepath.Join(ns.dataRoot, id)
 
 	err := os.MkdirAll(path, 0777)
@@ -193,9 +193,8 @@ func (ns *nodeServer) createVolume(id, name string, cap int64) (*volume, error) 
 	return &vol, nil
 }
 
-// deleteVolume deletes the directory for the hostpath volume.
-func (ns *nodeServer) deleteHostpathVolume(vol *volume) error {
-	glog.V(4).Infof("deleting hostpath volume: %s", vol.ID)
+func (ns *NodeServer) deleteVolume(vol *volume) error {
+	glog.V(4).Infof("node: deleting volume: %s", vol.ID)
 
 	if err := os.RemoveAll(vol.Path); err != nil && !os.IsNotExist(err) {
 		return err
@@ -206,29 +205,30 @@ func (ns *nodeServer) deleteHostpathVolume(vol *volume) error {
 	return nil
 }
 
-func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
+func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	glog.Info("getting default node info")
+func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+	glog.Info("node: getting default node info")
+
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.nodeID,
 	}, nil
 }
 
-func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
+func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *nodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
+func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *nodeServer) NodeExpandVolume(ctx context.Context, in *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
+func (ns *NodeServer) NodeExpandVolume(ctx context.Context, in *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
+func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
