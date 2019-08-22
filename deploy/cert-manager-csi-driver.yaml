@@ -46,7 +46,6 @@ spec:
               name: csi-data-dir
             - mountPath: /registration
               name: registration-dir
-
       volumes:
         - hostPath:
             path: /var/lib/kubelet/plugins/cert-manager-csi
