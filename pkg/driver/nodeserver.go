@@ -32,10 +32,10 @@ type NodeServer struct {
 }
 
 type volume struct {
-	Name string `json:"volName"`
-	ID   string `json:"volID"`
-	Size int64  `json:"volSize"`
-	Path string `json:"volPath"`
+	Name string
+	ID   string
+	Size int64
+	Path string
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
@@ -94,7 +94,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.Infof("node: created volume: %s", vol.Path)
 
 	glog.Infof("node: creating key/cert pair with cert-manager: %s", vol.Path)
-	if err := ns.cm.createKeyCertPair(volID, attr); err != nil {
+	if err := ns.cm.createKeyCertPair(vol, attr); err != nil {
 		return nil, err
 	}
 
@@ -144,11 +144,11 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 	// Check arguments
 	if len(targetPath) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
 	}
 
 	if len(volumeID) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
 	}
 
 	vol, ok := ns.volumes[volumeID]

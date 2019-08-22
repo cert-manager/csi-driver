@@ -59,7 +59,7 @@ func NewCertManager(nodeID, dataDir string) (*certmanager, error) {
 	}, nil
 }
 
-func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) error {
+func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) error {
 	uris, err := util.ParseURIs(attr[uriSANsKey])
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 	if keyPath == "" {
 		keyPath = "key.pem"
 	}
-	keyPath = filepath.Join(c.dataDir, keyPath)
+	keyPath = filepath.Join(vol.Path, keyPath)
 
 	keyBundle, err := util.NewRSAKey(keyPath)
 	if err != nil {
@@ -129,7 +129,7 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 	}
 
 	name := fmt.Sprintf("cert-manager-csi-%s-%s",
-		c.nodeID, volID)
+		c.nodeID, vol.ID)
 
 	issuerKind := attr[issuerKindKey]
 	if issuerKind == "" {
@@ -176,7 +176,7 @@ func (c *certmanager) createKeyCertPair(volID string, attr map[string]string) er
 	if certPath == "" {
 		certPath = "crt.pem"
 	}
-	certPath = filepath.Join(c.dataDir, certPath)
+	certPath = filepath.Join(vol.Path, certPath)
 
 	if err := util.WriteFile(certPath, cr.Status.Certificate, 0600); err != nil {
 		return err

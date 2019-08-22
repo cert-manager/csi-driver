@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -9,26 +8,7 @@ import (
 )
 
 func main() {
-	c := cmd.RootCmd
-
-	flag.CommandLine.Parse([]string{})
-
-	c.Flags().AddGoFlagSet(flag.CommandLine)
-
-	c.PersistentFlags().StringVar(&cmd.NodeID, "node-id", "", "node ID")
-	c.MarkPersistentFlagRequired("node-id")
-
-	c.PersistentFlags().StringVar(&cmd.Endpoint, "endpoint", "", "CSI endpoint")
-	c.MarkPersistentFlagRequired("endpoint")
-
-	c.PersistentFlags().StringVar(&cmd.KubeletEndpoint, "kubelet-registration-path", "", "Path of the CSI driver socket on the Kubernetes host machine.")
-	c.MarkPersistentFlagRequired("kubelet-registration-path")
-
-	c.PersistentFlags().StringVar(&cmd.DriverName, "driver-name", "cert-manager-csi", "name of the drive")
-
-	c.PersistentFlags().StringVar(&cmd.DataRoot, "data-root", "/csi-data-dir", "directory to store ephemeral data")
-
-	if err := c.Execute(); err != nil {
+	if err := cmd.RootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
