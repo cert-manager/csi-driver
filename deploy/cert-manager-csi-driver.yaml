@@ -1,0 +1,72 @@
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: csi.certmanager.k8s.io
+spec:
+  attachRequired: false
+  podInfoOnMount: true
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: cert-manager-csi
+spec:
+  selector:
+    matchLabels:
+      app: cert-manager-csi
+  template:
+    metadata:
+      labels:
+        app: cert-manager-csi
+    spec:
+      hostNetwork: true
+      containers:
+        - name: cert-manager-csi
+          image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0
+          imagePullPolicy: Always
+          args:
+            - --driver-name=csi.certmanager.k8s.io
+            - --v=10
+            - --endpoint=$(CSI_ENDPOINT)
+            - --node-id=$(KUBE_NODE_NAME)
+            - --default-certificate-request-namespace=cert-manager
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi/csi.sock
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
+              name: mountpoint-dir
+            - mountPath: /csi-data-dir
+              name: csi-data-dir
+            - mountPath: /registration
+              name: registration-dir
+
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet/plugins/cert-manager-csi
+            type: DirectoryOrCreate
+          name: socket-dir
+        - hostPath:
+            path: /var/lib/kubelet/pods
+            type: DirectoryOrCreate
+          name: mountpoint-dir
+        - hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+          name: registration-dir
+        - hostPath:
+            # 'path' is where data is persisted on host during mount of key/certs to pods.
+            path: /var/lib/cert-manager-csi-data/
+            type: DirectoryOrCreate
+          name: csi-data-dir
