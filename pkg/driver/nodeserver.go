@@ -124,7 +124,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		deviceId = req.GetPublishContext()[deviceID]
 	}
 
-	glog.V(4).Infof("node: target %v\ndevice %v\nreadonly %v\nvolumeId %v\nattributes %v\n",
+	glog.V(4).Infof("node: target:%v device:%v readonly:%v volumeId:%v attributes:%v",
 		targetPath, deviceId, readOnly, volID, attr)
 
 	var options []string

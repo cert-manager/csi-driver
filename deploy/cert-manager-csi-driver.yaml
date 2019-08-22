@@ -5,10 +5,40 @@ metadata:
 spec:
   podInfoOnMount: true
 ---
-kind: DaemonSet
-apiVersion: apps/v1
+apiVersion: v1
+kind: ServiceAccount
 metadata:
   name: cert-manager-csi
+  namespace: cert-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-csi
+rules:
+- apiGroups: ["certmanager.k8s.io"]
+  resources: ["certificaterequests"]
+  verbs: ["get", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-csi
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-csi
+subjects:
+- apiGroup:
+  kind: ServiceAccount
+  name: cert-manager-csi
+  namespace: cert-manager
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cert-manager-csi
+  namespace: cert-manager
 spec:
   selector:
     matchLabels:
@@ -18,6 +48,7 @@ spec:
       labels:
         app: cert-manager-csi
     spec:
+      serviceAccount: cert-manager-csi
       containers:
         - name: cert-manager-csi
           image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0

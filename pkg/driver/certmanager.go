@@ -111,7 +111,7 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		return err
 	}
 
-	glog.Info("cert-manager: new private key written to file: %s", keyPath)
+	glog.Infof("cert-manager: new private key written to file: %s", keyPath)
 
 	csr := &x509.CertificateRequest{
 		Subject: pkix.Name{
@@ -164,7 +164,8 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	namespace := attr[namespaceKey]
 	if len(namespace) == 0 {
 		glog.V(4).Infof("certmanager: %s: no namespace specified for key %s so using pod namespace %s",
-			vol.Name, namespaceKey, namespace)
+			vol.Name, namespaceKey, vol.PodNamespace)
+		namespace = vol.PodNamespace
 	}
 
 	glog.Infof("cert-manager: created CertificateRequest %s", name)
@@ -175,7 +176,7 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 
 	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
-	cr, err = c.waitForCertificateRequestReady(cr.Name, "", time.Second*30)
+	cr, err = c.waitForCertificateRequestReady(cr.Name, namespace, time.Second*30)
 	if err != nil {
 		return err
 	}
@@ -200,7 +201,7 @@ func (c *certmanager) waitForCertificateRequestReady(name, ns string, timeout ti
 	err := wait.PollImmediate(time.Second, timeout,
 		func() (bool, error) {
 
-			glog.V(4).Info("cert-manager: polling CertificateRequest %s/%s for ready status", name, ns)
+			glog.V(4).Infof("cert-manager: polling CertificateRequest %s/%s for ready status", name, ns)
 
 			var err error
 			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
