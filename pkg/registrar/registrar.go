@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/joshvanl/cert-manager-csi/pkg/driver"
-	registerapi "github.com/joshvanl/cert-manager-csi/pkg/registrar/v1beta1"
+	registerapi "github.com/joshvanl/cert-manager-csi/pkg/registrar/v1"
 )
 
 type Registrar struct {

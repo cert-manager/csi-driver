@@ -21,18 +21,21 @@ import (
 )
 
 const (
-	issuerNameKey  = "csi.certmanager.k8s.io/issuer-name"
-	issuerKindKey  = "csi.certmanager.k8s.io/issuer-kind"
-	issuerGroupKey = "csi.certmanager.k8s.io/issuer-group"
-	commonNameKey  = "csi.certmanager.k8s.io/common-name"
-	dnsNamesKey    = "csi.certmanager.k8s.io/dns-names"
-	ipSANsKey      = "csi.certmanager.k8s.io/ip-sans"
-	uriSANsKey     = "csi.certmanager.k8s.io/uri-sans"
-	durationKey    = "csi.certmanager.k8s.io/duration"
-	isCAKey        = "csi.certmanager.k8s.io/is-ca"
+	issuerNameKey      = "csi.certmanager.k8s.io/issuer-name"
+	issuerNamespaceKey = "csi.certmanager.k8s.io/issuer-namespace"
+	issuerKindKey      = "csi.certmanager.k8s.io/issuer-kind"
+	issuerGroupKey     = "csi.certmanager.k8s.io/issuer-group"
 
-	certFileKey = "csi.certmanager.k8s.io/certificate-file"
-	keyFileKey  = "csi.certmanager.k8s.io/privatekey-file"
+	commonNameKey = "csi.certmanager.k8s.io/common-name"
+	dnsNamesKey   = "csi.certmanager.k8s.io/dns-names"
+	ipSANsKey     = "csi.certmanager.k8s.io/ip-sans"
+	uriSANsKey    = "csi.certmanager.k8s.io/uri-sans"
+	durationKey   = "csi.certmanager.k8s.io/duration"
+	isCAKey       = "csi.certmanager.k8s.io/is-ca"
+
+	certFileKey    = "csi.certmanager.k8s.io/certificate-file"
+	keyFileKey     = "csi.certmanager.k8s.io/privatekey-file"
+	crNamespaceKey = "csi.certmanager.k8s.io/certificaterequest-namespace"
 )
 
 type certmanager struct {
