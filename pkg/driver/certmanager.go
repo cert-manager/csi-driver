@@ -13,6 +13,7 @@ import (
 	cm "github.com/jetstack/cert-manager/pkg/apis/certmanager"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -133,6 +134,28 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
 		c.nodeID, vol.PodName, vol.ID)
 
+	namespace := attr[namespaceKey]
+	if len(namespace) == 0 {
+		glog.V(4).Infof("certmanager: %s: no namespace specified for key %s so using pod namespace %s",
+			vol.Name, namespaceKey, vol.PodNamespace)
+		namespace = vol.PodNamespace
+	}
+
+	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		if !k8sErrors.IsNotFound(err) {
+			return err
+		}
+	} else {
+		glog.Infof("cert-manager: deleting existing CertificateRequest %s", name)
+
+		// exists so delete old
+		err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Delete(name, &metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
 	issuerKind := attr[issuerKindKey]
 	if issuerKind == "" {
 		issuerKind = cmapi.IssuerKind
@@ -145,7 +168,8 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 
 	cr := &cmapi.CertificateRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: namespace,
 		},
 		Spec: cmapi.CertificateRequestSpec{
 			CSRPEM: csrPEM,
@@ -161,13 +185,6 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		},
 	}
 
-	namespace := attr[namespaceKey]
-	if len(namespace) == 0 {
-		glog.V(4).Infof("certmanager: %s: no namespace specified for key %s so using pod namespace %s",
-			vol.Name, namespaceKey, vol.PodNamespace)
-		namespace = vol.PodNamespace
-	}
-
 	glog.Infof("cert-manager: created CertificateRequest %s", name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	if err != nil {
@@ -175,7 +192,6 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	}
 
 	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", name)
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	cr, err = c.waitForCertificateRequestReady(cr.Name, namespace, time.Second*30)
 	if err != nil {
 		return err
