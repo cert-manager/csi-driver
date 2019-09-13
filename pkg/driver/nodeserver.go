@@ -101,7 +101,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// we are already mounted
+	// we are already mounted so assume certs have to be written
 	if mntPoint {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
