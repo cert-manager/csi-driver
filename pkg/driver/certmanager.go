@@ -251,14 +251,13 @@ func (c *certmanager) validateAttributes(attr map[string]string) error {
 		errs = append(errs, fmt.Sprintf("%s field required", issuerNameKey))
 	}
 
-	if len(attr[dnsNamesKey]) == 0 && len(attr[ipSANsKey]) == 0 {
+	if len(attr[commonNameKey]) == 0 && len(attr[dnsNamesKey]) == 0 {
 		errs = append(errs, fmt.Sprintf("both %s and %s may not be empty",
 			commonNameKey, dnsNamesKey))
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to validate volume attributes: %s",
-			strings.Join(errs, ", "))
+		return errors.New(strings.Join(errs, ", "))
 	}
 
 	return nil

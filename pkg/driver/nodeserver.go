@@ -101,6 +101,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	// we are already mounted
 	if mntPoint {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
