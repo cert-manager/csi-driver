@@ -1,9 +1,11 @@
 package driver
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
@@ -24,6 +26,8 @@ const (
 
 	podNameKey      = "csi.storage.k8s.io/pod.name"
 	podNamespaceKey = "csi.storage.k8s.io/pod.namespace"
+
+	ephemeralKey = "csi.storage.k8s.io/ephemeral"
 )
 
 type NodeServer struct {
@@ -62,31 +66,13 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 	attr := req.GetVolumeContext()
 	targetPath := req.GetTargetPath()
-	readOnly := req.GetReadonly()
 
-	// Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
-	ephemeralVolume := attr["csi.storage.k8s.io/ephemeral"] == "true" || attr["csi.storage.k8s.io/ephemeral"] == ""
-	if !ephemeralVolume {
-		return nil, status.Error(codes.InvalidArgument, "publishing a non-ephemeral volume mount is not supported")
+	if err := ns.validateAttributes(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err := ns.cm.validateAttributes(attr); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	// Check arguments
-	if req.GetVolumeCapability() == nil {
-		return nil, status.Error(codes.InvalidArgument, "volume capability missing in request")
-	}
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
-	}
-	if len(targetPath) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
-	}
-
-	if req.GetVolumeCapability().GetBlock() != nil {
-		return nil, status.Error(codes.InvalidArgument, "block access type not supported")
 	}
 
 	volID := req.GetVolumeId()
@@ -125,14 +111,9 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	glog.V(4).Infof("node: target:%v device:%v readonly:%v volumeId:%v attributes:%v",
-		targetPath, deviceId, readOnly, volID, attr)
+		targetPath, deviceId, true, volID, attr)
 
-	var options []string
-	if readOnly {
-		options = append(options, "ro")
-	}
-
-	if err := util.Mount(vol.Path, targetPath, options); err != nil {
+	if err := util.Mount(vol.Path, targetPath, []string{"ro"}); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {
 			err = fmt.Errorf("%s,%s", err, rmErr)
 		}
@@ -141,6 +122,44 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	return &csi.NodePublishVolumeResponse{}, nil
+}
+
+func (ns *NodeServer) validateAttributes(req *csi.NodePublishVolumeRequest) error {
+	var errs []string
+	attr := req.GetVolumeContext()
+
+	// Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
+	ephemeralVolume := attr[ephemeralKey] == "true" || attr[ephemeralKey] == ""
+	if !ephemeralVolume {
+		errs = append(errs, "publishing a non-ephemeral volume mount is not supported")
+	}
+
+	if req.GetVolumeCapability() == nil {
+		errs = append(errs, "volume capability missing")
+	}
+	if len(req.GetVolumeId()) == 0 {
+		errs = append(errs, "volume ID missing")
+	}
+	if len(req.GetTargetPath()) == 0 {
+		errs = append(errs, "target path missing")
+	}
+
+	_, okN := attr[podNameKey]
+	_, okNs := attr[podNamespaceKey]
+	if !okN || !okNs {
+		errs = append(errs, fmt.Sprintf("expecting both %s and %s attributes to be set in context",
+			podNamespaceKey, podNameKey))
+	}
+
+	if req.GetVolumeCapability().GetBlock() != nil {
+		errs = append(errs, "block access type not supported")
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ", "))
+	}
+
+	return nil
 }
 
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
