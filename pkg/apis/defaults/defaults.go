@@ -7,7 +7,7 @@ import (
 	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func SetDefaults(attr v1alpha1.Attributes) v1alpha1.Attributes {
+func SetDefaultAttributes(attr v1alpha1.Attributes) v1alpha1.Attributes {
 	setDefaultIfEmpty(attr, v1alpha1.IssuerKindKey, cmapi.IssuerKind)
 	setDefaultIfEmpty(attr, v1alpha1.IssuerGroupKey, certmanager.GroupName)
 

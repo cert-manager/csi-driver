@@ -1,16 +1,14 @@
-package driver
+package certmanager
 
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
-	cm "github.com/jetstack/cert-manager/pkg/apis/certmanager"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,33 +16,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/joshvanl/cert-manager-csi/pkg/util"
 )
 
-const (
-	issuerNameKey  = "csi.certmanager.k8s.io/issuer-name"
-	issuerKindKey  = "csi.certmanager.k8s.io/issuer-kind"
-	issuerGroupKey = "csi.certmanager.k8s.io/issuer-group"
-
-	commonNameKey = "csi.certmanager.k8s.io/common-name"
-	dnsNamesKey   = "csi.certmanager.k8s.io/dns-names"
-	ipSANsKey     = "csi.certmanager.k8s.io/ip-sans"
-	uriSANsKey    = "csi.certmanager.k8s.io/uri-sans"
-	durationKey   = "csi.certmanager.k8s.io/duration"
-	isCAKey       = "csi.certmanager.k8s.io/is-ca"
-
-	certFileKey  = "csi.certmanager.k8s.io/certificate-file"
-	keyFileKey   = "csi.certmanager.k8s.io/privatekey-file"
-	namespaceKey = "csi.certmanager.k8s.io/namespace"
-)
-
-type certmanager struct {
+type CertManager struct {
 	nodeID   string
 	dataDir  string
 	cmClient cmclient.Interface
 }
 
-func NewCertManager(nodeID, dataDir string) (*certmanager, error) {
+func New(nodeID, dataDir string) (*CertManager, error) {
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -55,34 +37,30 @@ func NewCertManager(nodeID, dataDir string) (*certmanager, error) {
 		return nil, err
 	}
 
-	return &certmanager{
+	return &CertManager{
 		cmClient: cmClient,
 		nodeID:   nodeID,
 		dataDir:  dataDir,
 	}, nil
 }
 
-func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) error {
-	uris, err := util.ParseURIs(attr[uriSANsKey])
+func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.Volume, attr v1alpha1.Attributes) error {
+	uris, err := util.ParseURIs(attr[v1alpha1.URISANsKey])
 	if err != nil {
 		return err
 	}
 
-	ips := util.ParseIPAddresses(attr[ipSANsKey])
+	ips := util.ParseIPAddresses(attr[v1alpha1.IPSANsKey])
 
-	dnsNames := strings.Split(attr[dnsNamesKey], ",")
-	commonName := attr[commonNameKey]
+	dnsNames := strings.Split(attr[v1alpha1.DNSNamesKey], ",")
+	commonName := attr[v1alpha1.CommonNameKey]
 
 	if len(commonName) == 0 {
-		if len(dnsNames) == 0 {
-			return errors.New("no common name or DNS names given")
-		}
-
 		commonName = dnsNames[0]
 	}
 
 	duration := cmapi.DefaultCertificateDuration
-	if durStr, ok := attr[durationKey]; ok {
+	if durStr, ok := attr[v1alpha1.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
 			return err
@@ -90,22 +68,16 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	}
 
 	isCA := false
-	if isCAStr, ok := attr[isCAKey]; ok {
+	if isCAStr, ok := attr[v1alpha1.IsCAKey]; ok {
 		switch strings.ToLower(isCAStr) {
 		case "true":
 			isCA = true
 		case "false":
 			isCA = false
-		default:
-			return fmt.Errorf("invalid is-ca value: %s", isCAStr)
 		}
 	}
 
-	keyPath := attr[keyFileKey]
-	if keyPath == "" {
-		keyPath = "key.pem"
-	}
-	keyPath = filepath.Join(vol.Path, keyPath)
+	keyPath := filepath.Join(vol.Path, attr[v1alpha1.KeyFileKey])
 
 	keyBundle, err := util.NewRSAKey(keyPath)
 	if err != nil {
@@ -134,12 +106,7 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
 		c.nodeID, vol.PodName, vol.ID)
 
-	namespace := attr[namespaceKey]
-	if len(namespace) == 0 {
-		glog.V(4).Infof("certmanager: %s: no namespace specified for key %s so using pod namespace %s",
-			vol.Name, namespaceKey, vol.PodNamespace)
-		namespace = vol.PodNamespace
-	}
+	namespace := attr[v1alpha1.NamespaceKey]
 
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -156,16 +123,6 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		}
 	}
 
-	issuerKind := attr[issuerKindKey]
-	if issuerKind == "" {
-		issuerKind = cmapi.IssuerKind
-	}
-
-	issuerGroup := attr[issuerGroupKey]
-	if issuerGroup == "" {
-		issuerGroup = cm.GroupName
-	}
-
 	cr := &cmapi.CertificateRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -178,9 +135,9 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 				Duration: duration,
 			},
 			IssuerRef: cmapi.ObjectReference{
-				Name:  attr[issuerNameKey],
-				Kind:  issuerKind,
-				Group: issuerGroup,
+				Name:  attr[v1alpha1.IssuerNameKey],
+				Kind:  attr[v1alpha1.IssuerKindKey],
+				Group: attr[v1alpha1.IssuerGroupKey],
 			},
 		},
 	}
@@ -197,11 +154,7 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 		return err
 	}
 
-	certPath := attr[certFileKey]
-	if certPath == "" {
-		certPath = "crt.pem"
-	}
-	certPath = filepath.Join(vol.Path, certPath)
+	certPath := filepath.Join(vol.Path, attr[v1alpha1.CertFileKey])
 
 	if err := util.WriteFile(certPath, cr.Status.Certificate, 0600); err != nil {
 		return err
@@ -212,7 +165,7 @@ func (c *certmanager) createKeyCertPair(vol *volume, attr map[string]string) err
 	return nil
 }
 
-func (c *certmanager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
+func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
 	var cr *cmapi.CertificateRequest
 	err := wait.PollImmediate(time.Second, timeout,
 		func() (bool, error) {
@@ -242,23 +195,4 @@ func (c *certmanager) waitForCertificateRequestReady(name, ns string, timeout ti
 	}
 
 	return cr, nil
-}
-
-func (c *certmanager) validateAttributes(attr map[string]string) error {
-	var errs []string
-
-	if len(attr[issuerNameKey]) == 0 {
-		errs = append(errs, fmt.Sprintf("%s field required", issuerNameKey))
-	}
-
-	if len(attr[commonNameKey]) == 0 && len(attr[dnsNamesKey]) == 0 {
-		errs = append(errs, fmt.Sprintf("both %s and %s may not be empty",
-			commonNameKey, dnsNamesKey))
-	}
-
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ", "))
-	}
-
-	return nil
 }

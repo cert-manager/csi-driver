@@ -117,7 +117,7 @@ the following values;
 | csi.certmanager.k8s.io/dns-names        | DNS names the certificate will be requested for. At least a common name or one DNS name must be set. |                    | a.b.foo.com,c.d.foo.com        |
 | csi.certmanager.k8s.io/ip-sans          | IP addresses the certificate will be requested for.                                                  |                    | 192.0.0.1,192.0.0.2            |
 | csi.certmanager.k8s.io/uri-sans         | URI names the certificate will be requested for.                                                     |                    | spiffe://foo.bar.cluster.local |
-| csi.certmanager.k8s.io/duration         | Requested duration the signed certificate will be valid for.                                         | 90d                | 1880h                          |
+| csi.certmanager.k8s.io/duration         | Requested duration the signed certificate will be valid for.                                         | 720h               | 1880h                          |
 | csi.certmanager.k8s.io/is-ca            | Mark the certificate as a certificate authority.                                                     | false              | true                           |
 | csi.certmanager.k8s.io/certificate-file | File name to store the certificate file at.                                                          | crt.pem            | bar/foo.crt                    |
 | csi.certmanager.k8s.io/privatekey-file  | File name to store the key file at.                                                                  | key.pem            | bar/foo.key                    |

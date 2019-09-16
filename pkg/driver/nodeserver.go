@@ -13,6 +13,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/defaults"
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/validation"
+	"github.com/joshvanl/cert-manager-csi/pkg/certmanager"
 	"github.com/joshvanl/cert-manager-csi/pkg/util"
 )
 
@@ -24,32 +28,22 @@ const (
 
 	deviceID = "deviceID"
 
-	podNameKey      = "csi.storage.k8s.io/pod.name"
-	podNamespaceKey = "csi.storage.k8s.io/pod.namespace"
+	csiPodNameKey      = "csi.storage.k8s.io/pod.name"
+	csiPodNamespaceKey = "csi.storage.k8s.io/pod.namespace"
 
-	ephemeralKey = "csi.storage.k8s.io/ephemeral"
+	csiEphemeralKey = "csi.storage.k8s.io/ephemeral"
 )
 
 type NodeServer struct {
 	nodeID   string
 	dataRoot string
 
-	cm      *certmanager
-	volumes map[string]volume
-}
-
-type volume struct {
-	Name string
-	ID   string
-	Size int64
-	Path string
-
-	PodName      string
-	PodNamespace string
+	cm      *certmanager.CertManager
+	volumes map[string]v1alpha1.Volume
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
-	cm, err := NewCertManager(nodeID, dataRoot)
+	cm, err := certmanager.New(nodeID, dataRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -59,19 +53,21 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 		dataRoot: dataRoot,
 
 		cm:      cm,
-		volumes: make(map[string]volume),
+		volumes: make(map[string]v1alpha1.Volume),
 	}, nil
 }
 
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	attr := req.GetVolumeContext()
+	attr := util.MapStringToAttributes(req.GetVolumeContext())
 	targetPath := req.GetTargetPath()
 
-	if err := ns.validateAttributes(req); err != nil {
+	if err := ns.validateVolumeAttributes(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := ns.cm.validateAttributes(attr); err != nil {
+	attr = defaults.SetDefaultAttributes(attr)
+
+	if err := validation.ValidateAttributes(attr); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -85,7 +81,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.Infof("node: created volume: %s", vol.Path)
 
 	glog.Infof("node: creating key/cert pair with cert-manager: %s", vol.Path)
-	if err := ns.cm.createKeyCertPair(vol, attr); err != nil {
+	if err := ns.cm.CreateKeyCertPair(vol, attr); err != nil {
 		return nil, err
 	}
 
@@ -125,14 +121,23 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) validateAttributes(req *csi.NodePublishVolumeRequest) error {
+func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest) error {
 	var errs []string
+
 	attr := req.GetVolumeContext()
 
 	// Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
-	ephemeralVolume := attr[ephemeralKey] == "true" || attr[ephemeralKey] == ""
+	ephemeralVolume :=
+		(attr[v1alpha1.CSIEphemeralKey] == "true" || attr[v1alpha1.CSIEphemeralKey] == "")
 	if !ephemeralVolume {
 		errs = append(errs, "publishing a non-ephemeral volume mount is not supported")
+	}
+
+	_, okN := attr[v1alpha1.CSIPodNameKey]
+	_, okNs := attr[v1alpha1.CSIPodNamespaceKey]
+	if !okN || !okNs {
+		errs = append(errs, fmt.Sprintf("expecting both %s and %s attributes to be set in context",
+			v1alpha1.CSIPodNamespaceKey, v1alpha1.CSIPodNameKey))
 	}
 
 	if req.GetVolumeCapability() == nil {
@@ -143,13 +148,6 @@ func (ns *NodeServer) validateAttributes(req *csi.NodePublishVolumeRequest) erro
 	}
 	if len(req.GetTargetPath()) == 0 {
 		errs = append(errs, "target path missing")
-	}
-
-	_, okN := attr[podNameKey]
-	_, okNs := attr[podNamespaceKey]
-	if !okN || !okNs {
-		errs = append(errs, fmt.Sprintf("expecting both %s and %s attributes to be set in context",
-			podNamespaceKey, podNameKey))
 	}
 
 	if req.GetVolumeCapability().GetBlock() != nil {
@@ -199,7 +197,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
-func (ns *NodeServer) createVolume(id string, attr map[string]string) (*volume, error) {
+func (ns *NodeServer) createVolume(id string, attr v1alpha1.Attributes) (*v1alpha1.Volume, error) {
 	path := filepath.Join(ns.dataRoot, id)
 
 	err := os.MkdirAll(path, 0777)
@@ -207,20 +205,20 @@ func (ns *NodeServer) createVolume(id string, attr map[string]string) (*volume, 
 		return nil, err
 	}
 
-	vol := volume{
+	vol := v1alpha1.Volume{
 		ID:           id,
 		Name:         fmt.Sprintf("cert-manager-csi-%s", id),
 		Size:         maxStorageCapacity,
 		Path:         path,
-		PodName:      attr[podNameKey],
-		PodNamespace: attr[podNamespaceKey],
+		PodName:      attr[v1alpha1.CSIPodNameKey],
+		PodNamespace: attr[v1alpha1.NamespaceKey],
 	}
 
 	ns.volumes[id] = vol
 	return &vol, nil
 }
 
-func (ns *NodeServer) deleteVolume(vol *volume) error {
+func (ns *NodeServer) deleteVolume(vol *v1alpha1.Volume) error {
 	glog.V(4).Infof("node: deleting volume: %s", vol.ID)
 
 	if err := os.RemoveAll(vol.Path); err != nil && !os.IsNotExist(err) {
