@@ -1,6 +1,7 @@
 package v1alpha1
 
 type Attribute string
+type Attributes map[Attribute]string
 
 const (
 	CSIPodNameKey      = "csi.storage.k8s.io/pod.name"
@@ -15,8 +16,8 @@ const (
 
 	CommonNameKey Attribute = "csi.certmanager.k8s.io/common-name"
 	DNSNamesKey   Attribute = "csi.certmanager.k8s.io/dns-names"
-	IpSANsKey     Attribute = "csi.certmanager.k8s.io/ip-sans"
-	UriSANsKey    Attribute = "csi.certmanager.k8s.io/uri-sans"
+	IPSANsKey     Attribute = "csi.certmanager.k8s.io/ip-sans"
+	URISANsKey    Attribute = "csi.certmanager.k8s.io/uri-sans"
 	DurationKey   Attribute = "csi.certmanager.k8s.io/duration"
 	IsCAKey       Attribute = "csi.certmanager.k8s.io/is-ca"
 
