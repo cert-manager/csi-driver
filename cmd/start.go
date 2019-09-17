@@ -7,7 +7,6 @@ import (
 
 	"github.com/joshvanl/cert-manager-csi/cmd/options"
 	"github.com/joshvanl/cert-manager-csi/pkg/driver"
-	"github.com/joshvanl/cert-manager-csi/pkg/registrar"
 )
 
 var (
@@ -30,11 +29,6 @@ var RootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		d, err := driver.New(opts.DriverName, opts.NodeID, opts.Endpoint, opts.DataRoot)
 		if err != nil {
-			return err
-		}
-
-		r := registrar.New(opts.DriverName, opts.KubeletRegistrationEndpoint, d.NodeServer())
-		if err := r.Run(); err != nil {
 			return err
 		}
 

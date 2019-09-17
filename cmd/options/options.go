@@ -27,12 +27,8 @@ func AddFlags(cmd *cobra.Command) *Options {
 	cmd.PersistentFlags().StringVar(&opts.Endpoint, "endpoint", "", "CSI endpoint")
 	cmd.MarkPersistentFlagRequired("endpoint")
 
-	cmd.PersistentFlags().StringVar(&opts.KubeletRegistrationEndpoint,
-		"kubelet-registration-path", "", "Path of the CSI driver socket on the Kubernetes host machine.")
-	cmd.MarkPersistentFlagRequired("kubelet-registration-path")
-
 	cmd.PersistentFlags().StringVar(&opts.DriverName, "driver-name",
-		"cert-manager-csi", "name of the drive")
+		"csi.certmanager.k8s.io", "name of the driver")
 
 	cmd.PersistentFlags().StringVar(&opts.DataRoot, "data-root",
 		"/csi-data-dir", "directory to store ephemeral data")

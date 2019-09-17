@@ -8,14 +8,26 @@ import (
 	"sync"
 
 	"github.com/golang/glog"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 )
 
-func NewNonBlockingGRPCServer() *nonBlockingGRPCServer {
+// Defines Non blocking GRPC server interfaces
+type NonBlockingGRPCServer interface {
+	// Start services at the endpoint
+	Start(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer)
+	// Waits for the service to stop
+	Wait()
+	// Stops the service gracefully
+	Stop()
+	// Stops the service forcefully
+	ForceStop()
+}
+
+func NewNonBlockingGRPCServer() NonBlockingGRPCServer {
 	return &nonBlockingGRPCServer{}
 }
 
@@ -47,6 +59,7 @@ func (s *nonBlockingGRPCServer) ForceStop() {
 }
 
 func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
+
 	proto, addr, err := parseEndpoint(endpoint)
 	if err != nil {
 		glog.Fatal(err.Error())
@@ -54,14 +67,14 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	if proto == "unix" {
 		addr = "/" + addr
-		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) { //nolint: vetshadow
-			glog.Fatalf("server: failed to remove %s, error: %s", addr, err.Error())
+		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
+			glog.Fatalf("Failed to remove %s, error: %s", addr, err.Error())
 		}
 	}
 
 	listener, err := net.Listen(proto, addr)
 	if err != nil {
-		glog.Fatalf("server: failed to listen: %v", err)
+		glog.Fatalf("Failed to listen: %v", err)
 	}
 
 	opts := []grpc.ServerOption{
@@ -72,18 +85,15 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	if ids != nil {
 		csi.RegisterIdentityServer(server, ids)
-		glog.Info("server: registered identity server")
 	}
 	if cs != nil {
 		csi.RegisterControllerServer(server, cs)
-		glog.Info("server: registered controller server")
 	}
 	if ns != nil {
 		csi.RegisterNodeServer(server, ns)
-		glog.Info("server: registered node server")
 	}
 
-	glog.Infof("server: listening for connections on address: %#v", listener.Addr())
+	glog.Infof("Listening for connections on address: %#v", listener.Addr())
 
 	server.Serve(listener)
 
@@ -100,13 +110,13 @@ func parseEndpoint(ep string) (string, string, error) {
 }
 
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	glog.V(3).Infof("server: GRPC call: %s", info.FullMethod)
-	glog.V(5).Infof("server: GRPC request: %+v", protosanitizer.StripSecrets(req))
+	glog.V(3).Infof("GRPC call: %s", info.FullMethod)
+	glog.V(5).Infof("GRPC request: %s", protosanitizer.StripSecrets(req))
 	resp, err := handler(ctx, req)
 	if err != nil {
-		glog.Errorf("server: GRPC error: %v", err)
+		glog.Errorf("GRPC error: %v", err)
 	} else {
-		glog.V(5).Infof("server: GRPC response: %+v", protosanitizer.StripSecrets(resp))
+		glog.V(5).Infof("GRPC response: %s", protosanitizer.StripSecrets(resp))
 	}
 	return resp, err
 }

@@ -1,6 +1,7 @@
 package v1alpha1
 
 type Attribute string
+
 type Attributes map[Attribute]string
 
 const (

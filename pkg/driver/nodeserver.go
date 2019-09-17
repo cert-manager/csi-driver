@@ -140,18 +140,18 @@ func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest
 			v1alpha1.CSIPodNamespaceKey, v1alpha1.CSIPodNameKey))
 	}
 
-	if req.GetVolumeCapability() == nil {
+	if c := req.GetVolumeCapability(); c == nil {
 		errs = append(errs, "volume capability missing")
+	} else {
+		if c.GetBlock() != nil {
+			errs = append(errs, "block access type not supported")
+		}
 	}
 	if len(req.GetVolumeId()) == 0 {
 		errs = append(errs, "volume ID missing")
 	}
 	if len(req.GetTargetPath()) == 0 {
 		errs = append(errs, "target path missing")
-	}
-
-	if req.GetVolumeCapability().GetBlock() != nil {
-		errs = append(errs, "block access type not supported")
 	}
 
 	if len(errs) > 0 {

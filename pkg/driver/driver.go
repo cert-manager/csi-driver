@@ -12,6 +12,7 @@ type Driver struct {
 	endpoint string
 
 	ids *identityServer
+	cs  *ControllerServer
 	ns  *NodeServer
 }
 
@@ -26,13 +27,14 @@ func New(driverName, nodeID, endpoint, dataRoot string) (*Driver, error) {
 	return &Driver{
 		endpoint: endpoint,
 		ids:      NewIdentityServer(driverName, version),
+		cs:       NewControllerServer(),
 		ns:       ns,
 	}, nil
 }
 
 func (d *Driver) Run() {
 	s := NewNonBlockingGRPCServer()
-	s.Start(d.endpoint, d.ids, nil, d.ns)
+	s.Start(d.endpoint, d.ids, d.cs, d.ns)
 	s.Wait()
 }
 
