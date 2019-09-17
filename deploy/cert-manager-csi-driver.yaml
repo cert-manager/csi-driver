@@ -50,48 +50,62 @@ spec:
     spec:
       serviceAccount: cert-manager-csi
       containers:
-        - name: cert-manager-csi
-          image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0
-          imagePullPolicy: Always
+
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.0.2
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/cert-manager-csi /registration/cert-manager-csi-reg.sock"]
           args:
-            - --driver-name=csi.certmanager.k8s.io
             - --v=5
-            - --endpoint=unix:///csi/csi.sock
-            - --node-id=$(KUBE_NODE_NAME)
+            - --csi-address=/plugin/csi.sock
             - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi/csi.sock
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
-                  apiVersion: v1
                   fieldPath: spec.nodeName
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: registration-dir
+              mountPath: /registration
+
+        - name: cert-manager-csi
           securityContext:
             privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0
+          imagePullPolicy: "Always"
+          args :
+            - "--node-id=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix://plugin/csi.sock
           volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-            - mountPath: /var/lib/kubelet/pods
-              mountPropagation: Bidirectional
-              name: mountpoint-dir
-            - mountPath: /csi-data-dir
-              name: csi-data-dir
-            - mountPath: /registration
-              name: registration-dir
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
       volumes:
-        - hostPath:
+        - name: plugin-dir
+          hostPath:
             path: /var/lib/kubelet/plugins/cert-manager-csi
             type: DirectoryOrCreate
-          name: socket-dir
-        - hostPath:
+        - name: pods-mount-dir
+          hostPath:
             path: /var/lib/kubelet/pods
-            type: DirectoryOrCreate
-          name: mountpoint-dir
+            type: Directory
         - hostPath:
             path: /var/lib/kubelet/plugins_registry
             type: Directory
           name: registration-dir
-        - hostPath:
-            # 'path' is where data is persisted on host during mount of key/certs to pods.
-            path: /var/lib/cert-manager-csi-data/
-            type: DirectoryOrCreate
-          name: csi-data-dir
