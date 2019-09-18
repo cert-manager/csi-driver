@@ -117,11 +117,22 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		}
 	}
 
+	if err := util.WriteMetaDataFile(vol); err != nil {
+		return nil, err
+	}
+
+	mountPath := util.MountPath(vol)
+
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
 		if err = os.MkdirAll(targetPath, 0750); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		if err = os.MkdirAll(mountPath, 0750); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
 		mntPoint = false
 	}
 
@@ -142,7 +153,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.V(4).Infof("node: target:%v device:%v readonly:%v volumeId:%v attributes:%v",
 		targetPath, deviceId, true, volID, attr)
 
-	if err := util.Mount(vol.Path, targetPath, []string{"ro"}); err != nil {
+	if err := util.Mount(mountPath, targetPath, []string{"ro"}); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {
 			err = fmt.Errorf("%s,%s", err, rmErr)
 		}

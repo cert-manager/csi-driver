@@ -181,15 +181,16 @@ func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificat
 			return nil, err
 		}
 
-		sk, err := pki.DecodePrivateKeyBytes(keyBytes)
+		sk, err := pki.DecodePKCS1PrivateKeyBytes(keyBytes)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: (@joshval): rebuild key bundle completely
 		keyBundle = &util.KeyBundle{
-			PEM:        keyBytes,
-			PrivateKey: sk,
+			PEM:                keyBytes,
+			PrivateKey:         sk,
+			SignatureAlgorithm: x509.SHA256WithRSA,
+			PublicKeyAlgorithm: x509.RSA,
 		}
 	}
 

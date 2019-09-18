@@ -9,7 +9,13 @@ import (
 	"syscall"
 
 	"github.com/golang/glog"
+
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 )
+
+func MountPath(vol *v1alpha1.MetaData) string {
+	return filepath.Join(vol.Path, "data")
+}
 
 // IsLikelyNotMountPoint determines if a directory is not a mountpoint.
 // It is fast but not necessarily ALWAYS correct. If the path is in fact
