@@ -30,3 +30,16 @@ const (
 	DisableAutoRenewKey Attribute = "csi.certmanager.k8s.io/disable-auto-renew"
 	ReusePrivateKey     Attribute = "csi.certmanager.k8s.io/reuse-private-key"
 )
+
+type MetaData struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Size int64  `json:"size"`
+
+	// real file path in the host file system
+	Path string `json:"path"`
+	// target path to mount to
+	TargetPath string `json:"targetPath"`
+
+	Attributes Attributes `json:"attributes"`
+}

@@ -28,6 +28,8 @@ func ValidateAttributes(attr v1alpha1.Attributes) error {
 	errs = filepathBreakout(attr[v1alpha1.CertFileKey], v1alpha1.CertFileKey, errs)
 	errs = filepathBreakout(attr[v1alpha1.KeyFileKey], v1alpha1.KeyFileKey, errs)
 
+	// TODO (@joshvanl): add better validation for renew before to ensure we
+	// don't go into a crazy renew loop
 	errs = durationParse(attr[v1alpha1.RenewBeforeKey], v1alpha1.RenewBeforeKey, errs)
 	errs = boolValue(attr[v1alpha1.DisableAutoRenewKey], v1alpha1.DisableAutoRenewKey, errs)
 	errs = boolValue(attr[v1alpha1.ReusePrivateKey], v1alpha1.ReusePrivateKey, errs)

@@ -21,8 +21,9 @@ import (
 )
 
 type CertManager struct {
-	nodeID   string
-	dataDir  string
+	nodeID  string
+	dataDir string
+
 	cmClient cmclient.Interface
 }
 
@@ -44,7 +45,7 @@ func New(nodeID, dataDir string) (*CertManager, error) {
 	}, nil
 }
 
-func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.Volume, attr v1alpha1.Attributes) error {
+func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData, attr v1alpha1.Attributes) error {
 	uris, err := util.ParseURIs(attr[v1alpha1.URISANsKey])
 	if err != nil {
 		return err
@@ -103,21 +104,17 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.Volume, attr v1alpha1.Attr
 		return err
 	}
 
-	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
-		c.nodeID, vol.PodName, vol.ID)
-
 	namespace := attr[v1alpha1.NamespaceKey]
-
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return err
 		}
 	} else {
-		glog.Infof("cert-manager: deleting existing CertificateRequest %s", name)
+		glog.Infof("cert-manager: deleting existing CertificateRequest %s", vol.Name)
 
 		// exists so delete old
-		err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Delete(name, &metav1.DeleteOptions{})
+		err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
@@ -125,7 +122,7 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.Volume, attr v1alpha1.Attr
 
 	cr := &cmapi.CertificateRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      vol.Name,
 			Namespace: namespace,
 		},
 		Spec: cmapi.CertificateRequestSpec{
@@ -142,13 +139,13 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.Volume, attr v1alpha1.Attr
 		},
 	}
 
-	glog.Infof("cert-manager: created CertificateRequest %s", name)
+	glog.Infof("cert-manager: created CertificateRequest %s", vol.Name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	if err != nil {
 		return err
 	}
 
-	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", name)
+	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", vol.Name)
 	cr, err = c.waitForCertificateRequestReady(cr.Name, namespace, time.Second*30)
 	if err != nil {
 		return err

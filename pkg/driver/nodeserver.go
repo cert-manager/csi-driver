@@ -17,6 +17,7 @@ import (
 	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/joshvanl/cert-manager-csi/pkg/apis/validation"
 	"github.com/joshvanl/cert-manager-csi/pkg/certmanager"
+	"github.com/joshvanl/cert-manager-csi/pkg/renew"
 	"github.com/joshvanl/cert-manager-csi/pkg/util"
 )
 
@@ -39,7 +40,11 @@ type NodeServer struct {
 	dataRoot string
 
 	cm      *certmanager.CertManager
-	volumes map[string]v1alpha1.Volume
+	renewer *renew.Renewer
+
+	// TODO (@joshval): do we really need this arround? We can probably do away
+	// with it
+	volumes map[string]v1alpha1.MetaData
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
@@ -48,12 +53,18 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 		return nil, err
 	}
 
+	renewer := renew.New(dataRoot, cm)
+
+	if err := renewer.Discover(); err != nil {
+		glog.Errorf("renewer: %s", err)
+	}
+
 	return &NodeServer{
 		nodeID:   nodeID,
 		dataRoot: dataRoot,
-
-		cm:      cm,
-		volumes: make(map[string]v1alpha1.Volume),
+		renewer:  renewer,
+		cm:       cm,
+		volumes:  make(map[string]v1alpha1.MetaData),
 	}, nil
 }
 
@@ -62,17 +73,20 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	targetPath := req.GetTargetPath()
 
 	if err := ns.validateVolumeAttributes(req); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	attr = defaults.SetDefaultAttributes(attr)
+	attr, err := defaults.SetDefaultAttributes(attr)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	if err := validation.ValidateAttributes(attr); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	volID := req.GetVolumeId()
-	vol, err := ns.createVolume(volID, attr)
+	vol, err := ns.createVolume(volID, targetPath, attr)
 	if err != nil && !os.IsExist(err) {
 		glog.Error("node: failed to create volume: ", err)
 		return nil, status.Error(codes.Internal, err.Error())
@@ -197,28 +211,34 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
-func (ns *NodeServer) createVolume(id string, attr v1alpha1.Attributes) (*v1alpha1.Volume, error) {
-	path := filepath.Join(ns.dataRoot, id)
+func (ns *NodeServer) createVolume(id, targetPath string, attr v1alpha1.Attributes) (*v1alpha1.MetaData, error) {
+	podName := attr[v1alpha1.CSIPodNameKey]
+	// The namespace should have been set on defaults.
+	podNamespace := attr[v1alpha1.NamespaceKey]
 
-	err := os.MkdirAll(path, 0777)
+	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
+		podName, podNamespace, id)
+	path := filepath.Join(ns.dataRoot, name)
+
+	err := os.MkdirAll(path, 0700)
 	if err != nil {
 		return nil, err
 	}
 
-	vol := v1alpha1.Volume{
-		ID:           id,
-		Name:         fmt.Sprintf("cert-manager-csi-%s", id),
-		Size:         maxStorageCapacity,
-		Path:         path,
-		PodName:      attr[v1alpha1.CSIPodNameKey],
-		PodNamespace: attr[v1alpha1.NamespaceKey],
+	vol := v1alpha1.MetaData{
+		ID:         id,
+		Name:       name,
+		Size:       maxStorageCapacity,
+		Path:       path,
+		TargetPath: targetPath,
+		Attributes: attr,
 	}
 
 	ns.volumes[id] = vol
 	return &vol, nil
 }
 
-func (ns *NodeServer) deleteVolume(vol *v1alpha1.Volume) error {
+func (ns *NodeServer) deleteVolume(vol *v1alpha1.MetaData) error {
 	glog.V(4).Infof("node: deleting volume: %s", vol.ID)
 
 	if err := os.RemoveAll(vol.Path); err != nil && !os.IsNotExist(err) {
