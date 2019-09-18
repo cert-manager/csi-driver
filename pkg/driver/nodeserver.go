@@ -95,8 +95,26 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.Infof("node: created volume: %s", vol.Path)
 
 	glog.Infof("node: creating key/cert pair with cert-manager: %s", vol.Path)
-	if err := ns.cm.CreateKeyCertPair(vol); err != nil {
+
+	keyBundle, err := util.NewRSAKey()
+	if err != nil {
 		return nil, err
+	}
+
+	err = util.WriteFile(util.KeyPath(vol), keyBundle.PEM, 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := ns.cm.CreateNewCertificate(vol, keyBundle)
+	if err != nil {
+		return nil, err
+	}
+
+	if s, ok := attr[v1alpha1.DisableAutoRenewKey]; !ok || s != "true" {
+		if err := ns.renewer.WatchFile(vol, cert.NotAfter); err != nil {
+			return nil, err
+		}
 	}
 
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)

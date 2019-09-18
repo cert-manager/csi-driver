@@ -9,15 +9,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 type KeyBundle struct {
 	PrivateKey         crypto.Signer
 	SignatureAlgorithm x509.SignatureAlgorithm
 	PublicKeyAlgorithm x509.PublicKeyAlgorithm
+	PEM                []byte
 }
 
-func NewRSAKey(keyPath string) (*KeyBundle, error) {
+func NewRSAKey() (*KeyBundle, error) {
 	sk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
@@ -30,15 +33,11 @@ func NewRSAKey(keyPath string) (*KeyBundle, error) {
 		},
 	)
 
-	err = WriteFile(keyPath, keyPEM, 0600)
-	if err != nil {
-		return nil, err
-	}
-
 	return &KeyBundle{
 		PrivateKey:         sk,
 		SignatureAlgorithm: x509.SHA256WithRSA,
 		PublicKeyAlgorithm: x509.RSA,
+		PEM:                keyPEM,
 	}, nil
 }
 
@@ -48,4 +47,8 @@ func WriteFile(path string, b []byte, perm os.FileMode) error {
 	}
 
 	return ioutil.WriteFile(path, b, perm)
+}
+
+func KeyPath(vol *v1alpha1.MetaData) string {
+	return filepath.Join(vol.Path, vol.Attributes[v1alpha1.KeyFileKey])
 }

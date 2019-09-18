@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang/glog"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
+	"github.com/jetstack/cert-manager/pkg/util/pki"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -45,12 +47,12 @@ func New(nodeID, dataDir string) (*CertManager, error) {
 	}, nil
 }
 
-func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
+func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
 	attr := vol.Attributes
 
 	uris, err := util.ParseURIs(attr[v1alpha1.URISANsKey])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ips := util.ParseIPAddresses(attr[v1alpha1.IPSANsKey])
@@ -66,7 +68,7 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
 	if durStr, ok := attr[v1alpha1.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -79,15 +81,6 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
 			isCA = false
 		}
 	}
-
-	keyPath := filepath.Join(vol.Path, attr[v1alpha1.KeyFileKey])
-
-	keyBundle, err := util.NewRSAKey(keyPath)
-	if err != nil {
-		return err
-	}
-
-	glog.Infof("cert-manager: new private key written to file: %s", keyPath)
 
 	csr := &x509.CertificateRequest{
 		Subject: pkix.Name{
@@ -103,14 +96,14 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
 
 	csrPEM, err := util.EncodeCSR(csr, keyBundle.PrivateKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	namespace := attr[v1alpha1.NamespaceKey]
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
-			return err
+			return nil, err
 		}
 	} else {
 		glog.Infof("cert-manager: deleting existing CertificateRequest %s", vol.Name)
@@ -118,7 +111,7 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
 		// exists so delete old
 		err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -144,24 +137,90 @@ func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
 	glog.Infof("cert-manager: created CertificateRequest %s", vol.Name)
 	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", vol.Name)
 	cr, err = c.waitForCertificateRequestReady(cr.Name, namespace, time.Second*30)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	certPath := filepath.Join(vol.Path, attr[v1alpha1.CertFileKey])
 
 	if err := util.WriteFile(certPath, cr.Status.Certificate, 0600); err != nil {
-		return err
+		return nil, err
+	}
+
+	cert, err := pki.DecodeX509CertificateBytes(cr.Status.Certificate)
+	if err != nil {
+		return nil, err
 	}
 
 	glog.Infof("cert-manager: certificate written to file %s", certPath)
 
-	return nil
+	return cert, nil
+}
+
+func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificate, error) {
+	var err error
+	var keyBundle *util.KeyBundle
+
+	keyPath := util.KeyPath(vol)
+
+	if b, ok := vol.Attributes[v1alpha1.ReusePrivateKey]; !ok || b != "true" {
+		keyBundle, err = util.NewRSAKey()
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+
+		keyBytes, err := ioutil.ReadFile(keyPath)
+		if err != nil {
+			return nil, err
+		}
+
+		sk, err := pki.DecodePrivateKeyBytes(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO: (@joshval): rebuild key bundle completely
+		keyBundle = &util.KeyBundle{
+			PEM:        keyBytes,
+			PrivateKey: sk,
+		}
+	}
+
+	cert, err := c.CreateNewCertificate(vol, keyBundle)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := util.WriteFile(keyPath, keyBundle.PEM, 0600); err != nil {
+		return nil, err
+	}
+
+	return cert, nil
+}
+
+func (c *CertManager) NewKey(vol *v1alpha1.MetaData) (*util.KeyBundle, error) {
+	keyPath := util.KeyPath(vol)
+
+	keyBundle, err := util.NewRSAKey()
+	if err != nil {
+		return nil, err
+	}
+
+	err = util.WriteFile(keyPath, keyBundle.PEM, 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	glog.Infof("cert-manager: new private key written to file: %s", keyPath)
+
+	return keyBundle, nil
 }
 
 func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {

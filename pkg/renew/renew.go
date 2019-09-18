@@ -100,7 +100,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		glog.Info("cert-manager: watching volume for certificate renewal %s", base)
+		glog.Info("renewer: watching new volume for certificate renewal %s", base)
 
 		if err := r.WatchFile(metaData, cert.NotAfter); err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %s",
@@ -133,6 +133,8 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	ch := make(chan struct{})
 	r.watchingVols[metaData.Name] = ch
 
+	glog.Info("renewer: starting to watch certificate for renewal: %s", metaData.Name)
+
 	renewalTime := notAfter.Add(-renewBefore)
 	timer := time.NewTimer(time.Until(renewalTime))
 
@@ -142,7 +144,17 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 			timer.Stop()
 			return
 		case <-timer.C:
-			// cm.RenewCert(metaData) (make sure to check for reuse key
+			cert, err := r.cm.RenewCertificate(metaData)
+			if err != nil {
+				glog.Errorf("renewer: failed to renew certificate %s: %s",
+					metaData.Name, err)
+				return
+			}
+
+			if err := r.WatchFile(metaData, cert.NotBefore); err != nil {
+				glog.Errorf("renewer: failed to watch certificate %s: %s",
+					metaData.Name, err)
+			}
 		}
 	}()
 
