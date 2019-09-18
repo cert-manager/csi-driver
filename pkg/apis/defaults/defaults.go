@@ -9,7 +9,7 @@ import (
 	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func SetDefaultAttributes(attr v1alpha1.Attributes) (v1alpha1.Attributes, error) {
+func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {
 	setDefaultIfEmpty(attr, v1alpha1.IssuerKindKey, cmapi.IssuerKind)
 	setDefaultIfEmpty(attr, v1alpha1.IssuerGroupKey, certmanager.GroupName)
 
@@ -20,7 +20,7 @@ func SetDefaultAttributes(attr v1alpha1.Attributes) (v1alpha1.Attributes, error)
 	setDefaultIfEmpty(attr, v1alpha1.KeyFileKey, "key.pem")
 
 	// TODO (@joshvanl): add a smarter defaulting mechanism
-	dur, err := time.ParseDuration(attr[v1alpha1.DurationKey])
+	dur, err := time.ParseDuration(attr[string(v1alpha1.DurationKey)])
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func SetDefaultAttributes(attr v1alpha1.Attributes) (v1alpha1.Attributes, error)
 	return attr, nil
 }
 
-func setDefaultIfEmpty(attr v1alpha1.Attributes, k v1alpha1.Attribute, s string) {
-	if len(attr[k]) == 0 {
-		attr[k] = s
+func setDefaultIfEmpty(attr map[string]string, k, s string) {
+	if len(attr[string(k)]) == 0 {
+		attr[string(k)] = s
 	}
 }

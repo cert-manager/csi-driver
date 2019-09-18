@@ -69,7 +69,7 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 }
 
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	attr := util.MapStringToAttributes(req.GetVolumeContext())
+	attr := req.GetVolumeContext()
 	targetPath := req.GetTargetPath()
 
 	if err := ns.validateVolumeAttributes(req); err != nil {
@@ -95,7 +95,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.Infof("node: created volume: %s", vol.Path)
 
 	glog.Infof("node: creating key/cert pair with cert-manager: %s", vol.Path)
-	if err := ns.cm.CreateKeyCertPair(vol, attr); err != nil {
+	if err := ns.cm.CreateKeyCertPair(vol); err != nil {
 		return nil, err
 	}
 
@@ -211,7 +211,8 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
-func (ns *NodeServer) createVolume(id, targetPath string, attr v1alpha1.Attributes) (*v1alpha1.MetaData, error) {
+func (ns *NodeServer) createVolume(id, targetPath string,
+	attr map[string]string) (*v1alpha1.MetaData, error) {
 	podName := attr[v1alpha1.CSIPodNameKey]
 	// The namespace should have been set on defaults.
 	podNamespace := attr[v1alpha1.NamespaceKey]

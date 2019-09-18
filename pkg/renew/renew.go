@@ -19,7 +19,6 @@ import (
 )
 
 // TODO (@joshvanl): check for v1alpha1.DisableAutoRenewKey
-
 const (
 	metaFileName = "metadata.json"
 )
@@ -150,7 +149,8 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	return nil
 }
 
-func (r *Renewer) readFile(rootPath string, key v1alpha1.Attribute, attr v1alpha1.Attributes) ([]byte, error) {
+func (r *Renewer) readFile(rootPath, key string,
+	attr map[string]string) ([]byte, error) {
 	path, ok := attr[key]
 	if !ok {
 		return nil, fmt.Errorf("%s: %s not set in metadata file",

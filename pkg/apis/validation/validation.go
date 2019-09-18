@@ -9,7 +9,7 @@ import (
 	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func ValidateAttributes(attr v1alpha1.Attributes) error {
+func ValidateAttributes(attr map[string]string) error {
 	var errs []string
 
 	if len(attr[v1alpha1.IssuerNameKey]) == 0 {
@@ -41,7 +41,7 @@ func ValidateAttributes(attr v1alpha1.Attributes) error {
 	return nil
 }
 
-func filepathBreakout(s string, k v1alpha1.Attribute, errs []string) []string {
+func filepathBreakout(s, k string, errs []string) []string {
 	if strings.Contains(s, "..") {
 		errs = append(errs, fmt.Sprintf("%s filepaths may not contain '..'",
 			k))
@@ -50,7 +50,7 @@ func filepathBreakout(s string, k v1alpha1.Attribute, errs []string) []string {
 	return errs
 }
 
-func durationParse(s string, k v1alpha1.Attribute, errs []string) []string {
+func durationParse(s, k string, errs []string) []string {
 	if len(s) == 0 {
 		return errs
 	}
@@ -63,7 +63,7 @@ func durationParse(s string, k v1alpha1.Attribute, errs []string) []string {
 	return errs
 }
 
-func boolValue(s string, k v1alpha1.Attribute, errs []string) []string {
+func boolValue(s, k string, errs []string) []string {
 	if len(s) == 0 {
 		return errs
 	}

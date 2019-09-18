@@ -45,7 +45,9 @@ func New(nodeID, dataDir string) (*CertManager, error) {
 	}, nil
 }
 
-func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData, attr v1alpha1.Attributes) error {
+func (c *CertManager) CreateKeyCertPair(vol *v1alpha1.MetaData) error {
+	attr := vol.Attributes
+
 	uris, err := util.ParseURIs(attr[v1alpha1.URISANsKey])
 	if err != nil {
 		return err
