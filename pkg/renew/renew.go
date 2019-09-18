@@ -161,6 +161,17 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	return nil
 }
 
+func (r *Renewer) KillWatcher(vol *v1alpha1.MetaData) {
+	r.muVol.RLock()
+	defer r.muVol.RUnlock()
+
+	ch, ok := r.watchingVols[vol.Name]
+	if ok {
+		glog.Infof("renewer: killing watcher for %s", vol.Name)
+		close(ch)
+	}
+}
+
 func (r *Renewer) readFile(rootPath, key string,
 	attr map[string]string) ([]byte, error) {
 	path, ok := attr[key]

@@ -44,7 +44,7 @@ type NodeServer struct {
 
 	// TODO (@joshval): do we really need this arround? We can probably do away
 	// with it
-	volumes map[string]v1alpha1.MetaData
+	volumes map[string]*v1alpha1.MetaData
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
@@ -64,7 +64,7 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 		dataRoot: dataRoot,
 		renewer:  renewer,
 		cm:       cm,
-		volumes:  make(map[string]v1alpha1.MetaData),
+		volumes:  make(map[string]*v1alpha1.MetaData),
 	}, nil
 }
 
@@ -164,6 +164,43 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
+func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+	targetPath := req.GetTargetPath()
+	volumeID := req.GetVolumeId()
+
+	// Check arguments
+	if len(targetPath) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
+	}
+
+	if len(volumeID) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
+	}
+
+	vol, ok := ns.volumes[volumeID]
+	if !ok {
+		return nil, status.Error(codes.NotFound,
+			fmt.Sprintf("volume id %s does not exit in the volumes list", volumeID))
+	}
+
+	// kill the renewal Go routine watching this volume
+	ns.renewer.KillWatcher(vol)
+
+	// Unmounting the image
+	err := util.Unmount(targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	glog.V(4).Infof("node: volume %s/%s has been unmounted.", targetPath, volumeID)
+
+	glog.V(4).Infof("node: deleting volume %s", volumeID)
+	if err := ns.deleteVolume(vol); err != nil && !os.IsNotExist(err) {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to delete volume: %s", err))
+	}
+
+	return &csi.NodeUnpublishVolumeResponse{}, nil
+}
+
 func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest) error {
 	var errs []string
 
@@ -204,40 +241,6 @@ func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest
 	return nil
 }
 
-func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
-	targetPath := req.GetTargetPath()
-	volumeID := req.GetVolumeId()
-
-	// Check arguments
-	if len(targetPath) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
-	}
-
-	if len(volumeID) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
-	}
-
-	vol, ok := ns.volumes[volumeID]
-	if !ok {
-		return nil, status.Error(codes.NotFound,
-			fmt.Sprintf("volume id %s does not exit in the volumes list", volumeID))
-	}
-
-	// Unmounting the image
-	err := util.Unmount(targetPath)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	glog.V(4).Infof("node: volume %s/%s has been unmounted.", targetPath, volumeID)
-
-	glog.V(4).Infof("node: deleting volume %s", volumeID)
-	if err := ns.deleteVolume(&vol); err != nil && !os.IsNotExist(err) {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to delete volume: %s", err))
-	}
-
-	return &csi.NodeUnpublishVolumeResponse{}, nil
-}
-
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
 func (ns *NodeServer) createVolume(id, targetPath string,
@@ -255,7 +258,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 		return nil, err
 	}
 
-	vol := v1alpha1.MetaData{
+	vol := &v1alpha1.MetaData{
 		ID:         id,
 		Name:       name,
 		Size:       maxStorageCapacity,
@@ -265,7 +268,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	}
 
 	ns.volumes[id] = vol
-	return &vol, nil
+	return vol, nil
 }
 
 func (ns *NodeServer) deleteVolume(vol *v1alpha1.MetaData) error {
