@@ -129,11 +129,11 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		if err = os.MkdirAll(mountPath, 0750); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
 		mntPoint = false
+	}
+
+	if err = os.MkdirAll(mountPath, 0750); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if err != nil {
@@ -250,7 +250,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	podNamespace := attr[v1alpha1.NamespaceKey]
 
 	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
-		podName, podNamespace, id)
+		podNamespace, podName, id)
 	path := filepath.Join(ns.dataRoot, name)
 
 	err := os.MkdirAll(path, 0700)

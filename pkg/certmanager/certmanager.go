@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -100,7 +101,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 	}
 
 	namespace := attr[v1alpha1.NamespaceKey]
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
+	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return nil, err
@@ -109,7 +110,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 		glog.Infof("cert-manager: deleting existing CertificateRequest %s", vol.Name)
 
 		// exists so delete old
-		err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
+		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +127,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 			Duration: &metav1.Duration{
 				Duration: duration,
 			},
-			IssuerRef: cmapi.ObjectReference{
+			IssuerRef: cmmeta.ObjectReference{
 				Name:  attr[v1alpha1.IssuerNameKey],
 				Kind:  attr[v1alpha1.IssuerKindKey],
 				Group: attr[v1alpha1.IssuerGroupKey],
@@ -135,7 +136,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 	}
 
 	glog.Infof("cert-manager: created CertificateRequest %s", vol.Name)
-	_, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(namespace).Create(cr)
+	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +166,8 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificate, error) {
 	var err error
 	var keyBundle *util.KeyBundle
+
+	glog.Infof("cert-manager: renewing certicate %s", vol.Name)
 
 	keyPath := util.KeyPath(vol)
 
@@ -232,7 +235,7 @@ func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout ti
 			glog.V(4).Infof("cert-manager: polling CertificateRequest %s/%s for ready status", name, ns)
 
 			var err error
-			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
+			cr, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}

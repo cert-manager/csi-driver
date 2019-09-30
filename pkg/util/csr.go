@@ -7,7 +7,8 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 )
 
 // EncodeCSR calls x509.CreateCertificateRequest to sign the given CSR.
@@ -27,7 +28,7 @@ func EncodeCSR(csr *x509.CertificateRequest, key crypto.Signer) ([]byte, error) 
 
 func CertificateRequestReady(cr *cmapi.CertificateRequest) bool {
 	readyType := cmapi.CertificateRequestConditionReady
-	readyStatus := cmapi.ConditionTrue
+	readyStatus := cmmeta.ConditionTrue
 
 	existingConditions := cr.Status.Conditions
 	for _, cond := range existingConditions {

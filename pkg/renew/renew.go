@@ -120,8 +120,9 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	defer r.muVol.Unlock()
 
 	if _, ok := r.watchingVols[metaData.Name]; ok {
-		return fmt.Errorf("volume already being watched, aborting second watcher: %s",
+		glog.Errorf("volume already being watched, aborting second watcher: %s",
 			metaData.Name)
+		return nil
 	}
 
 	renewBefore, err := time.ParseDuration(

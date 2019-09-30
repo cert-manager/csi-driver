@@ -10,46 +10,46 @@ import (
 
 func TestValidateCertManagerAttributes(t *testing.T) {
 	type vaT struct {
-		attr     v1alpha1.Attributes
+		attr     map[string]string
 		expError error
 	}
 
 	tests := map[string]vaT{
 		"attributes with no issuer name or common name/dns names should error": {
-			attr: v1alpha1.Attributes{},
+			attr: map[string]string{},
 			expError: errors.New(
 				"csi.certmanager.k8s.io/issuer-name field required, both csi.certmanager.k8s.io/common-name and csi.certmanager.k8s.io/dns-names may not be empty"),
 		},
 		"attributes with no issuer name but common name": {
-			attr: v1alpha1.Attributes{
+			attr: map[string]string{
 				v1alpha1.IssuerNameKey: "test-issuer",
 			},
 			expError: errors.New(
 				"both csi.certmanager.k8s.io/common-name and csi.certmanager.k8s.io/dns-names may not be empty"),
 		},
 		"attributes with no issuer name but DNS names should error": {
-			attr: v1alpha1.Attributes{
+			attr: map[string]string{
 				v1alpha1.DNSNamesKey: "foo.bar.com,car.bar.com",
 			},
 			expError: errors.New(
 				"csi.certmanager.k8s.io/issuer-name field required"),
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
-			attr: v1alpha1.Attributes{
+			attr: map[string]string{
 				v1alpha1.CommonNameKey: "foo.bar",
 			},
 			expError: errors.New(
 				"csi.certmanager.k8s.io/issuer-name field required"),
 		},
 		"valid attributes with common name should return no error": {
-			attr: v1alpha1.Attributes{
+			attr: map[string]string{
 				v1alpha1.IssuerNameKey: "test-issuer",
 				v1alpha1.CommonNameKey: "foo.bar",
 			},
 			expError: nil,
 		},
 		"valid attributes with DNS names should return no error": {
-			attr: v1alpha1.Attributes{
+			attr: map[string]string{
 				v1alpha1.IssuerNameKey: "test-issuer",
 				v1alpha1.DNSNamesKey:   "foo.bar.com,car.bar.com",
 			},

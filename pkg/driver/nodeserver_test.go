@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -169,22 +170,25 @@ func TestCreateDeleteVolume(t *testing.T) {
 
 	ns := &NodeServer{
 		dataRoot: dir,
-		volumes:  make(map[string]v1alpha1.Volume),
+		volumes:  make(map[string]*v1alpha1.MetaData),
 	}
 
 	id := "test-id"
-	attr := v1alpha1.Attributes{
-		v1alpha1.CSIPodNameKey:      "test-pod",
-		v1alpha1.CSIPodNamespaceKey: "test-namespace",
+	targetPath := "test-target-path"
+	attr := map[string]string{
+		v1alpha1.CSIPodNameKey: "test-pod",
+		v1alpha1.NamespaceKey:  "test-namespace",
 	}
 
-	vol, err := ns.createVolume(id, attr)
+	vol, err := ns.createVolume(id, targetPath, attr)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	path := dir + "/test-id"
+	path := filepath.Join(dir, "cert-manager-csi-test-namespace-test-pod-test-id")
+
+	t.Logf("expecting path: %s", path)
 
 	f, err := os.Stat(path)
 	if err != nil {

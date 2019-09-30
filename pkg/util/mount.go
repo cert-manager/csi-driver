@@ -46,7 +46,7 @@ func Mount(source, target string, options []string) error {
 	if err != nil {
 		return err
 	}
-	return doMount(source, target, options)
+	return nil
 }
 
 // Unmount unmounts the target.
