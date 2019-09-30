@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
 metadata:
-  name: csi.certmanager.k8s.io
+  name: csi.cert-manager.io
 spec:
   podInfoOnMount: true
 ---
@@ -16,7 +16,7 @@ kind: ClusterRole
 metadata:
   name: cert-manager-csi
 rules:
-- apiGroups: ["certmanager.k8s.io"]
+- apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["get", "create", "delete"]
 ---

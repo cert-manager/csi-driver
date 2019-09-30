@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: sandbox
 ---
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha1
 kind: Issuer
 metadata:
   name: ca-issuer
@@ -61,8 +61,8 @@ spec:
       volumes:
         - name: tls
           csi:
-            driver: csi.certmanager.k8s.io
+            driver: csi.cert-manager.io
             volumeAttributes:
-                  csi.certmanager.k8s.io/issuer-name: ca-issuer
-                  csi.certmanager.k8s.io/dns-names: my-service.sandbox.svc.cluster.local
-                  csi.certmanager.k8s.io/uri-sans: spiffe://my-service.sandbox.cluster.local
+                  csi.cert-manager.io/issuer-name: ca-issuer
+                  csi.cert-manager.io/dns-names: my-service.sandbox.svc.cluster.local
+                  csi.cert-manager.io/uri-sans: spiffe://my-service.sandbox.cluster.local

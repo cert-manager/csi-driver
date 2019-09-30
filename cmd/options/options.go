@@ -28,7 +28,7 @@ func AddFlags(cmd *cobra.Command) *Options {
 	cmd.MarkPersistentFlagRequired("endpoint")
 
 	cmd.PersistentFlags().StringVar(&opts.DriverName, "driver-name",
-		"csi.certmanager.k8s.io", "name of the driver")
+		"csi.cert-manager.io", "name of the driver")
 
 	cmd.PersistentFlags().StringVar(&opts.DataRoot, "data-root",
 		"/csi-data-dir", "directory to store ephemeral data")

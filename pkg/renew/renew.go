@@ -18,11 +18,6 @@ import (
 	"github.com/joshvanl/cert-manager-csi/pkg/certmanager"
 )
 
-// TODO (@joshvanl): check for v1alpha1.DisableAutoRenewKey
-const (
-	metaFileName = "metadata.json"
-)
-
 type Renewer struct {
 	dataDir string
 
@@ -55,7 +50,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		metaPath := filepath.Join(f.Name(), metaFileName)
+		metaPath := filepath.Join(f.Name(), v1alpha1.MetaDataFileName)
 
 		b, err := ioutil.ReadFile(metaPath)
 		if err != nil {

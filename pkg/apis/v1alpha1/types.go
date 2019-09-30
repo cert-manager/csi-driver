@@ -1,5 +1,10 @@
 package v1alpha1
 
+// TODO (@joshvanl): check for v1alpha1.DisableAutoRenewKey
+const (
+	MetaDataFileName = "metadata.json"
+)
+
 const (
 	CSIPodNameKey      = "csi.storage.k8s.io/pod.name"
 	CSIPodNamespaceKey = "csi.storage.k8s.io/pod.namespace"
@@ -7,24 +12,24 @@ const (
 )
 
 const (
-	IssuerNameKey  string = "csi.certmanager.k8s.io/issuer-name"
-	IssuerKindKey  string = "csi.certmanager.k8s.io/issuer-kind"
-	IssuerGroupKey string = "csi.certmanager.k8s.io/issuer-group"
+	IssuerNameKey  string = "csi.cert-manager.io/issuer-name"
+	IssuerKindKey  string = "csi.cert-manager.io/issuer-kind"
+	IssuerGroupKey string = "csi.cert-manager.io/issuer-group"
 
-	CommonNameKey string = "csi.certmanager.k8s.io/common-name"
-	DNSNamesKey   string = "csi.certmanager.k8s.io/dns-names"
-	IPSANsKey     string = "csi.certmanager.k8s.io/ip-sans"
-	URISANsKey    string = "csi.certmanager.k8s.io/uri-sans"
-	DurationKey   string = "csi.certmanager.k8s.io/duration"
-	IsCAKey       string = "csi.certmanager.k8s.io/is-ca"
+	CommonNameKey string = "csi.cert-manager.io/common-name"
+	DNSNamesKey   string = "csi.cert-manager.io/dns-names"
+	IPSANsKey     string = "csi.cert-manager.io/ip-sans"
+	URISANsKey    string = "csi.cert-manager.io/uri-sans"
+	DurationKey   string = "csi.cert-manager.io/duration"
+	IsCAKey       string = "csi.cert-manager.io/is-ca"
 
-	CertFileKey  string = "csi.certmanager.k8s.io/certificate-file"
-	KeyFileKey   string = "csi.certmanager.k8s.io/privatekey-file"
-	NamespaceKey string = "csi.certmanager.k8s.io/namespace"
+	CertFileKey  string = "csi.cert-manager.io/certificate-file"
+	KeyFileKey   string = "csi.cert-manager.io/privatekey-file"
+	NamespaceKey string = "csi.cert-manager.io/namespace"
 
-	RenewBeforeKey      string = "csi.certmanager.k8s.io/renew-before"
-	DisableAutoRenewKey string = "csi.certmanager.k8s.io/disable-auto-renew"
-	ReusePrivateKey     string = "csi.certmanager.k8s.io/reuse-private-key"
+	RenewBeforeKey      string = "csi.cert-manager.io/renew-before"
+	DisableAutoRenewKey string = "csi.cert-manager.io/disable-auto-renew"
+	ReusePrivateKey     string = "csi.cert-manager.io/reuse-private-key"
 )
 
 type MetaData struct {

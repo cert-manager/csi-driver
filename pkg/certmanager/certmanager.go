@@ -3,6 +3,7 @@ package certmanager
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -110,6 +111,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 		glog.Infof("cert-manager: deleting existing CertificateRequest %s", vol.Name)
 
 		// exists so delete old
+		// TODO (@joshvanl): change this to matches spec
 		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			return nil, err
@@ -146,6 +148,19 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 	if err != nil {
 		return nil, err
 	}
+
+	// Write metadata to file
+	metaDataBytes, err := json.Marshal(vol)
+	if err != nil {
+		return nil, err
+	}
+
+	metaPath := filepath.Join(vol.Path, v1alpha1.MetaDataFileName)
+	if err := ioutil.WriteFile(metaPath, metaDataBytes, 0600); err != nil {
+		return nil, err
+	}
+
+	glog.V(4).Infof("cert-manager: metadata written to file %s", metaPath)
 
 	certPath := filepath.Join(vol.Path, attr[v1alpha1.CertFileKey])
 

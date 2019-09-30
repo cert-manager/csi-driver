@@ -31,12 +31,12 @@ cluster.
 
 You can verify the installation has completed correctly by checking the presence
 of the CSIDriver resource as well as a CSINode resource present for each node,
-referencing `csi.certmanager.k8s.io`.
+referencing `csi.cert-manager.io`.
 
 ```
 $ kubectl get csidrivers
 NAME                     CREATED AT
-csi.certmanager.k8s.io   2019-09-06T16:55:19Z
+csi.cert-manager.io   2019-09-06T16:55:19Z
 
 $ kubectl get csinodes -o yaml
 apiVersion: v1
@@ -52,7 +52,7 @@ items:
 ...
   spec:
     drivers:
-    - name: csi.certmanager.k8s.io
+    - name: csi.cert-manager.io
       nodeID: kind-control-plane
       topologyKeys: null
 ...
@@ -87,10 +87,10 @@ spec:
   volumes:
     - name: tls
       csi:
-        driver: csi.certmanager.k8s.io
+        driver: csi.cert-manager.io
         volumeAttributes:
-              csi.certmanager.k8s.io/issuer-name: ca-issuer
-              csi.certmanager.k8s.io/dns-names: my-service.sandbox.svc.cluster.local
+              csi.cert-manager.io/issuer-name: ca-issuer
+              csi.cert-manager.io/dns-names: my-service.sandbox.svc.cluster.local
 ```
 
 Once created, the CSI driver will generate a private key locally, request a
@@ -110,15 +110,15 @@ the following values;
 
 | Attribute                               | Description                                                                                          | Default            | Example                        |
 |-----------------------------------------|------------------------------------------------------------------------------------------------------|--------------------|--------------------------------|
-| csi.certmanager.k8s.io/issuer-name      | The Issuer name to sign the certificate request.                                                     |                    | ca-issuer                      |
-| csi.certmanager.k8s.io/issuer-kind      | The Issuer kind to sign the certificate request.                                                     | Issuer             | ClusterIssuer                  |
-| csi.certmanager.k8s.io/issuer-group     | The group name the Issuer belongs to.                                                                | certmanager.k8s.io | out.of.tree.foo                |
-| csi.certmanager.k8s.io/common-name      | Certificate common name. A common name or at least one DNS name must be set.                         |                    | my-cert.foo                    |
-| csi.certmanager.k8s.io/dns-names        | DNS names the certificate will be requested for. At least a common name or one DNS name must be set. |                    | a.b.foo.com,c.d.foo.com        |
-| csi.certmanager.k8s.io/ip-sans          | IP addresses the certificate will be requested for.                                                  |                    | 192.0.0.1,192.0.0.2            |
-| csi.certmanager.k8s.io/uri-sans         | URI names the certificate will be requested for.                                                     |                    | spiffe://foo.bar.cluster.local |
-| csi.certmanager.k8s.io/duration         | Requested duration the signed certificate will be valid for.                                         | 720h               | 1880h                          |
-| csi.certmanager.k8s.io/is-ca            | Mark the certificate as a certificate authority.                                                     | false              | true                           |
-| csi.certmanager.k8s.io/certificate-file | File name to store the certificate file at.                                                          | crt.pem            | bar/foo.crt                    |
-| csi.certmanager.k8s.io/privatekey-file  | File name to store the key file at.                                                                  | key.pem            | bar/foo.key                    |
-| csi.certmanager.k8s.io/namespace        | The namespace to use when creating the CertificateRequest.                                           | $PodNamespace      | my-namespace                   |
+| csi.cert-manager.io/issuer-name      | The Issuer name to sign the certificate request.                                                     |                    | ca-issuer                      |
+| csi.cert-manager.io/issuer-kind      | The Issuer kind to sign the certificate request.                                                     | Issuer             | ClusterIssuer                  |
+| csi.cert-manager.io/issuer-group     | The group name the Issuer belongs to.                                                                | cert-manager.io | out.of.tree.foo                |
+| csi.cert-manager.io/common-name      | Certificate common name. A common name or at least one DNS name must be set.                         |                    | my-cert.foo                    |
+| csi.cert-manager.io/dns-names        | DNS names the certificate will be requested for. At least a common name or one DNS name must be set. |                    | a.b.foo.com,c.d.foo.com        |
+| csi.cert-manager.io/ip-sans          | IP addresses the certificate will be requested for.                                                  |                    | 192.0.0.1,192.0.0.2            |
+| csi.cert-manager.io/uri-sans         | URI names the certificate will be requested for.                                                     |                    | spiffe://foo.bar.cluster.local |
+| csi.cert-manager.io/duration         | Requested duration the signed certificate will be valid for.                                         | 720h               | 1880h                          |
+| csi.cert-manager.io/is-ca            | Mark the certificate as a certificate authority.                                                     | false              | true                           |
+| csi.cert-manager.io/certificate-file | File name to store the certificate file at.                                                          | crt.pem            | bar/foo.crt                    |
+| csi.cert-manager.io/privatekey-file  | File name to store the key file at.                                                                  | key.pem            | bar/foo.key                    |
+| csi.cert-manager.io/namespace        | The namespace to use when creating the CertificateRequest.                                           | $PodNamespace      | my-namespace                   |
