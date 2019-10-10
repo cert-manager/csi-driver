@@ -15,18 +15,6 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 	}
 
 	tests := map[string]vaT{
-		"attributes with no issuer name or common name/dns names should error": {
-			attr: map[string]string{},
-			expError: errors.New(
-				"csi.cert-manager.io/issuer-name field required, both csi.cert-manager.io/common-name and csi.cert-manager.io/dns-names may not be empty"),
-		},
-		"attributes with no issuer name but common name": {
-			attr: map[string]string{
-				v1alpha1.IssuerNameKey: "test-issuer",
-			},
-			expError: errors.New(
-				"both csi.cert-manager.io/common-name and csi.cert-manager.io/dns-names may not be empty"),
-		},
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
 				v1alpha1.DNSNamesKey: "foo.bar.com,car.bar.com",

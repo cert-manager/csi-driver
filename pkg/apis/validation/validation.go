@@ -16,11 +16,6 @@ func ValidateAttributes(attr map[string]string) error {
 		errs = append(errs, fmt.Sprintf("%s field required", v1alpha1.IssuerNameKey))
 	}
 
-	if len(attr[v1alpha1.CommonNameKey]) == 0 && len(attr[v1alpha1.DNSNamesKey]) == 0 {
-		errs = append(errs, fmt.Sprintf("both %s and %s may not be empty",
-			v1alpha1.CommonNameKey, v1alpha1.DNSNamesKey))
-	}
-
 	errs = boolValue(attr[v1alpha1.IsCAKey], v1alpha1.IsCAKey, errs)
 
 	errs = durationParse(attr[v1alpha1.DurationKey], v1alpha1.DurationKey, errs)

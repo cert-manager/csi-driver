@@ -162,7 +162,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 
 	glog.V(4).Infof("cert-manager: metadata written to file %s", metaPath)
 
-	certPath := filepath.Join(vol.Path, attr[v1alpha1.CertFileKey])
+	certPath := util.CertPath(vol)
 
 	if err := util.WriteFile(certPath, cr.Status.Certificate, 0600); err != nil {
 		return nil, err
@@ -175,6 +175,13 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 
 	glog.Infof("cert-manager: certificate written to file %s", certPath)
 
+	keyPath := util.KeyPath(vol)
+	if err := util.WriteFile(keyPath, keyBundle.PEM, 0600); err != nil {
+		return nil, fmt.Errorf("faild to write key data to file: %s", err)
+	}
+
+	glog.Infof("cert-manager: private key written to file: %s", keyPath)
+
 	return cert, nil
 }
 
@@ -184,8 +191,6 @@ func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificat
 
 	glog.Infof("cert-manager: renewing certicate %s", vol.Name)
 
-	keyPath := util.KeyPath(vol)
-
 	if b, ok := vol.Attributes[v1alpha1.ReusePrivateKey]; !ok || b != "true" {
 		keyBundle, err = util.NewRSAKey()
 		if err != nil {
@@ -194,7 +199,8 @@ func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificat
 
 	} else {
 
-		keyBytes, err := ioutil.ReadFile(keyPath)
+		keyBytes, err := ioutil.ReadFile(util.KeyPath(vol))
+
 		if err != nil {
 			return nil, err
 		}
@@ -217,29 +223,7 @@ func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificat
 		return nil, err
 	}
 
-	if err := util.WriteFile(keyPath, keyBundle.PEM, 0600); err != nil {
-		return nil, err
-	}
-
 	return cert, nil
-}
-
-func (c *CertManager) NewKey(vol *v1alpha1.MetaData) (*util.KeyBundle, error) {
-	keyPath := util.KeyPath(vol)
-
-	keyBundle, err := util.NewRSAKey()
-	if err != nil {
-		return nil, err
-	}
-
-	err = util.WriteFile(keyPath, keyBundle.PEM, 0600)
-	if err != nil {
-		return nil, err
-	}
-
-	glog.Infof("cert-manager: new private key written to file: %s", keyPath)
-
-	return keyBundle, nil
 }
 
 func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {

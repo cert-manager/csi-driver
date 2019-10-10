@@ -8,3 +8,6 @@ build: ## build cert-manager-csi
 
 image: build ## build cert-manager-csi docker image
 	docker build -t gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1 .
+
+publish: image
+	docker push gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1

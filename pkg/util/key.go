@@ -50,5 +50,9 @@ func WriteFile(path string, b []byte, perm os.FileMode) error {
 }
 
 func KeyPath(vol *v1alpha1.MetaData) string {
-	return filepath.Join(vol.Path, vol.Attributes[v1alpha1.KeyFileKey])
+	return filepath.Join(vol.Path, "data", vol.Attributes[v1alpha1.KeyFileKey])
+}
+
+func CertPath(vol *v1alpha1.MetaData) string {
+	return filepath.Join(vol.Path, "data", vol.Attributes[v1alpha1.CertFileKey])
 }

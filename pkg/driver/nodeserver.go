@@ -101,24 +101,25 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, err
 	}
 
-	err = util.WriteFile(util.KeyPath(vol), keyBundle.PEM, 0600)
-	if err != nil {
-		return nil, err
-	}
+	//err = util.WriteFile(util.KeyPath(vol), keyBundle.PEM, 0600)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	cert, err := ns.cm.CreateNewCertificate(vol, keyBundle)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new certificate: %s", err)
 	}
 
 	if s, ok := attr[v1alpha1.DisableAutoRenewKey]; !ok || s != "true" {
 		if err := ns.renewer.WatchFile(vol, cert.NotAfter); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to watch file %s:%s:%s",
+				attr[v1alpha1.CSIPodNamespaceKey], attr[v1alpha1.CSIPodNameKey], vol.ID, err)
 		}
 	}
 
 	if err := util.WriteMetaDataFile(vol); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write metadata file: %s", err)
 	}
 
 	mountPath := util.MountPath(vol)
@@ -126,18 +127,16 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
 		if err = os.MkdirAll(targetPath, 0750); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, status.Error(codes.Internal,
+				fmt.Sprintf("failed to create target path directory %s: %s", targetPath, err))
 		}
 
 		mntPoint = false
 	}
 
 	if err = os.MkdirAll(mountPath, 0750); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("failed to create mount path directory %s: %s", mountPath, err))
 	}
 
 	// we are already mounted so assume certs have to be written
@@ -155,11 +154,15 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	if err := util.Mount(mountPath, targetPath, []string{"ro"}); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {
-			err = fmt.Errorf("%s,%s", err, rmErr)
+			err = fmt.Errorf("failed to remove all from %s: %s,%s", vol.Path, err, rmErr)
 		}
 
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("failed to mount path %s -> %s: %s", mountPath, targetPath, err))
 	}
+
+	glog.V(2).Infof("node: mount successful %s:%s:%s",
+		attr[v1alpha1.CSIPodNamespaceKey], attr[v1alpha1.CSIPodNameKey], vol.ID)
 
 	return &csi.NodePublishVolumeResponse{}, nil
 }
@@ -249,7 +252,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	// The namespace should have been set on defaults.
 	podNamespace := attr[v1alpha1.NamespaceKey]
 
-	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
+	name := fmt.Sprintf("cert-manager-csi-%s:%s:%s",
 		podNamespace, podName, id)
 	path := filepath.Join(ns.dataRoot, name)
 
