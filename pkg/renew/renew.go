@@ -36,41 +36,48 @@ func New(dataDir string, cm *certmanager.CertManager) *Renewer {
 }
 
 func (r *Renewer) Discover() error {
+	glog.V(4).Infof("renewer: starting discovery on %s", r.dataDir)
+
 	files, err := ioutil.ReadDir(r.dataDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read data dir: %s", err)
 	}
 
 	var errs []string
 	for _, f := range files {
+		fPath := filepath.Join(r.dataDir, f.Name())
+
+		glog.V(4).Infof("renewer: trying discovery on %s", fPath)
+
 		// not a directory or not a csi directory
-		base := filepath.Base(f.Name())
+		base := filepath.Base(fPath)
 		if !f.IsDir() ||
 			!strings.HasPrefix(base, "cert-manager-csi") {
+			glog.V(4).Infof("renewer: file not a directory or has 'cert-manger-csi' prefix: %s", f.Name())
 			continue
 		}
 
-		metaPath := filepath.Join(f.Name(), v1alpha1.MetaDataFileName)
-
+		metaPath := filepath.Join(fPath, v1alpha1.MetaDataFileName)
 		b, err := ioutil.ReadFile(metaPath)
 		if err != nil {
 			// meta data file doesn't exist, move on
 			if os.IsNotExist(err) {
+				glog.V(4).Infof("renewer: metadata file not found: %s", metaPath)
 				continue
 			}
 
-			return nil
+			return fmt.Errorf("failed to read metadata file: %s", err)
 		}
 
 		metaData := new(v1alpha1.MetaData)
 		if err := json.Unmarshal(b, metaData); err != nil {
 			errs = append(errs,
-				fmt.Sprintf("%s: %s", f.Name(), err.Error()))
+				fmt.Sprintf("failed to unmarshal metadata file for %s: %s", f.Name(), err.Error()))
 			continue
 		}
 
 		// TODO (@joshvanl): do we really need to check the key?
-		keyBytes, err := r.readFile(f.Name(), v1alpha1.KeyFileKey, metaData.Attributes)
+		keyBytes, err := r.readFile(fPath, metaData.Attributes[v1alpha1.KeyFileKey])
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -82,7 +89,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		certBytes, err := r.readFile(f.Name(), v1alpha1.CertFileKey, metaData.Attributes)
+		certBytes, err := r.readFile(fPath, metaData.Attributes[v1alpha1.CertFileKey])
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -129,7 +136,7 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	ch := make(chan struct{})
 	r.watchingVols[metaData.Name] = ch
 
-	glog.Info("renewer: starting to watch certificate for renewal: %s", metaData.Name)
+	glog.Infof("renewer: starting to watch certificate for renewal: %s", metaData.Name)
 
 	renewalTime := notAfter.Add(-renewBefore)
 	timer := time.NewTimer(time.Until(renewalTime))
@@ -168,18 +175,17 @@ func (r *Renewer) KillWatcher(vol *v1alpha1.MetaData) {
 	}
 }
 
-func (r *Renewer) readFile(rootPath, key string,
-	attr map[string]string) ([]byte, error) {
-	path, ok := attr[key]
-	if !ok {
-		return nil, fmt.Errorf("%s: %s not set in metadata file",
-			rootPath, key)
+func (r *Renewer) readFile(rootPath, path string) ([]byte, error) {
+	if len(path) == 0 {
+		return nil, fmt.Errorf("%s: read path is empty from attributes file",
+			rootPath, path)
 	}
 
+	path = filepath.Join(rootPath, "data", path)
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read key file: %s",
-			rootPath, err)
+		return nil, fmt.Errorf("%s: failed to read file: %s",
+			path, err)
 	}
 
 	return b, nil

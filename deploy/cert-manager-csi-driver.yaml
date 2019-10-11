@@ -81,8 +81,9 @@ spec:
           image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.0
           imagePullPolicy: "Always"
           args :
-            - "--node-id=$(NODE_ID)"
-            - "--endpoint=$(CSI_ENDPOINT)"
+            - --node-id=$(NODE_ID)
+            - --endpoint=$(CSI_ENDPOINT)
+            - --data-root=/csi-data-dir
           env:
             - name: NODE_ID
               valueFrom:
@@ -96,6 +97,8 @@ spec:
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
+            - name: csi-data-dir
+              mountPath: /csi-data-dir
       volumes:
         - name: plugin-dir
           hostPath:
@@ -109,3 +112,7 @@ spec:
             path: /var/lib/kubelet/plugins_registry
             type: Directory
           name: registration-dir
+        - hostPath:
+            path: /tmp # TODO: Fix this path
+            type: Directory
+          name: csi-data-dir

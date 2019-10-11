@@ -101,11 +101,6 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, err
 	}
 
-	//err = util.WriteFile(util.KeyPath(vol), keyBundle.PEM, 0600)
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	cert, err := ns.cm.CreateNewCertificate(vol, keyBundle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new certificate: %s", err)
@@ -183,7 +178,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	vol, ok := ns.volumes[volumeID]
 	if !ok {
 		return nil, status.Error(codes.NotFound,
-			fmt.Sprintf("volume id %s does not exit in the volumes list", volumeID))
+			fmt.Sprintf("volume id %s does not exist in the volumes list", volumeID))
 	}
 
 	// kill the renewal Go routine watching this volume
@@ -252,7 +247,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	// The namespace should have been set on defaults.
 	podNamespace := attr[v1alpha1.NamespaceKey]
 
-	name := fmt.Sprintf("cert-manager-csi-%s:%s:%s",
+	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
 		podNamespace, podName, id)
 	path := filepath.Join(ns.dataRoot, name)
 
