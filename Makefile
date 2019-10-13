@@ -6,8 +6,11 @@ help:  ## display this help
 build: ## build cert-manager-csi
 	GO111MODULE=on CGO_ENABLED=0 go build -v
 
+test: ## offline test cert-manager-csi
+	go test -v ./...
+
 image: build ## build cert-manager-csi docker image
 	docker build -t gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1 .
 
-publish: image
+publish: image ## build cert-manager-csi docker image and publish image
 	docker push gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1

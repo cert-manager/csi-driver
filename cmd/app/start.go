@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/joshvanl/cert-manager-csi/cmd/options"
+	"github.com/joshvanl/cert-manager-csi/cmd/app/options"
 	"github.com/joshvanl/cert-manager-csi/pkg/driver"
 )
 

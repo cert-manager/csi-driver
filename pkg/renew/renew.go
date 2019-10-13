@@ -102,7 +102,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		glog.Info("renewer: watching new volume for certificate renewal %s", base)
+		glog.Infof("renewer: watching new volume for certificate renewal %s", base)
 
 		if err := r.WatchFile(metaData, cert.NotAfter); err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %s",
@@ -178,7 +178,7 @@ func (r *Renewer) KillWatcher(vol *v1alpha1.MetaData) {
 func (r *Renewer) readFile(rootPath, path string) ([]byte, error) {
 	if len(path) == 0 {
 		return nil, fmt.Errorf("%s: read path is empty from attributes file",
-			rootPath, path)
+			rootPath)
 	}
 
 	path = filepath.Join(rootPath, "data", path)

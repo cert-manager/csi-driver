@@ -1,0 +1,4 @@
+{
+  "GoPrefix": "github.com/joshvanl/cert-manager-csi",
+  "AddSourcesRules": true
+}
