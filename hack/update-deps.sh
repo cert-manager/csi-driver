@@ -31,7 +31,7 @@ elif ! command -v bazel &>/dev/null; then
 else
   (
     set -o xtrace
-    bazel run @com_github_jetstack_cert_manager_csi//hack:update-deps -- "$@"
+    bazel run @com_github_joshvanl_cert_manager_csi//hack:update-deps -- "$@"
   )
   exit 0
 fi
@@ -88,6 +88,7 @@ esac
 
 rm -rf vendor
 "$go" mod tidy
+unset GOROOT
 "$gazelle" update-repos \
   --from_file=go.mod --to_macro=hack/build/repos.bzl%go_repositories \
   --build_file_generation=on --build_file_proto_mode=disable

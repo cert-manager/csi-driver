@@ -8,7 +8,7 @@ GAZELLE = "@bazel_gazelle//cmd/gazelle"
 
 KAZEL = "@io_k8s_repo_infra//cmd/kazel"
 
-JQ = "@com_github_jetstack_cert_manager_csi//hack/bin:jq"
+JQ = "@com_github_joshvanl_cert_manager_csi//hack/bin:jq"
 
 sh_binary(
     name = "update-bazel",

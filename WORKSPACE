@@ -1,5 +1,5 @@
 # gazelle:repository_macro hack/build/repos.bzl%go_repositories
-workspace(name = "com_github_jetstack_cert_manager_csi")
+workspace(name = "com_github_joshvanl_cert_manager_csi")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")

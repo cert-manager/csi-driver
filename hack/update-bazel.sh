@@ -25,7 +25,7 @@ elif ! command -v bazel &>/dev/null; then
 else
   (
     set -o xtrace
-    bazel run @com_github_jetstack_cert_manager_csi//hack:update-bazel
+    bazel run @com_github_joshvanl_cert_manager_csi//hack:update-bazel
   )
   exit 0
 fi
@@ -40,6 +40,7 @@ if [[ ! -f go.mod ]]; then
     exit 1
 fi
 
+unset GOROOT
 set -o xtrace
 "$gazelle" fix --external=external
 "$kazel" --cfg-path=./hack/build/.kazelcfg.json

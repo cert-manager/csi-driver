@@ -3,8 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["options.go"],
-    importpath = "github.com/jetstack/cert-manager-csi/cmd/app/options",
+    importpath = "github.com/joshvanl/cert-manager-csi/cmd/app/options",
     visibility = ["//visibility:public"],
+    deps = ["@com_github_spf13_cobra//:go_default_library"],
 )
 
 filegroup(

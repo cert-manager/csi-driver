@@ -3,8 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["renew.go"],
-    importpath = "github.com/jetstack/cert-manager-csi/pkg/renew",
+    importpath = "github.com/joshvanl/cert-manager-csi/pkg/renew",
     visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/apis/v1alpha1:go_default_library",
+        "//pkg/certmanager:go_default_library",
+        "@com_github_golang_glog//:go_default_library",
+        "@com_github_jetstack_cert_manager//pkg/util/pki:go_default_library",
+    ],
 )
 
 filegroup(

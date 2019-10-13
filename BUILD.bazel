@@ -1,6 +1,5 @@
-# gazelle:prefix github.com/jetstack/cert-manager-csi
+# gazelle:prefix github.com/joshvanl/cert-manager-csi
 # gazelle:proto disable_global
-# gazelle:exclude docs/generated/reference/generate/json_swagger
 
 load("@io_bazel_rules_docker//container:container.bzl", "container_bundle")
 load("@io_bazel_rules_docker//contrib:push-all.bzl", "docker_push")
@@ -19,6 +18,11 @@ container_bundle(
     images = {
         "{STABLE_DOCKER_REPO}/cert-manager-csi:{STABLE_DOCKER_TAG}": "//cmd/app:image",
     },
+)
+
+docker_push(
+    name = "images.push",
+    bundle = ":images",
 )
 
 filegroup(

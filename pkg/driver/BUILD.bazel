@@ -9,14 +9,33 @@ go_library(
         "nodeserver.go",
         "server.go",
     ],
-    importpath = "github.com/jetstack/cert-manager-csi/pkg/driver",
+    importpath = "github.com/joshvanl/cert-manager-csi/pkg/driver",
     visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/apis/defaults:go_default_library",
+        "//pkg/apis/v1alpha1:go_default_library",
+        "//pkg/apis/validation:go_default_library",
+        "//pkg/certmanager:go_default_library",
+        "//pkg/renew:go_default_library",
+        "//pkg/util:go_default_library",
+        "@com_github_container_storage_interface_spec//lib/go/csi:go_default_library",
+        "@com_github_golang_glog//:go_default_library",
+        "@com_github_kubernetes_csi_csi_lib_utils//protosanitizer:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_x_net//context:go_default_library",
+    ],
 )
 
 go_test(
     name = "go_default_test",
     srcs = ["nodeserver_test.go"],
     embed = [":go_default_library"],
+    deps = [
+        "//pkg/apis/v1alpha1:go_default_library",
+        "@com_github_container_storage_interface_spec//lib/go/csi:go_default_library",
+    ],
 )
 
 filegroup(
