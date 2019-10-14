@@ -4,7 +4,7 @@ help:  ## display this help
 .PHONY: help build docker_build test depend verify all clean generate
 
 build: ## build cert-manager-csi
-	GO111MODULE=on CGO_ENABLED=0 go build -v
+	GO111MODULE=on CGO_ENABLED=0 go build -v -o cert-manager-csi ./cmd/.
 
 test: ## offline test cert-manager-csi
 	go test -v ./...
