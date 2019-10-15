@@ -9,7 +9,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 //func TestNodePublishVolume(t *testing.T) {

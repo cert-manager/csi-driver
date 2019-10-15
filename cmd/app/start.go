@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/joshvanl/cert-manager-csi/cmd/app/options"
-	"github.com/joshvanl/cert-manager-csi/pkg/driver"
+	"github.com/jetstack/cert-manager-csi/cmd/app/options"
+	"github.com/jetstack/cert-manager-csi/pkg/driver"
 )
 
 var (

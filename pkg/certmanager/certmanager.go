@@ -20,8 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
-	"github.com/joshvanl/cert-manager-csi/pkg/util"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
 type CertManager struct {

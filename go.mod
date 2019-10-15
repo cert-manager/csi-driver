@@ -1,4 +1,4 @@
-module github.com/joshvanl/cert-manager-csi
+module github.com/jetstack/cert-manager-csi
 
 go 1.12
 

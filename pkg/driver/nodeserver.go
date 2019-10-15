@@ -13,12 +13,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/defaults"
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/validation"
-	"github.com/joshvanl/cert-manager-csi/pkg/certmanager"
-	"github.com/joshvanl/cert-manager-csi/pkg/renew"
-	"github.com/joshvanl/cert-manager-csi/pkg/util"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
+	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
+	"github.com/jetstack/cert-manager-csi/pkg/renew"
+	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
 const (

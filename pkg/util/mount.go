@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func MountPath(vol *v1alpha1.MetaData) string {

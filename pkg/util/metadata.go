@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func WriteMetaDataFile(vol *v1alpha1.MetaData) error {

@@ -14,8 +14,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
-	"github.com/joshvanl/cert-manager-csi/pkg/certmanager"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
 )
 
 type Renewer struct {

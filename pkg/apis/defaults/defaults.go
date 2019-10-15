@@ -6,7 +6,7 @@ import (
 	"github.com/jetstack/cert-manager/pkg/apis/certmanager"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 
-	"github.com/joshvanl/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {

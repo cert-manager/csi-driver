@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/joshvanl/cert-manager-csi/cmd/app"
+	"github.com/jetstack/cert-manager-csi/cmd/app"
 )
 
 func main() {
