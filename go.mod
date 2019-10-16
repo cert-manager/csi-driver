@@ -8,13 +8,18 @@ require (
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/jetstack/cert-manager v0.11.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
+	github.com/onsi/ginkgo v1.10.1 // indirect
+	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	google.golang.org/grpc v1.23.0
-	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
-	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+	gopkg.in/yaml.v2 v2.2.4 // indirect
+	k8s.io/api v0.0.0-20191010143144-fbf594f18f80
+	k8s.io/apimachinery v0.0.0-20191014065749-fb3eea214746
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
+	k8s.io/klog v1.0.0 // indirect
+	k8s.io/utils v0.0.0-20191010214722-8d271d903fe4 // indirect
 	sigs.k8s.io/kind v0.5.1
 )
 

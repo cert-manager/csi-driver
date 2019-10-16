@@ -4,7 +4,7 @@ help:  ## display this help
 .PHONY: help build docker_build test depend verify all clean generate
 
 build: ## build cert-manager-csi
-	GO111MODULE=on CGO_ENABLED=0 go build -v -o cert-manager-csi ./cmd/.
+	GO111MODULE=on CGO_ENABLED=0 go build -v -o ./bin/cert-manager-csi ./cmd/.
 
 test: ## offline test cert-manager-csi
 	go test -v ./...
@@ -14,3 +14,6 @@ image: build ## build cert-manager-csi docker image
 
 publish: image ## build cert-manager-csi docker image and publish image
 	docker push gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1
+
+e2e:
+	CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go run ./test/e2e/suite/.

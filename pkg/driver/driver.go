@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	version = "0.0.1-alpha.0"
+	Version = "0.1.0-alpha.1"
 )
 
 type Driver struct {
@@ -17,7 +17,7 @@ type Driver struct {
 }
 
 func New(driverName, nodeID, endpoint, dataRoot string) (*Driver, error) {
-	glog.Infof("driver: %v version: %v", driverName, version)
+	glog.Infof("driver: %v version: %v", driverName, Version)
 
 	ns, err := NewNodeServer(nodeID, dataRoot)
 	if err != nil {
@@ -26,7 +26,7 @@ func New(driverName, nodeID, endpoint, dataRoot string) (*Driver, error) {
 
 	return &Driver{
 		endpoint: endpoint,
-		ids:      NewIdentityServer(driverName, version),
+		ids:      NewIdentityServer(driverName, Version),
 		cs:       NewControllerServer(),
 		ns:       ns,
 	}, nil

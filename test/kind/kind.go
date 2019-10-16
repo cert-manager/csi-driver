@@ -2,6 +2,9 @@ package kind
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -16,16 +19,25 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster/create"
 )
 
+const (
+	kubectlURL       = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/%s/amd64/kubectl"
+	kubectlSHALinux  = "69cfb3eeaa0b77cc4923428855acdfc9ca9786544eeaff9c21913be830869d29"
+	kubectlSHADarwin = "9b45260bb16f251cf2bb4b4c5f90bc847ab752c9c936b784dc2bae892e10205a"
+)
+
 type Kind struct {
+	rootPath string
+
 	ctx    *cluster.Context
 	client *kubernetes.Clientset
 }
 
-func New(nodeImage string, masterNodes, workerNodes int) (*Kind, error) {
+func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error) {
 	log.Infof("kind: using k8s node image %q", nodeImage)
 
 	k := &Kind{
-		ctx: cluster.NewContext("cert-manager-csi-e2e"),
+		rootPath: rootPath,
+		ctx:      cluster.NewContext("cert-manager-csi-e2e"),
 	}
 
 	conf := new(configv1alpha3.Cluster)
@@ -107,7 +119,7 @@ func (k *Kind) waitForNodesReady() error {
 		}
 
 		if len(nodes.Items) == 0 {
-			log.Errorf("kind: no nodes found - checking again...")
+			log.Warn("kind: no nodes found - checking again...")
 			return false, nil
 		}
 
@@ -151,7 +163,7 @@ func (k *Kind) waitForPodsReady(namespace, labelSelector string) error {
 		}
 
 		if len(pods.Items) == 0 {
-			log.Errorf("kind: no pods found in namespace %q with selector %q - checking again...",
+			log.Warnf("kind: no pods found in namespace %q with selector %q - checking again...",
 				namespace, labelSelector)
 			return false, nil
 		}
@@ -159,8 +171,8 @@ func (k *Kind) waitForPodsReady(namespace, labelSelector string) error {
 		var notReady []string
 		for _, pod := range pods.Items {
 			if pod.Status.Phase != corev1.PodRunning {
-				notReady = append(notReady, fmt.Sprintf("%s:%s (%s: %s)",
-					pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Reason))
+				notReady = append(notReady, fmt.Sprintf("%s:%s (%s)",
+					pod.Namespace, pod.Name, pod.Status.Phase))
 			}
 		}
 
@@ -172,4 +184,20 @@ func (k *Kind) waitForPodsReady(namespace, labelSelector string) error {
 
 		return true, nil
 	})
+}
+
+func downloadFile(filepath, url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
