@@ -1,11 +1,11 @@
-package main
+package environment
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/jetstack/cert-manager-csi/test/kind"
 )
@@ -16,7 +16,11 @@ const (
 	defaultRootPath           = "../../../."
 )
 
-func main() {
+type Environment struct {
+	kind *kind.Kind
+}
+
+func Create(masterNodes, workerNodes int) (*Environment, error) {
 	nodeImage := os.Getenv("CERT_MANAGER_CSI_K8S_VERSION")
 	if nodeImage == "" {
 		nodeImage = defaultNodeImage
@@ -33,26 +37,38 @@ func main() {
 		rootPath = defaultRootPath
 	}
 
-	bPath, err := filepath.Abs(rootPath)
+	rPath, err := filepath.Abs(rootPath)
 	if err != nil {
-		log.Fatalf("failed to get absolute path %q: %s",
+		return nil, fmt.Errorf("failed to get absolute path %q: %s",
 			rootPath, err)
 	}
 
-	k, err := kind.New(bPath, nodeImage, 1, 3)
+	k, err := kind.New(rPath, nodeImage, masterNodes, workerNodes)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to create kind cluster: %s", err)
 	}
 
 	if err := k.DeployCertManager(certManagerVersion); err != nil {
-		log.Errorf(err.Error())
+		return nil, fmt.Errorf("failed to deploy cert-manager: %s", err)
 	}
 
 	if err := k.DeployCSIDriver("canary"); err != nil {
-		log.Errorf(err.Error())
+		return nil, fmt.Errorf("failed to deploy cert-manager-csi driver: %s", err)
 	}
 
-	if err := k.Stop(); err != nil {
-		log.Fatal(err)
+	return &Environment{
+		kind: k,
+	}, nil
+}
+
+func (e *Environment) Destory() error {
+	if err := e.kind.Stop(); err != nil {
+		return err
 	}
+
+	return nil
+}
+
+func (e *Environment) KubeClient() *kubernetes.Clientset {
+	return e.kind.KubeClient()
 }

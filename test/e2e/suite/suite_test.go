@@ -1,0 +1,46 @@
+/*
+Copyright 2019 The Jetstack cert-manager contributors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package suite
+
+import (
+	"testing"
+	"time"
+
+	"github.com/onsi/ginkgo"
+	ginkgoconfig "github.com/onsi/ginkgo/config"
+	"github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+func init() {
+	// Turn on verbose by default to get spec names
+	ginkgoconfig.DefaultReporterConfig.Verbose = true
+	// Turn on EmitSpecProgress to get spec progress (especially on interrupt)
+	ginkgoconfig.GinkgoConfig.EmitSpecProgress = true
+	// Randomize specs as well as suites
+	ginkgoconfig.GinkgoConfig.RandomizeAllSpecs = true
+
+	wait.ForeverTestTimeout = time.Second * 60
+}
+
+func TestE2E(t *testing.T) {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+
+	var r []ginkgo.Reporter
+
+	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "cert-manager-csi e2e suite", r)
+}

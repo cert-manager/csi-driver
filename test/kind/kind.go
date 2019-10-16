@@ -104,6 +104,10 @@ func (k *Kind) Stop() error {
 	return nil
 }
 
+func (k *Kind) KubeClient() *kubernetes.Clientset {
+	return k.client
+}
+
 func (k *Kind) errStop(err error) error {
 	k.Stop()
 	return err

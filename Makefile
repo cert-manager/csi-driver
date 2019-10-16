@@ -16,4 +16,4 @@ publish: image ## build cert-manager-csi docker image and publish image
 	docker push gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1
 
 e2e:
-	CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go run ./test/e2e/suite/.
+	CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go test -v ./test/e2e/suite/.
