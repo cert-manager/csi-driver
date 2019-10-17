@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	configv1alpha3 "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 	"sigs.k8s.io/kind/pkg/cluster"
@@ -28,8 +29,9 @@ const (
 type Kind struct {
 	rootPath string
 
-	ctx    *cluster.Context
-	client *kubernetes.Clientset
+	ctx        *cluster.Context
+	restConfig *rest.Config
+	client     *kubernetes.Clientset
 }
 
 func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error) {
@@ -71,21 +73,22 @@ func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error
 	kubeconfig := k.ctx.KubeConfigPath()
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, k.errStop(fmt.Errorf("failed to build kind rest client: %s", err))
+		return nil, k.errDestroy(fmt.Errorf("failed to build kind rest client: %s", err))
 	}
+	k.restConfig = restConfig
 
 	client, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return nil, k.errStop(fmt.Errorf("failed to build kind kubernetes client: %s", err))
+		return nil, k.errDestroy(fmt.Errorf("failed to build kind kubernetes client: %s", err))
 	}
 	k.client = client
 
 	if err := k.waitForNodesReady(); err != nil {
-		return nil, k.errStop(fmt.Errorf("failed to wait for nodes to become ready: %s", err))
+		return nil, k.errDestroy(fmt.Errorf("failed to wait for nodes to become ready: %s", err))
 	}
 
 	if err := k.waitForCoreDNSReady(); err != nil {
-		return nil, k.errStop(fmt.Errorf("failed to wait for DNS pods to become ready: %s", err))
+		return nil, k.errDestroy(fmt.Errorf("failed to wait for DNS pods to become ready: %s", err))
 	}
 
 	log.Infof("kind: cluster ready %q", k.ctx.Name())
@@ -93,8 +96,8 @@ func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error
 	return k, nil
 }
 
-func (k *Kind) Stop() error {
-	log.Infof("kind: stopping cluster %q", k.ctx.Name())
+func (k *Kind) Destroy() error {
+	log.Infof("kind: destroying cluster %q", k.ctx.Name())
 	if err := k.ctx.Delete(); err != nil {
 		return fmt.Errorf("failed to delete kind cluster: %s", err)
 	}
@@ -108,8 +111,16 @@ func (k *Kind) KubeClient() *kubernetes.Clientset {
 	return k.client
 }
 
-func (k *Kind) errStop(err error) error {
-	k.Stop()
+func (k *Kind) KubeConfigPath() string {
+	return k.ctx.KubeConfigPath()
+}
+
+func (k *Kind) RestConfig() *rest.Config {
+	return k.restConfig
+}
+
+func (k *Kind) errDestroy(err error) error {
+	k.Destroy()
 	return err
 }
 

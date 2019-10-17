@@ -17,24 +17,32 @@ limitations under the License.
 package suite
 
 import (
-	"fmt"
-	"time"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 
 	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
+	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
 )
 
 var (
-	Writer = GinkgoWriter
-	env    *environment.Environment
+	env *environment.Environment
+	cfg = framework.DefaultConfig
 )
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
 	env, err = environment.Create(1, 3)
 	if err != nil {
-		failf(err.Error())
+		framework.Failf("Error provisioning environment: %v", err)
+	}
+
+	cfg.KubeConfigPath = env.KubeConfigPath()
+	cfg.Kubectl = filepath.Join(env.RootPath(), "bin", "kubectl")
+	cfg.RepoRoot = env.RootPath()
+
+	if err := framework.DefaultConfig.Validate(); err != nil {
+		framework.Failf("Invalid test config: %v", err)
 	}
 
 	return nil
@@ -46,24 +54,7 @@ var globalLogs map[string]string
 var _ = SynchronizedAfterSuite(func() {},
 	func() {
 		if err := env.Destory(); err != nil {
-			failf(err.Error())
+			framework.Failf("Failed to destory environment: %s", err)
 		}
 	},
 )
-
-func failf(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	logf(msg)
-	Fail(nowStamp()+": "+msg, 1)
-}
-
-func log(level string, format string, args ...interface{}) {
-	fmt.Fprintf(Writer, nowStamp()+": "+level+": "+format+"\n", args...)
-}
-
-func logf(format string, args ...interface{}) {
-	log("INFO", format, args...)
-}
-func nowStamp() string {
-	return time.Now().Format(time.StampMilli)
-}
