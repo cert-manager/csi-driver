@@ -10,10 +10,10 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func MountPath(vol *v1alpha1.MetaData) string {
+func MountPath(vol *csiapi.MetaData) string {
 	return filepath.Join(vol.Path, "data")
 }
 

@@ -39,8 +39,6 @@ type Framework struct {
 	// The self signed issuer to reference
 	Issuer cmmeta.ObjectReference
 
-	CACert, CAKey []byte
-
 	helper *helper.Helper
 }
 
@@ -54,7 +52,6 @@ func NewFramework(baseName string, cfg *config.Config) *Framework {
 		BaseName: baseName,
 	}
 
-	f.helper = helper.NewHelper(cfg)
 	BeforeEach(f.BeforeEach)
 	AfterEach(f.AfterEach)
 
@@ -62,10 +59,11 @@ func NewFramework(baseName string, cfg *config.Config) *Framework {
 }
 
 func (f *Framework) BeforeEach() {
+	f.helper = helper.NewHelper(f.Config)
 	f.cleanupHandle = AddCleanupAction(f.AfterEach)
 
 	By("Creating a kubernetes client")
-	kubeConfig, err := util.LoadConfig(f.Config.KubeConfigPath, f.Config.KubeContext)
+	kubeConfig, err := util.LoadConfig(f.Config.KubeConfigPath)
 	Expect(err).NotTo(HaveOccurred())
 
 	f.KubeClientSet, err = kubernetes.NewForConfig(kubeConfig)
@@ -81,14 +79,11 @@ func (f *Framework) BeforeEach() {
 
 	By("Using the namespace " + f.Namespace.Name)
 
-	By("Building a ResourceQuota api object")
-	_, err = f.CreateKubeResourceQuota()
-	Expect(err).NotTo(HaveOccurred())
-
 	By("Creating CA Issuer")
 	f.Issuer, err = f.CreateCAIssuer(f.Namespace.Name, f.BaseName)
 	Expect(err).NotTo(HaveOccurred())
 
+	f.helper.RestConfig = kubeConfig
 	f.helper.CMClient = f.CertManagerClientSet
 	f.helper.KubeClient = f.KubeClientSet
 }
@@ -108,6 +103,10 @@ func (f *Framework) AfterEach() {
 	By("Waiting for test namespace to no longer exist")
 	err = f.WaitForKubeNamespaceNotExist(f.Namespace.Name)
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func (f *Framework) Helper() *helper.Helper {
+	return f.helper
 }
 
 func CasesDescribe(text string, body func()) bool {

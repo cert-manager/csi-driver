@@ -25,7 +25,6 @@ import (
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -101,28 +100,6 @@ func (f *Framework) CreateKubeNamespace(baseName string) (*corev1.Namespace, err
 	return f.KubeClientSet.CoreV1().Namespaces().Create(ns)
 }
 
-// CreateKubeResourceQuota provisions a ResourceQuota resource in the target
-// namespace.
-func (f *Framework) CreateKubeResourceQuota() (*corev1.ResourceQuota, error) {
-	quota := &corev1.ResourceQuota{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "default-e2e-quota",
-			Namespace: f.Namespace.Name,
-		},
-		Spec: corev1.ResourceQuotaSpec{
-			Hard: corev1.ResourceList{
-				"cpu":             resource.MustParse("16"),
-				"limits.cpu":      resource.MustParse("16"),
-				"requests.cpu":    resource.MustParse("16"),
-				"memory":          resource.MustParse("32G"),
-				"limits.memory":   resource.MustParse("32G"),
-				"requests.memory": resource.MustParse("32G"),
-			},
-		},
-	}
-	return f.KubeClientSet.CoreV1().ResourceQuotas(f.Namespace.Name).Create(quota)
-}
-
 // CreateSelfSignedIssuer creates a selfsigned issuer used for creating certificates
 func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectReference, error) {
 	sec, err := f.KubeClientSet.CoreV1().Secrets(namespace).Create(&corev1.Secret{
@@ -141,8 +118,8 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 
 	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().Issuers(namespace).Create(&cmapi.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: baseName + "-",
-			Namespace:    namespace,
+			Name:      "ca-issuer",
+			Namespace: namespace,
 		},
 		Spec: cmapi.IssuerSpec{
 			IssuerConfig: cmapi.IssuerConfig{

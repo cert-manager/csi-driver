@@ -17,29 +17,29 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 	tests := map[string]vaT{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
-				v1alpha1.DNSNamesKey: "foo.bar.com,car.bar.com",
+				csiapi.DNSNamesKey: "foo.bar.com,car.bar.com",
 			},
 			expError: errors.New(
 				"csi.cert-manager.io/issuer-name field required"),
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
-				v1alpha1.CommonNameKey: "foo.bar",
+				csiapi.CommonNameKey: "foo.bar",
 			},
 			expError: errors.New(
 				"csi.cert-manager.io/issuer-name field required"),
 		},
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
-				v1alpha1.IssuerNameKey: "test-issuer",
-				v1alpha1.CommonNameKey: "foo.bar",
+				csiapi.IssuerNameKey: "test-issuer",
+				csiapi.CommonNameKey: "foo.bar",
 			},
 			expError: nil,
 		},
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
-				v1alpha1.IssuerNameKey: "test-issuer",
-				v1alpha1.DNSNamesKey:   "foo.bar.com,car.bar.com",
+				csiapi.IssuerNameKey: "test-issuer",
+				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
 			},
 			expError: nil,
 		},

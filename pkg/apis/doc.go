@@ -14,27 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package helper
+package apis
 
-import (
-	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/config"
-)
-
-// Helper provides methods for common operations needed during tests.
-type Helper struct {
-	cfg *config.Config
-
-	RestConfig *rest.Config
-	KubeClient kubernetes.Interface
-	CMClient   cmclient.Interface
-}
-
-func NewHelper(cfg *config.Config) *Helper {
-	return &Helper{
-		cfg: cfg,
-	}
-}
+const GroupName = "csi.cert-manager.io"

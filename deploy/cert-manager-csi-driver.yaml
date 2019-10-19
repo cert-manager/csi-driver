@@ -4,6 +4,8 @@ metadata:
   name: csi.cert-manager.io
 spec:
   podInfoOnMount: true
+  volumeLifecycleModes:
+  - Ephemeral
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -18,7 +20,7 @@ metadata:
 rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
-  verbs: ["get", "create", "delete"]
+  verbs: ["get", "create", "delete", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

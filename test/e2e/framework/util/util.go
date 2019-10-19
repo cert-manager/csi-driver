@@ -24,7 +24,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-func RestclientConfig(config, context string) (*clientcmdapi.Config, error) {
+func RestclientConfig(config string) (*clientcmdapi.Config, error) {
 	if config == "" {
 		return nil, fmt.Errorf("Config file must be specified to load client config")
 	}
@@ -32,14 +32,11 @@ func RestclientConfig(config, context string) (*clientcmdapi.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error loading config: %v", err.Error())
 	}
-	if context != "" {
-		c.CurrentContext = context
-	}
 	return c, nil
 }
 
-func LoadConfig(config, context string) (*rest.Config, error) {
-	c, err := RestclientConfig(config, context)
+func LoadConfig(config string) (*rest.Config, error) {
+	c, err := RestclientConfig(config)
 	if err != nil {
 		return nil, err
 	}

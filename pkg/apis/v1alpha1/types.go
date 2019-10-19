@@ -1,6 +1,6 @@
 package v1alpha1
 
-// TODO (@joshvanl): check for v1alpha1.DisableAutoRenewKey
+// TODO (@joshvanl): check for csiapi.DisableAutoRenewKey
 const (
 	MetaDataFileName = "metadata.json"
 )
@@ -23,9 +23,8 @@ const (
 	DurationKey   string = "csi.cert-manager.io/duration"
 	IsCAKey       string = "csi.cert-manager.io/is-ca"
 
-	CertFileKey  string = "csi.cert-manager.io/certificate-file"
-	KeyFileKey   string = "csi.cert-manager.io/privatekey-file"
-	NamespaceKey string = "csi.cert-manager.io/namespace"
+	CertFileKey string = "csi.cert-manager.io/certificate-file"
+	KeyFileKey  string = "csi.cert-manager.io/privatekey-file"
 
 	RenewBeforeKey      string = "csi.cert-manager.io/renew-before"
 	DisableAutoRenewKey string = "csi.cert-manager.io/disable-auto-renew"

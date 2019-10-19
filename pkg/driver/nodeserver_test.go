@@ -58,8 +58,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "target-path",
 				TargetPath: "test-namespace",
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey:         "test-pod",
-					v1alpha1.CSIPodNamespaceKey:    "test-pod",
+					csiapi.CSIPodNameKey:         "test-pod",
+					csiapi.CSIPodNamespaceKey:    "test-pod",
 					"csi.storage.k8s.io/ephemeral": "false",
 				},
 				VolumeCapability: &csi.VolumeCapability{},
@@ -69,8 +69,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 		"if not volume ID or target path then error": {
 			req: csi.NodePublishVolumeRequest{
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey:      "test-pod",
-					v1alpha1.CSIPodNamespaceKey: "test-namespace",
+					csiapi.CSIPodNameKey:      "test-pod",
+					csiapi.CSIPodNamespaceKey: "test-namespace",
 				},
 				VolumeCapability: &csi.VolumeCapability{},
 			},
@@ -81,7 +81,7 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "volumeID",
 				TargetPath: "target-path",
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey: "test-pod",
+					csiapi.CSIPodNameKey: "test-pod",
 				},
 				VolumeCapability: nil,
 			},
@@ -94,8 +94,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "volumeID",
 				TargetPath: "target-path",
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey:      "test-pod",
-					v1alpha1.CSIPodNamespaceKey: "test-namespace",
+					csiapi.CSIPodNameKey:      "test-pod",
+					csiapi.CSIPodNamespaceKey: "test-namespace",
 				},
 				VolumeCapability: &csi.VolumeCapability{
 					AccessType: &csi.VolumeCapability_Block{
@@ -110,8 +110,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "volumeID",
 				TargetPath: "target-path",
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey:      "test-pod",
-					v1alpha1.CSIPodNamespaceKey: "test-namespace",
+					csiapi.CSIPodNameKey:      "test-pod",
+					csiapi.CSIPodNamespaceKey: "test-namespace",
 
 					"csi.storage.k8s.io/ephemeral": "true",
 				},
@@ -124,8 +124,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "volumeID",
 				TargetPath: "target-path",
 				VolumeContext: map[string]string{
-					v1alpha1.CSIPodNameKey:      "test-pod",
-					v1alpha1.CSIPodNamespaceKey: "test-namespace",
+					csiapi.CSIPodNameKey:      "test-pod",
+					csiapi.CSIPodNamespaceKey: "test-namespace",
 				},
 				VolumeCapability: &csi.VolumeCapability{},
 			},
@@ -170,14 +170,14 @@ func TestCreateDeleteVolume(t *testing.T) {
 
 	ns := &NodeServer{
 		dataRoot: dir,
-		volumes:  make(map[string]*v1alpha1.MetaData),
+		volumes:  make(map[string]*csiapi.MetaData),
 	}
 
 	id := "test-id"
 	targetPath := "test-target-path"
 	attr := map[string]string{
-		v1alpha1.CSIPodNameKey: "test-pod",
-		v1alpha1.NamespaceKey:  "test-namespace",
+		csiapi.CSIPodNameKey: "test-pod",
+		csiapi.NamespaceKey:  "test-namespace",
 	}
 
 	vol, err := ns.createVolume(id, targetPath, attr)

@@ -14,7 +14,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
 )
 
@@ -57,7 +57,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		metaPath := filepath.Join(fPath, v1alpha1.MetaDataFileName)
+		metaPath := filepath.Join(fPath, csiapi.MetaDataFileName)
 		b, err := ioutil.ReadFile(metaPath)
 		if err != nil {
 			// meta data file doesn't exist, move on
@@ -69,7 +69,7 @@ func (r *Renewer) Discover() error {
 			return fmt.Errorf("failed to read metadata file: %s", err)
 		}
 
-		metaData := new(v1alpha1.MetaData)
+		metaData := new(csiapi.MetaData)
 		if err := json.Unmarshal(b, metaData); err != nil {
 			errs = append(errs,
 				fmt.Sprintf("failed to unmarshal metadata file for %s: %s", f.Name(), err.Error()))
@@ -77,7 +77,7 @@ func (r *Renewer) Discover() error {
 		}
 
 		// TODO (@joshvanl): do we really need to check the key?
-		keyBytes, err := r.readFile(fPath, metaData.Attributes[v1alpha1.KeyFileKey])
+		keyBytes, err := r.readFile(fPath, metaData.Attributes[csiapi.KeyFileKey])
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -89,7 +89,7 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		certBytes, err := r.readFile(fPath, metaData.Attributes[v1alpha1.CertFileKey])
+		certBytes, err := r.readFile(fPath, metaData.Attributes[csiapi.CertFileKey])
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -117,7 +117,7 @@ func (r *Renewer) Discover() error {
 	return nil
 }
 
-func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) error {
+func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error {
 	r.muVol.Lock()
 	defer r.muVol.Unlock()
 
@@ -128,7 +128,7 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	}
 
 	renewBefore, err := time.ParseDuration(
-		metaData.Attributes[v1alpha1.RenewBeforeKey])
+		metaData.Attributes[csiapi.RenewBeforeKey])
 	if err != nil {
 		return fmt.Errorf("failed to parse renew before: %s", err)
 	}
@@ -164,7 +164,7 @@ func (r *Renewer) WatchFile(metaData *v1alpha1.MetaData, notAfter time.Time) err
 	return nil
 }
 
-func (r *Renewer) KillWatcher(vol *v1alpha1.MetaData) {
+func (r *Renewer) KillWatcher(vol *csiapi.MetaData) {
 	r.muVol.RLock()
 	defer r.muVol.RUnlock()
 

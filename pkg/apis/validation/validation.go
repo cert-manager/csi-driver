@@ -6,28 +6,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func ValidateAttributes(attr map[string]string) error {
 	var errs []string
 
-	if len(attr[v1alpha1.IssuerNameKey]) == 0 {
-		errs = append(errs, fmt.Sprintf("%s field required", v1alpha1.IssuerNameKey))
+	if len(attr[csiapi.IssuerNameKey]) == 0 {
+		errs = append(errs, fmt.Sprintf("%s field required", csiapi.IssuerNameKey))
 	}
 
-	errs = boolValue(attr[v1alpha1.IsCAKey], v1alpha1.IsCAKey, errs)
+	errs = boolValue(attr[csiapi.IsCAKey], csiapi.IsCAKey, errs)
 
-	errs = durationParse(attr[v1alpha1.DurationKey], v1alpha1.DurationKey, errs)
+	errs = durationParse(attr[csiapi.DurationKey], csiapi.DurationKey, errs)
 
-	errs = filepathBreakout(attr[v1alpha1.CertFileKey], v1alpha1.CertFileKey, errs)
-	errs = filepathBreakout(attr[v1alpha1.KeyFileKey], v1alpha1.KeyFileKey, errs)
+	errs = filepathBreakout(attr[csiapi.CertFileKey], csiapi.CertFileKey, errs)
+	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
 
 	// TODO (@joshvanl): add better validation for renew before to ensure we
 	// don't go into a crazy renew loop
-	errs = durationParse(attr[v1alpha1.RenewBeforeKey], v1alpha1.RenewBeforeKey, errs)
-	errs = boolValue(attr[v1alpha1.DisableAutoRenewKey], v1alpha1.DisableAutoRenewKey, errs)
-	errs = boolValue(attr[v1alpha1.ReusePrivateKey], v1alpha1.ReusePrivateKey, errs)
+	errs = durationParse(attr[csiapi.RenewBeforeKey], csiapi.RenewBeforeKey, errs)
+	errs = boolValue(attr[csiapi.DisableAutoRenewKey], csiapi.DisableAutoRenewKey, errs)
+	errs = boolValue(attr[csiapi.ReusePrivateKey], csiapi.ReusePrivateKey, errs)
 
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, ", "))

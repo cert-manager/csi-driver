@@ -6,29 +6,26 @@ import (
 	"github.com/jetstack/cert-manager/pkg/apis/certmanager"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {
-	setDefaultIfEmpty(attr, v1alpha1.IssuerKindKey, cmapi.IssuerKind)
-	setDefaultIfEmpty(attr, v1alpha1.IssuerGroupKey, certmanager.GroupName)
+	setDefaultIfEmpty(attr, csiapi.IssuerKindKey, cmapi.IssuerKind)
+	setDefaultIfEmpty(attr, csiapi.IssuerGroupKey, certmanager.GroupName)
 
-	setDefaultIfEmpty(attr, v1alpha1.IsCAKey, "false")
-	setDefaultIfEmpty(attr, v1alpha1.DurationKey, cmapi.DefaultCertificateDuration.String())
+	setDefaultIfEmpty(attr, csiapi.IsCAKey, "false")
+	setDefaultIfEmpty(attr, csiapi.DurationKey, cmapi.DefaultCertificateDuration.String())
 
-	setDefaultIfEmpty(attr, v1alpha1.CertFileKey, "crt.pem")
-	setDefaultIfEmpty(attr, v1alpha1.KeyFileKey, "key.pem")
+	setDefaultIfEmpty(attr, csiapi.CertFileKey, "crt.pem")
+	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "key.pem")
 
 	// TODO (@joshvanl): add a smarter defaulting mechanism
-	dur, err := time.ParseDuration(attr[string(v1alpha1.DurationKey)])
+	dur, err := time.ParseDuration(attr[string(csiapi.DurationKey)])
 	if err != nil {
 		return nil, err
 	}
 	dur = dur / 3
-	setDefaultIfEmpty(attr, v1alpha1.RenewBeforeKey, dur.String())
-
-	// use given pod namespace if one not set
-	setDefaultIfEmpty(attr, v1alpha1.NamespaceKey, attr[v1alpha1.CSIPodNamespaceKey])
+	setDefaultIfEmpty(attr, csiapi.RenewBeforeKey, dur.String())
 
 	return attr, nil
 }

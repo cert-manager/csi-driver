@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
 	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
 	"github.com/jetstack/cert-manager-csi/pkg/renew"
@@ -44,7 +44,7 @@ type NodeServer struct {
 
 	// TODO (@joshval): do we really need this arround? We can probably do away
 	// with it
-	volumes map[string]*v1alpha1.MetaData
+	volumes map[string]*csiapi.MetaData
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
@@ -64,7 +64,7 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 		dataRoot: dataRoot,
 		renewer:  renewer,
 		cm:       cm,
-		volumes:  make(map[string]*v1alpha1.MetaData),
+		volumes:  make(map[string]*csiapi.MetaData),
 	}, nil
 }
 
@@ -106,10 +106,10 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, fmt.Errorf("failed to create new certificate: %s", err)
 	}
 
-	if s, ok := attr[v1alpha1.DisableAutoRenewKey]; !ok || s != "true" {
+	if s, ok := attr[csiapi.DisableAutoRenewKey]; !ok || s != "true" {
 		if err := ns.renewer.WatchFile(vol, cert.NotAfter); err != nil {
 			return nil, fmt.Errorf("failed to watch file %s:%s:%s: %s",
-				attr[v1alpha1.CSIPodNamespaceKey], attr[v1alpha1.CSIPodNameKey], vol.ID, err)
+				attr[csiapi.CSIPodNamespaceKey], attr[csiapi.CSIPodNameKey], vol.ID, err)
 		}
 	}
 
@@ -157,7 +157,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	glog.V(2).Infof("node: mount successful %s:%s:%s",
-		attr[v1alpha1.CSIPodNamespaceKey], attr[v1alpha1.CSIPodNameKey], vol.ID)
+		attr[csiapi.CSIPodNamespaceKey], attr[csiapi.CSIPodNameKey], vol.ID)
 
 	return &csi.NodePublishVolumeResponse{}, nil
 }
@@ -184,6 +184,10 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	// kill the renewal Go routine watching this volume
 	ns.renewer.KillWatcher(vol)
 
+	if err := ns.cm.DeleteCertificateRequest(vol); err != nil {
+		return nil, err
+	}
+
 	// Unmounting the image
 	err := util.Unmount(targetPath)
 	if err != nil {
@@ -206,16 +210,16 @@ func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest
 
 	// Kubernetes 1.15 doesn't have csi.storage.k8s.io/ephemeral.
 	ephemeralVolume :=
-		(attr[v1alpha1.CSIEphemeralKey] == "true" || attr[v1alpha1.CSIEphemeralKey] == "")
+		(attr[csiapi.CSIEphemeralKey] == "true" || attr[csiapi.CSIEphemeralKey] == "")
 	if !ephemeralVolume {
 		errs = append(errs, "publishing a non-ephemeral volume mount is not supported")
 	}
 
-	_, okN := attr[v1alpha1.CSIPodNameKey]
-	_, okNs := attr[v1alpha1.CSIPodNamespaceKey]
+	_, okN := attr[csiapi.CSIPodNameKey]
+	_, okNs := attr[csiapi.CSIPodNamespaceKey]
 	if !okN || !okNs {
 		errs = append(errs, fmt.Sprintf("expecting both %s and %s attributes to be set in context",
-			v1alpha1.CSIPodNamespaceKey, v1alpha1.CSIPodNameKey))
+			csiapi.CSIPodNamespaceKey, csiapi.CSIPodNameKey))
 	}
 
 	if c := req.GetVolumeCapability(); c == nil {
@@ -242,13 +246,10 @@ func (ns *NodeServer) validateVolumeAttributes(req *csi.NodePublishVolumeRequest
 // createVolume create the directory for the volume. It returns the volume
 // path or err if one occurs.
 func (ns *NodeServer) createVolume(id, targetPath string,
-	attr map[string]string) (*v1alpha1.MetaData, error) {
-	podName := attr[v1alpha1.CSIPodNameKey]
-	// The namespace should have been set on defaults.
-	podNamespace := attr[v1alpha1.NamespaceKey]
+	attr map[string]string) (*csiapi.MetaData, error) {
+	podName := attr[csiapi.CSIPodNameKey]
 
-	name := fmt.Sprintf("cert-manager-csi-%s-%s-%s",
-		podNamespace, podName, id)
+	name := util.BuildVolumeName(podName, id)
 	path := filepath.Join(ns.dataRoot, name)
 
 	err := os.MkdirAll(path, 0700)
@@ -256,7 +257,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 		return nil, err
 	}
 
-	vol := &v1alpha1.MetaData{
+	vol := &csiapi.MetaData{
 		ID:         id,
 		Name:       name,
 		Size:       maxStorageCapacity,
@@ -269,7 +270,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	return vol, nil
 }
 
-func (ns *NodeServer) deleteVolume(vol *v1alpha1.MetaData) error {
+func (ns *NodeServer) deleteVolume(vol *csiapi.MetaData) error {
 	glog.V(4).Infof("node: deleting volume: %s", vol.ID)
 
 	if err := os.RemoveAll(vol.Path); err != nil && !os.IsNotExist(err) {

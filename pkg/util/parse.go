@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func ParseDNSNames(dnsNames string) []string {
+	return strings.Split(dnsNames, ",")
+}
+
 func ParseIPAddresses(ips string) []net.IP {
 	if len(ips) == 0 {
 		return nil
@@ -44,4 +48,32 @@ func ParseURIs(uris string) ([]*url.URL, error) {
 	}
 
 	return urisURL, nil
+}
+
+func IPAddressesMatch(a, b []net.IP) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if !a[i].Equal(b[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func URIsMatch(a, b []*url.URL) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i].String() != b[i].String() {
+			return false
+		}
+	}
+
+	return true
 }

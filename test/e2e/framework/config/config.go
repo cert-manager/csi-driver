@@ -24,7 +24,6 @@ import (
 
 type Config struct {
 	KubeConfigPath string
-	KubeContext    string
 	Kubectl        string
 
 	Ginkgo Ginkgo

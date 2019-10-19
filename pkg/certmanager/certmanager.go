@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
@@ -49,25 +49,21 @@ func New(nodeID, dataDir string) (*CertManager, error) {
 	}, nil
 }
 
-func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
+func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
 	attr := vol.Attributes
 
-	uris, err := util.ParseURIs(attr[v1alpha1.URISANsKey])
+	uris, err := util.ParseURIs(attr[csiapi.URISANsKey])
 	if err != nil {
 		return nil, err
 	}
 
-	ips := util.ParseIPAddresses(attr[v1alpha1.IPSANsKey])
+	ips := util.ParseIPAddresses(attr[csiapi.IPSANsKey])
 
-	dnsNames := strings.Split(attr[v1alpha1.DNSNamesKey], ",")
-	commonName := attr[v1alpha1.CommonNameKey]
-
-	if len(commonName) == 0 {
-		commonName = dnsNames[0]
-	}
+	dnsNames := strings.Split(attr[csiapi.DNSNamesKey], ",")
+	commonName := attr[csiapi.CommonNameKey]
 
 	duration := cmapi.DefaultCertificateDuration
-	if durStr, ok := attr[v1alpha1.DurationKey]; ok {
+	if durStr, ok := attr[csiapi.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
 			return nil, err
@@ -75,7 +71,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 	}
 
 	isCA := false
-	if isCAStr, ok := attr[v1alpha1.IsCAKey]; ok {
+	if isCAStr, ok := attr[csiapi.IsCAKey]; ok {
 		switch strings.ToLower(isCAStr) {
 		case "true":
 			isCA = true
@@ -101,7 +97,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 		return nil, err
 	}
 
-	namespace := attr[v1alpha1.NamespaceKey]
+	namespace := attr[csiapi.CSIPodNamespaceKey]
 	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
@@ -130,9 +126,9 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 				Duration: duration,
 			},
 			IssuerRef: cmmeta.ObjectReference{
-				Name:  attr[v1alpha1.IssuerNameKey],
-				Kind:  attr[v1alpha1.IssuerKindKey],
-				Group: attr[v1alpha1.IssuerGroupKey],
+				Name:  attr[csiapi.IssuerNameKey],
+				Kind:  attr[csiapi.IssuerKindKey],
+				Group: attr[csiapi.IssuerGroupKey],
 			},
 		},
 	}
@@ -155,7 +151,7 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 		return nil, err
 	}
 
-	metaPath := filepath.Join(vol.Path, v1alpha1.MetaDataFileName)
+	metaPath := filepath.Join(vol.Path, csiapi.MetaDataFileName)
 	if err := ioutil.WriteFile(metaPath, metaDataBytes, 0600); err != nil {
 		return nil, err
 	}
@@ -185,13 +181,13 @@ func (c *CertManager) CreateNewCertificate(vol *v1alpha1.MetaData, keyBundle *ut
 	return cert, nil
 }
 
-func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificate, error) {
+func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate, error) {
 	var err error
 	var keyBundle *util.KeyBundle
 
 	glog.Infof("cert-manager: renewing certicate %s", vol.Name)
 
-	if b, ok := vol.Attributes[v1alpha1.ReusePrivateKey]; !ok || b != "true" {
+	if b, ok := vol.Attributes[csiapi.ReusePrivateKey]; !ok || b != "true" {
 		keyBundle, err = util.NewRSAKey()
 		if err != nil {
 			return nil, err
@@ -224,6 +220,12 @@ func (c *CertManager) RenewCertificate(vol *v1alpha1.MetaData) (*x509.Certificat
 	}
 
 	return cert, nil
+}
+
+func (c *CertManager) DeleteCertificateRequest(vol *csiapi.MetaData) error {
+	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
+	name := vol.Attributes[csiapi.CSIPodNameKey]
+	return c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(name, &metav1.DeleteOptions{})
 }
 
 func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {

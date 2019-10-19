@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 type KeyBundle struct {
@@ -49,10 +49,10 @@ func WriteFile(path string, b []byte, perm os.FileMode) error {
 	return ioutil.WriteFile(path, b, perm)
 }
 
-func KeyPath(vol *v1alpha1.MetaData) string {
-	return filepath.Join(vol.Path, "data", vol.Attributes[v1alpha1.KeyFileKey])
+func KeyPath(vol *csiapi.MetaData) string {
+	return filepath.Join(vol.Path, "data", vol.Attributes[csiapi.KeyFileKey])
 }
 
-func CertPath(vol *v1alpha1.MetaData) string {
-	return filepath.Join(vol.Path, "data", vol.Attributes[v1alpha1.CertFileKey])
+func CertPath(vol *csiapi.MetaData) string {
+	return filepath.Join(vol.Path, "data", vol.Attributes[csiapi.CertFileKey])
 }
