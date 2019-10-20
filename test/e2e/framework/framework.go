@@ -8,6 +8,8 @@ import (
 	crclientset "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework/config"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework/helper"
@@ -65,6 +67,10 @@ func (f *Framework) BeforeEach() {
 	By("Creating a kubernetes client")
 	kubeConfig, err := util.LoadConfig(f.Config.KubeConfigPath)
 	Expect(err).NotTo(HaveOccurred())
+	kubeConfig.ContentConfig = rest.ContentConfig{
+		GroupVersion:         &corev1.SchemeGroupVersion,
+		NegotiatedSerializer: scheme.Codecs,
+	}
 
 	f.KubeClientSet, err = kubernetes.NewForConfig(kubeConfig)
 	Expect(err).NotTo(HaveOccurred())

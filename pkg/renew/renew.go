@@ -36,7 +36,7 @@ func New(dataDir string, cm *certmanager.CertManager) *Renewer {
 }
 
 func (r *Renewer) Discover() error {
-	glog.V(4).Infof("renewer: starting discovery on %s", r.dataDir)
+	glog.V(4).Infof("renewer: starting discovery on %q", r.dataDir)
 
 	files, err := ioutil.ReadDir(r.dataDir)
 	if err != nil {
@@ -47,13 +47,13 @@ func (r *Renewer) Discover() error {
 	for _, f := range files {
 		fPath := filepath.Join(r.dataDir, f.Name())
 
-		glog.V(4).Infof("renewer: trying discovery on %s", fPath)
+		glog.V(4).Infof("renewer: trying discovery on %q", fPath)
 
 		// not a directory or not a csi directory
 		base := filepath.Base(fPath)
 		if !f.IsDir() ||
 			!strings.HasPrefix(base, "cert-manager-csi") {
-			glog.V(4).Infof("renewer: file not a directory or has 'cert-manger-csi' prefix: %s", f.Name())
+			glog.V(4).Infof("renewer: file not a directory or doesn't have \"cert-manger-csi\" prefix: %q", f.Name())
 			continue
 		}
 
@@ -62,7 +62,7 @@ func (r *Renewer) Discover() error {
 		if err != nil {
 			// meta data file doesn't exist, move on
 			if os.IsNotExist(err) {
-				glog.V(4).Infof("renewer: metadata file not found: %s", metaPath)
+				glog.V(4).Infof("renewer: metadata file not found: %q", metaPath)
 				continue
 			}
 
@@ -72,7 +72,7 @@ func (r *Renewer) Discover() error {
 		metaData := new(csiapi.MetaData)
 		if err := json.Unmarshal(b, metaData); err != nil {
 			errs = append(errs,
-				fmt.Sprintf("failed to unmarshal metadata file for %s: %s", f.Name(), err.Error()))
+				fmt.Sprintf("failed to unmarshal metadata file for %q: %s", f.Name(), err.Error()))
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (r *Renewer) Discover() error {
 		}
 
 		if _, err := pki.DecodePrivateKeyBytes(keyBytes); err != nil {
-			errs = append(errs, fmt.Sprintf("%s: failed to parse key file: %s",
+			errs = append(errs, fmt.Sprintf("%q: failed to parse key file: %s",
 				f.Name(), err))
 			continue
 		}
@@ -97,15 +97,15 @@ func (r *Renewer) Discover() error {
 
 		cert, err := pki.DecodeX509CertificateBytes(certBytes)
 		if err != nil {
-			errs = append(errs, fmt.Sprintf("%s: failed to parse cert file: %s",
+			errs = append(errs, fmt.Sprintf("%q: failed to parse cert file: %s",
 				f.Name(), err))
 			continue
 		}
 
-		glog.Infof("renewer: watching new volume for certificate renewal %s", base)
+		glog.Infof("renewer: watching new volume for certificate renewal %q", base)
 
 		if err := r.WatchFile(metaData, cert.NotAfter); err != nil {
-			errs = append(errs, fmt.Sprintf("%s: %s",
+			errs = append(errs, fmt.Sprintf("%q: %s",
 				f.Name(), err))
 		}
 	}
@@ -136,7 +136,7 @@ func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error
 	ch := make(chan struct{})
 	r.watchingVols[metaData.Name] = ch
 
-	glog.Infof("renewer: starting to watch certificate for renewal: %s", metaData.Name)
+	glog.Infof("renewer: starting to watch certificate for renewal: %q", metaData.Name)
 
 	renewalTime := notAfter.Add(-renewBefore)
 	timer := time.NewTimer(time.Until(renewalTime))
@@ -149,13 +149,13 @@ func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error
 		case <-timer.C:
 			cert, err := r.cm.RenewCertificate(metaData)
 			if err != nil {
-				glog.Errorf("renewer: failed to renew certificate %s: %s",
+				glog.Errorf("renewer: failed to renew certificate %q: %s",
 					metaData.Name, err)
 				return
 			}
 
 			if err := r.WatchFile(metaData, cert.NotBefore); err != nil {
-				glog.Errorf("renewer: failed to watch certificate %s: %s",
+				glog.Errorf("renewer: failed to watch certificate %q: %s",
 					metaData.Name, err)
 			}
 		}
@@ -170,21 +170,21 @@ func (r *Renewer) KillWatcher(vol *csiapi.MetaData) {
 
 	ch, ok := r.watchingVols[vol.Name]
 	if ok {
-		glog.Infof("renewer: killing watcher for %s", vol.Name)
+		glog.Infof("renewer: killing watcher for %q", vol.Name)
 		close(ch)
 	}
 }
 
 func (r *Renewer) readFile(rootPath, path string) ([]byte, error) {
 	if len(path) == 0 {
-		return nil, fmt.Errorf("%s: read path is empty from attributes file",
+		return nil, fmt.Errorf("%q: read path is empty from attributes file",
 			rootPath)
 	}
 
 	path = filepath.Join(rootPath, "data", path)
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read file: %s",
+		return nil, fmt.Errorf("%q: failed to read file: %s",
 			path, err)
 	}
 

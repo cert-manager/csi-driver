@@ -52,7 +52,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 
 		testPod := &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: f.BaseName,
+				GenerateName: f.BaseName + "-",
 				Namespace:    f.Namespace.Name,
 			},
 			Spec: corev1.PodSpec{
@@ -96,5 +96,11 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the certificate key pair exists in the pod and matches that in the CertificateRequest")
+		err = f.Helper().CertificateKeyExistInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+			cr, testVolume.CSI.VolumeAttributes)
+		Expect(err).NotTo(HaveOccurred())
+
+		//By("Ensure the certificate key pair and metadata file exists in the local data directory and matches that in the CertificateRequest")
+		//Expect(err).NotTo(HaveOccurred())
 	})
 })

@@ -3,6 +3,9 @@ help:  ## display this help
 
 .PHONY: help build docker_build test depend verify all clean generate
 
+clean: ## clean all bin data
+	rm -rf ./bin
+
 build: ## build cert-manager-csi
 	GO111MODULE=on CGO_ENABLED=0 go build -v -o ./bin/cert-manager-csi ./cmd/.
 

@@ -48,7 +48,7 @@ type NodeServer struct {
 }
 
 func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
-	cm, err := certmanager.New(nodeID, dataRoot)
+	cm, err := certmanager.New()
 	if err != nil {
 		return nil, err
 	}

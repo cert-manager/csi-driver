@@ -25,13 +25,10 @@ import (
 )
 
 type CertManager struct {
-	nodeID  string
-	dataDir string
-
 	cmClient cmclient.Interface
 }
 
-func New(nodeID, dataDir string) (*CertManager, error) {
+func New() (*CertManager, error) {
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -44,8 +41,6 @@ func New(nodeID, dataDir string) (*CertManager, error) {
 
 	return &CertManager{
 		cmClient: cmClient,
-		nodeID:   nodeID,
-		dataDir:  dataDir,
 	}, nil
 }
 

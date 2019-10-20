@@ -7,12 +7,13 @@ import (
 	"time"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	"github.com/jetstack/cert-manager/pkg/util/pki"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/remotecommand"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
@@ -20,7 +21,6 @@ import (
 
 func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName, mountPath string,
 	cr *cmapi.CertificateRequest, attr map[string]string) error {
-
 	certPath, ok := attr[csiapi.CertFileKey]
 	if !ok {
 		certPath = "crt.pem"
@@ -33,47 +33,98 @@ func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName,
 	}
 	keyPath = filepath.Join(mountPath, keyPath)
 
-	restClient, err := rest.RESTClientFor(h.RestConfig)
+	certData, err := h.readFilePath(namespace, podName, containerName, certPath)
 	if err != nil {
-		return fmt.Errorf("failed to build rest client form rest config: %s", err)
+		return fmt.Errorf("failed to read cert data from pod: %s", err)
 	}
 
+	keyData, err := h.readFilePath(namespace, podName, containerName, keyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read key data from pod: %s", err)
+	}
+
+	if err := h.certKeyMatch(cr, certData, keyData); err != nil {
+		return fmt.Errorf("failed to match certificate and key %q %q: %s",
+			certPath, keyPath, err)
+	}
+
+	return nil
+}
+
+func (h *Helper) certKeyMatch(cr *cmapi.CertificateRequest, certData, keyData []byte) error {
+	if !bytes.Equal(certData, cr.Status.Certificate) {
+		return fmt.Errorf("certificate at s does not match that in the CertificateRequest %q, exp=%s got=%s",
+			cr.Name, cr.Status.Certificate, certData)
+	}
+
+	cert, err := pki.DecodeX509CertificateBytes(certData)
+	if err != nil {
+		return fmt.Errorf("failed to decode certificate: %s", err)
+	}
+
+	key, err := pki.DecodePrivateKeyBytes(keyData)
+	if err != nil {
+		return fmt.Errorf("failed to parse key data: %s", err)
+	}
+
+	ok, err := pki.PublicKeyMatchesCertificate(key.Public(), cert)
+	if err != nil {
+		return fmt.Errorf("failed to check key matches certificate: %s", err)
+	}
+
+	if !ok {
+		return fmt.Errorf("private key does not match certificate %s\n%s",
+			certData, keyData)
+	}
+
+	return nil
+}
+
+func (h *Helper) readFilePath(namespace, podName, containerName, path string) ([]byte, error) {
+	coreclient, err := corev1client.NewForConfig(h.RestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build core client form rest config: %s", err)
+	}
+
+	log.Infof("helper: reading from file %s:%s:%s:%s",
+		namespace, podName, containerName, path)
+
 	// TODO (@joshvanl): use tar compression
-	req := restClient.Post().
+	req := coreclient.RESTClient().
+		Post().
+		Namespace(namespace).
 		Resource("pods").
 		Name(podName).
-		Namespace(namespace).
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Container: containerName,
-			Command: []string{
-				"cat", certPath,
-			},
-			Stdin:  false,
-			Stdout: true,
-			Stderr: true,
-			TTY:    false,
+			Command:   []string{"cat", path},
+			Stdin:     false,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
 		}, scheme.ParameterCodec)
 
 	exec, err := remotecommand.NewSPDYExecutor(h.RestConfig, "POST", req.URL())
 	if err != nil {
-		return fmt.Errorf("failed to create SPDY executor: %s", err)
+		return nil, err
 	}
-	execOut := &bytes.Buffer{}
-	execErr := &bytes.Buffer{}
 
-	sopt := remotecommand.StreamOptions{
+	execOut, execErr := new(bytes.Buffer), new(bytes.Buffer)
+	err = exec.Stream(remotecommand.StreamOptions{
 		Stdout: execOut,
 		Stderr: execErr,
 		Tty:    false,
-	}
-
-	err = exec.Stream(sopt)
+	})
 	if err != nil {
-		fmt.Errorf("failed to execute stream command: %s", err)
+		return nil, fmt.Errorf("failed to create exec stream: %s", err)
 	}
 
-	return nil
+	if b := execErr.Bytes(); len(b) > 0 {
+		return nil, fmt.Errorf("received output in from StdErr: %s", b)
+	}
+
+	return execOut.Bytes(), nil
 }
 
 func (h *Helper) WaitForPodReady(namespace, name string) error {
