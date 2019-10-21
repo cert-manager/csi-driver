@@ -61,6 +61,12 @@ func (k *Kind) DeployCSIDriver(version string) error {
 		if err := node.LoadImageArchive(r); err != nil {
 			return err
 		}
+
+		err := node.Command("mkdir", "-p", "/tmp/cert-manager-csi").Run()
+		if err != nil {
+			return fmt.Errorf("failed to create directory %q: %s",
+				"/tmp/cert-manager-csi", err)
+		}
 	}
 
 	manifests, err := ioutil.ReadFile(

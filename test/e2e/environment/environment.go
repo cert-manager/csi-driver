@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/kind/pkg/cluster/nodes"
 
 	"github.com/jetstack/cert-manager-csi/test/kind"
 )
@@ -81,4 +82,25 @@ func (e *Environment) KubeConfigPath() string {
 
 func (e *Environment) RootPath() string {
 	return e.rootPath
+}
+
+func (e *Environment) Node(name string) (*nodes.Node, error) {
+	ns, err := e.kind.Nodes()
+	if err != nil {
+		return nil, err
+	}
+
+	var node *nodes.Node
+	for _, n := range ns {
+		if n.Name() == name {
+			node = &n
+			break
+		}
+	}
+
+	if node == nil {
+		return nil, fmt.Errorf("failed to find node %q", name)
+	}
+
+	return node, nil
 }

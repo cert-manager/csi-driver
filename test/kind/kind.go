@@ -18,6 +18,7 @@ import (
 	configv1alpha3 "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cluster/create"
+	"sigs.k8s.io/kind/pkg/cluster/nodes"
 )
 
 const (
@@ -96,6 +97,19 @@ func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error
 	return k, nil
 }
 
+func DeleteFromName(name string) error {
+	ok, err := cluster.IsKnown(name)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return fmt.Errorf("cluster unknown: %q", name)
+	}
+
+	return cluster.NewContext(name).Delete()
+}
+
 func (k *Kind) Destroy() error {
 	log.Infof("kind: destroying cluster %q", k.ctx.Name())
 	if err := k.ctx.Delete(); err != nil {
@@ -117,6 +131,10 @@ func (k *Kind) KubeConfigPath() string {
 
 func (k *Kind) RestConfig() *rest.Config {
 	return k.restConfig
+}
+
+func (k *Kind) Nodes() ([]nodes.Node, error) {
+	return k.ctx.ListNodes()
 }
 
 func (k *Kind) errDestroy(err error) error {

@@ -115,6 +115,6 @@ spec:
             type: Directory
           name: registration-dir
         - hostPath:
-            path: /tmp # TODO: Fix this path
+            path: /tmp/cert-manager-csi # TODO: Fix this path
             type: Directory
           name: csi-data-dir

@@ -100,7 +100,8 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 			cr, testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 
-		//By("Ensure the certificate key pair and metadata file exists in the local data directory and matches that in the CertificateRequest")
-		//Expect(err).NotTo(HaveOccurred())
+		By("Ensure the certificate key pair and metadata file exists in the local data directory and matches that in the CertificateRequest")
+		err = f.Helper().MetaDataCertificateKeyExistInLocalPath(cr, testPod, testVolume.CSI.VolumeAttributes, "tls", "/tmp/cert-manager-csi")
+		Expect(err).NotTo(HaveOccurred())
 	})
 })

@@ -1,75 +1,102 @@
 package helper
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
+	"reflect"
+	"strconv"
+	"strings"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/kind/pkg/cluster/nodes"
 
+	csidefaults "github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
 func (h *Helper) MetaDataCertificateKeyExistInLocalPath(cr *cmapi.CertificateRequest,
-	pod *corev1.Pod, attr map[string]string, dataDir string) error {
-	volID := util.BuildVolumeName(pod.Name, string(pod.UID))
-	name := util.BuildVolumeName(pod.Name, volID)
-	dirPath := filepath.Join(dataDir, name)
+	pod *corev1.Pod, attr map[string]string, podMountPath, dataDir string) error {
+	volID := util.BuildVolumeID(string(pod.UID), podMountPath)
+	volName := util.BuildVolumeName(pod.Name, volID)
+	dirPath := filepath.Join(dataDir, volName)
 
-	if err := h.matchDirPerm(dirPath, true, 0700); err != nil {
+	// set defaults and csi storage attrubutes from pod
+	attr, err := csidefaults.SetDefaultAttributes(attr)
+	if err != nil {
+		return fmt.Errorf("failed to set default volume attributes: %s", err)
+	}
+
+	attr["csi.storage.k8s.io/ephemeral"] = "true"
+	attr["csi.storage.k8s.io/pod.name"] = pod.Name
+	attr["csi.storage.k8s.io/pod.namespace"] = pod.Namespace
+	attr["csi.storage.k8s.io/pod.uid"] = string(pod.UID)
+	attr["csi.storage.k8s.io/serviceAccount.name"] = pod.Spec.ServiceAccountName
+
+	node, err := h.cfg.Environment.Node(pod.Spec.NodeName)
+	if err != nil {
+		return err
+	}
+
+	if err := h.matchFilePerm(node, dirPath, 700); err != nil {
 		return err
 	}
 
 	metaPath := filepath.Join(dirPath, "metadata.json")
-	if err := h.matchDirPerm(metaPath, false, 0600); err != nil {
+	if err := h.matchFilePerm(node, metaPath, 600); err != nil {
 		return err
 	}
 
-	metaDataData, err := ioutil.ReadFile(metaPath)
+	metaDataData, err := h.readFile(node, metaPath)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s\n", metaDataData)
+	expMetaData := &csiapi.MetaData{
+		ID:   volID,
+		Name: volName,
+		Size: 102400,
+		Path: filepath.Join("/csi-data-dir", volName),
+		TargetPath: fmt.Sprintf("/var/lib/kubelet/pods/%s/volumes/kubernetes.io~csi/%s/mount",
+			string(pod.UID), podMountPath),
+		Attributes: attr,
+	}
 
-	// TODO: check that both attributes and metadata file match <<<<
+	gotMetaData := new(csiapi.MetaData)
+	if err := json.Unmarshal(metaDataData, gotMetaData); err != nil {
+		return fmt.Errorf("failed to unmarshal metadata: %s", err)
+	}
 
-	//metaData := new(csiapi.MetaData)
-	//if err := json.Unmarshal(metaDataData, metaData); err != nil {
-	//	return fmt.Errorf("failed to unmarshal metadata file for %q: %s", metaPath, err)
-	//}
+	if err := h.metaDataMatches(expMetaData, gotMetaData); err != nil {
+		return fmt.Errorf("bad metadata at %q: %s", metaPath, err)
+	}
 
 	dataDirPath := filepath.Join(dirPath, "data")
-	if err := h.matchDirPerm(dataDirPath, true, 0700); err != nil {
+	if err := h.matchFilePerm(node, dataDirPath, 744); err != nil {
 		return err
 	}
 
-	certPath, ok := attr[csiapi.CertFileKey]
-	if !ok {
-		certPath = "crt.pem"
-	}
+	certPath := attr[csiapi.CertFileKey]
 	certPath = filepath.Join(dataDirPath, certPath)
-	if err := h.matchDirPerm(certPath, false, 0600); err != nil {
+	if err := h.matchFilePerm(node, certPath, 600); err != nil {
 		return err
 	}
 
-	keyPath, ok := attr[csiapi.KeyFileKey]
-	if !ok {
-		keyPath = "key.pem"
-	}
+	keyPath := attr[csiapi.KeyFileKey]
 	keyPath = filepath.Join(dataDirPath, keyPath)
-	if err := h.matchDirPerm(keyPath, false, 0600); err != nil {
+	if err := h.matchFilePerm(node, keyPath, 600); err != nil {
 		return err
 	}
 
-	certData, err := ioutil.ReadFile(certPath)
+	certData, err := h.readFile(node, certPath)
 	if err != nil {
 		return err
 	}
-	keyData, err := ioutil.ReadFile(keyPath)
+	keyData, err := h.readFile(node, keyPath)
 	if err != nil {
 		return err
 	}
@@ -77,18 +104,94 @@ func (h *Helper) MetaDataCertificateKeyExistInLocalPath(cr *cmapi.CertificateReq
 	return h.certKeyMatch(cr, certData, keyData)
 }
 
-func (h *Helper) matchDirPerm(path string, isDir bool, perm os.FileMode) error {
-	stat, err := os.Stat(path)
-	if err != nil {
-		return fmt.Errorf("failed to get stat of %q: %s", path, err)
+func (h *Helper) readFile(node *nodes.Node, path string) ([]byte, error) {
+	// TODO (@joshvanl): use tar compression
+	execOut, execErr := new(bytes.Buffer), new(bytes.Buffer)
+	cmd := node.Command("cat", path)
+	cmd.SetStdout(execOut)
+	cmd.SetStderr(execErr)
+
+	if err := cmd.Run(); err != nil {
+		log.Errorf("helper: cat %q failed: %s", path, execErr.String())
+		return nil, err
 	}
 
-	if stat.IsDir() != isDir {
-		return fmt.Errorf("expected is directory %q == %t, got %t", path, stat.IsDir(), isDir)
+	return execOut.Bytes(), nil
+}
+
+func (h *Helper) matchFilePerm(node *nodes.Node, path string, perm int) error {
+	execOut, execErr := new(bytes.Buffer), new(bytes.Buffer)
+
+	cmd := node.Command("stat", "-c", "\"%a\"", path)
+	cmd.SetStdout(execOut)
+	cmd.SetStderr(execErr)
+
+	if err := cmd.Run(); err != nil {
+		log.Errorf("helper: stat failed: %s", execErr.String())
+		pathD := filepath.Dir(path)
+
+		cmd := node.Command("ls", "-la", pathD)
+		cmd.SetStdout(execOut)
+		if lErr := cmd.Run(); lErr == nil {
+			log.Infof("helper: ls -la %q: %s\n",
+				pathD, execOut.String())
+		}
+
+		return fmt.Errorf("failed to get stat of file %q: %s",
+			path, err)
 	}
-	if stat.Mode() != perm {
-		return fmt.Errorf("expected %q to have permissions %s but got %s",
-			path, perm, stat.Mode())
+
+	uStr := strings.ReplaceAll(
+		strings.TrimSpace(execOut.String()), `"`, "")
+	u, err := strconv.ParseUint(uStr, 10, 32)
+	if err != nil {
+		return err
+	}
+
+	if uint32(u) != uint32(perm) {
+		return fmt.Errorf("expected %q to have permissions %v but got %v",
+			path, uint32(perm), uint32(u))
+	}
+
+	return nil
+}
+
+func (h *Helper) metaDataMatches(exp, got *csiapi.MetaData) error {
+	var errs []string
+
+	if exp.ID != got.ID {
+		errs = append(errs, fmt.Sprintf("miss-match id, exp=%s got=%s",
+			exp.ID, got.ID))
+	}
+
+	if exp.Name != got.Name {
+		errs = append(errs, fmt.Sprintf("miss-match name, exp=%s got=%s",
+			exp.Name, got.Name))
+	}
+
+	if exp.Path != got.Path {
+		errs = append(errs, fmt.Sprintf("miss-match path, exp=%s got=%s",
+			exp.Path, got.Path))
+	}
+
+	if exp.Size != got.Size {
+		errs = append(errs, fmt.Sprintf("miss-match size, exp=%d got=%d",
+			exp.Size, got.Size))
+	}
+
+	if exp.TargetPath != got.TargetPath {
+		errs = append(errs, fmt.Sprintf("miss-match targetPath, exp=%s got=%s",
+			exp.TargetPath, got.TargetPath))
+	}
+
+	if !reflect.DeepEqual(exp.Attributes, got.Attributes) {
+		errs = append(errs, fmt.Sprintf("miss-match attributes, exp=%s got=%s",
+			exp.Attributes, got.Attributes))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("unexpected metadata: %s",
+			strings.Join(errs, ", "))
 	}
 
 	return nil

@@ -40,6 +40,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	cfg.KubeConfigPath = env.KubeConfigPath()
 	cfg.Kubectl = filepath.Join(env.RootPath(), "bin", "kubectl")
 	cfg.RepoRoot = env.RootPath()
+	cfg.Environment = env
 
 	if err := framework.DefaultConfig.Validate(); err != nil {
 		framework.Failf("Invalid test config: %v", err)

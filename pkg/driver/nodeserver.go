@@ -23,16 +23,10 @@ import (
 
 const (
 	kib int64 = 1024
-	mib int64 = kib * 1024
 
-	maxStorageCapacity = 10 * mib
+	maxStorageCapacity = 100 * kib
 
-	deviceID = "deviceID"
-
-	csiPodNameKey      = "csi.storage.k8s.io/pod.name"
-	csiPodNamespaceKey = "csi.storage.k8s.io/pod.namespace"
-
-	csiEphemeralKey = "csi.storage.k8s.io/ephemeral"
+	deviceIDKey = "deviceID"
 )
 
 type NodeServer struct {
@@ -139,13 +133,8 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
 
-	deviceId := ""
-	if req.GetPublishContext() != nil {
-		deviceId = req.GetPublishContext()[deviceID]
-	}
-
-	glog.V(4).Infof("node: target:%v device:%v readonly:%v volumeId:%v attributes:%v",
-		targetPath, deviceId, true, volID, attr)
+	glog.V(4).Infof("node: publish volume request ~ target:%v volumeId:%v attributes:%v",
+		targetPath, volID, attr)
 
 	if err := util.Mount(mountPath, targetPath, []string{"ro"}); err != nil {
 		if rmErr := os.RemoveAll(vol.Path); rmErr != nil && !os.IsNotExist(rmErr) {

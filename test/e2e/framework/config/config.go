@@ -20,6 +20,8 @@ import (
 	"errors"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+
+	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
 )
 
 type Config struct {
@@ -34,6 +36,8 @@ type Config struct {
 	// RepoRoot is used as the base path for any parts of the framework that
 	// require access to repo files, such as Helm charts and test fixtures.
 	RepoRoot string
+
+	Environment *environment.Environment
 }
 
 func (c *Config) Validate() error {
