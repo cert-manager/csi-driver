@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -19,7 +18,7 @@ import (
 	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
-func (h *Helper) MetaDataCertificateKeyExistInLocalPath(cr *cmapi.CertificateRequest,
+func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequest,
 	pod *corev1.Pod, attr map[string]string, podMountPath, dataDir string) error {
 	volID := util.BuildVolumeID(string(pod.UID), podMountPath)
 	volName := util.BuildVolumeName(pod.Name, volID)
@@ -151,47 +150,6 @@ func (h *Helper) matchFilePerm(node *nodes.Node, path string, perm int) error {
 	if uint32(u) != uint32(perm) {
 		return fmt.Errorf("expected %q to have permissions %v but got %v",
 			path, uint32(perm), uint32(u))
-	}
-
-	return nil
-}
-
-func (h *Helper) metaDataMatches(exp, got *csiapi.MetaData) error {
-	var errs []string
-
-	if exp.ID != got.ID {
-		errs = append(errs, fmt.Sprintf("miss-match id, exp=%s got=%s",
-			exp.ID, got.ID))
-	}
-
-	if exp.Name != got.Name {
-		errs = append(errs, fmt.Sprintf("miss-match name, exp=%s got=%s",
-			exp.Name, got.Name))
-	}
-
-	if exp.Path != got.Path {
-		errs = append(errs, fmt.Sprintf("miss-match path, exp=%s got=%s",
-			exp.Path, got.Path))
-	}
-
-	if exp.Size != got.Size {
-		errs = append(errs, fmt.Sprintf("miss-match size, exp=%d got=%d",
-			exp.Size, got.Size))
-	}
-
-	if exp.TargetPath != got.TargetPath {
-		errs = append(errs, fmt.Sprintf("miss-match targetPath, exp=%s got=%s",
-			exp.TargetPath, got.TargetPath))
-	}
-
-	if !reflect.DeepEqual(exp.Attributes, got.Attributes) {
-		errs = append(errs, fmt.Sprintf("miss-match attributes, exp=%s got=%s",
-			exp.Attributes, got.Attributes))
-	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("unexpected metadata: %s",
-			strings.Join(errs, ", "))
 	}
 
 	return nil
