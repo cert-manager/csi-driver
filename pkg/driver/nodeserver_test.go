@@ -9,7 +9,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 //func TestNodePublishVolume(t *testing.T) {
@@ -58,8 +58,8 @@ func TestValidateNodeServerAttributes(t *testing.T) {
 				VolumeId:   "target-path",
 				TargetPath: "test-namespace",
 				VolumeContext: map[string]string{
-					csiapi.CSIPodNameKey:         "test-pod",
-					csiapi.CSIPodNamespaceKey:    "test-pod",
+					csiapi.CSIPodNameKey:           "test-pod",
+					csiapi.CSIPodNamespaceKey:      "test-pod",
 					"csi.storage.k8s.io/ephemeral": "false",
 				},
 				VolumeCapability: &csi.VolumeCapability{},
@@ -176,8 +176,8 @@ func TestCreateDeleteVolume(t *testing.T) {
 	id := "test-id"
 	targetPath := "test-target-path"
 	attr := map[string]string{
-		csiapi.CSIPodNameKey: "test-pod",
-		csiapi.NamespaceKey:  "test-namespace",
+		csiapi.CSIPodNameKey:      "test-pod",
+		csiapi.CSIPodNamespaceKey: "test-namespace",
 	}
 
 	vol, err := ns.createVolume(id, targetPath, attr)
@@ -186,7 +186,7 @@ func TestCreateDeleteVolume(t *testing.T) {
 		return
 	}
 
-	path := filepath.Join(dir, "cert-manager-csi-test-namespace-test-pod-test-id")
+	path := filepath.Join(dir, "cert-manager-csi-test-pod-test-id")
 
 	t.Logf("expecting path: %s", path)
 

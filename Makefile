@@ -10,7 +10,7 @@ build: ## build cert-manager-csi
 	GO111MODULE=on CGO_ENABLED=0 go build -v -o ./bin/cert-manager-csi ./cmd/.
 
 test: ## offline test cert-manager-csi
-	go test -v ./...
+	go test -v ./pkg/...
 
 image: build ## build cert-manager-csi docker image
 	docker build -t gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1 .

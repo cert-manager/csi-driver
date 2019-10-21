@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 func TestValidateCertManagerAttributes(t *testing.T) {
