@@ -27,7 +27,7 @@ func (h *Helper) CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, att
 	}
 
 	issuerKind, ok := attr[csiapi.IssuerKindKey]
-	if !ok {
+	if !ok || len(issuerKind) == 0 {
 		issuerKind = "Issuer"
 	}
 	if issuerKind != cr.Spec.IssuerRef.Kind {
@@ -36,7 +36,7 @@ func (h *Helper) CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, att
 	}
 
 	issuerGroup, ok := attr[csiapi.IssuerGroupKey]
-	if !ok {
+	if !ok || len(issuerGroup) == 0 {
 		issuerGroup = "cert-manager.io"
 	}
 	if issuerGroup != cr.Spec.IssuerRef.Group {

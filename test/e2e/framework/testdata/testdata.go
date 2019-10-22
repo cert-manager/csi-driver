@@ -3,6 +3,7 @@ package testdata
 import (
 	"errors"
 	"math/rand"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -14,7 +15,7 @@ type issuer struct {
 }
 
 type TestData struct {
-	*rand.Rand
+	r       *rand.Rand
 	issuers []issuer
 }
 
@@ -33,22 +34,24 @@ func New(seed int64, issuers, clusterIssuers []string) (*TestData, error) {
 	}
 
 	return &TestData{
-		Rand:    rand.New(rand.NewSource(seed)),
+		r:       rand.New(rand.NewSource(seed)),
 		issuers: unIssuers,
 	}, nil
 }
 
 func (t *TestData) RandomVolumeAttributes() map[string]string {
-	var attr map[string]string
+	attr := make(map[string]string)
 
 	issName, issKind, issGroup := t.Issuer()
-	attr["issuer-name"] = issName
+	attr["csi.cert-manager.io/issuer-name"] = issName
+	// cluster issuers have to have the kind set since "Issuer" is the default
 	if issKind == "ClusterIssuer" {
-		attr["issuer-kind"] = issKind
+		attr["csi.cert-manager.io/issuer-kind"] = issKind
 	} else {
 		t.maybeAddAttribute(attr, "issuer-kind", issKind)
 	}
 
+	// TODO (@joshvanl): add cert and key random path
 	for _, a := range []struct {
 		k, v string
 	}{
@@ -66,17 +69,30 @@ func (t *TestData) RandomVolumeAttributes() map[string]string {
 	return attr
 }
 
-func (t *TestData) RandNameString() string {
+func (t *TestData) RandomFilePath() string {
+	dirs := make([]string, t.r.Int()%5)
+	for i := range dirs {
+		dirs[i] = t.RandomName()
+	}
+
+	return "/" + filepath.Join(dirs...)
+}
+
+func (t *TestData) RandomName() string {
 	b := make([]rune, 6)
 	for i := range b {
-		b[i] = letterRunes[t.Intn(len(letterRunes))]
+		b[i] = letterRunes[t.r.Intn(len(letterRunes))]
 	}
 
 	return string(b)
 }
 
+func (t *TestData) Int(n int) int {
+	return t.r.Int() % n
+}
+
 func (t *TestData) maybeAddAttribute(attr map[string]string, k, v string) {
-	if t.Int()%2 == 0 {
+	if t.r.Int()%4 == 0 {
 		return
 	}
 
@@ -84,11 +100,11 @@ func (t *TestData) maybeAddAttribute(attr map[string]string, k, v string) {
 }
 
 func (t *TestData) Issuer() (name, kind, group string) {
-	n := t.Int() % len(t.issuers)
+	n := t.r.Int() % len(t.issuers)
 	name, kind = t.issuers[n].name, t.issuers[n].kind
 
 	if kind == "Issuer" {
-		if t.Int()%2 == 0 {
+		if t.r.Int()%2 == 0 {
 			kind = ""
 		}
 	}
@@ -109,25 +125,20 @@ func (t *TestData) IPSANs() string {
 }
 
 func (t *TestData) Duration() string {
-	if t.Int()%2 == 0 {
+	if t.r.Int()%2 == 0 {
 		return ""
 	}
 
-	return time.Duration(t.Int63()).String()
+	return time.Duration(t.r.Int63()).String()
 }
 
 func (t *TestData) CommonName() string {
 	cns := commonNameData()
-	n := t.Int()%len(cns) + 1
-	if n == len(cns) {
-		return ""
-	}
-
-	return cns[n]
+	return cns[t.r.Int()%len(cns)]
 }
 
 func (t *TestData) IsCA() string {
-	switch t.Int() % 3 {
+	switch t.r.Int() % 3 {
 	case 0:
 		return ""
 	case 1:
@@ -140,10 +151,10 @@ func (t *TestData) IsCA() string {
 // Return random subset of given list. Can be empty.
 func (t *TestData) randSubset(set []string) string {
 	var out []string
-	n := t.Int() % len(set)
+	n := t.r.Int() % len(set)
 
 	for i := 0; i < n; i++ {
-		r := t.Int() % len(set)
+		r := t.r.Int() % len(set)
 		out = append(out, set[r])
 		set = append(set[:r], set[i+1:]...)
 	}
@@ -177,6 +188,7 @@ func ipSANsData() []string {
 
 func commonNameData() []string {
 	return []string{
+		"",
 		"foo-bar",
 		"bla.bla",
 		"boo",

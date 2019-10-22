@@ -1,18 +1,23 @@
 package framework
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	crclientset "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubectl/pkg/scheme"
 
+	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework/config"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework/helper"
+	"github.com/jetstack/cert-manager-csi/test/e2e/framework/testdata"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework/util"
 )
 
@@ -38,8 +43,10 @@ type Framework struct {
 	// should abort, the AfterSuite hook should run all Cleanup actions.
 	cleanupHandle CleanupActionHandle
 
-	// The self signed issuer to reference
-	Issuer cmmeta.ObjectReference
+	testdata *testdata.TestData
+
+	// The CA Issuer and ClusterIssuer to reference
+	Issuer, ClusterIssuer cmmeta.ObjectReference
 
 	helper *helper.Helper
 }
@@ -89,6 +96,15 @@ func (f *Framework) BeforeEach() {
 	f.Issuer, err = f.CreateCAIssuer(f.Namespace.Name, f.BaseName)
 	Expect(err).NotTo(HaveOccurred())
 
+	By("Creating CA ClusterIssuer")
+	f.ClusterIssuer, err = f.CreateCAClusterIssuer(f.BaseName)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Creating test data generator")
+	f.testdata, err = testdata.New(time.Now().Unix(),
+		[]string{f.Issuer.Name}, []string{f.ClusterIssuer.Name})
+	Expect(err).NotTo(HaveOccurred())
+
 	f.helper.RestConfig = kubeConfig
 	f.helper.CMClient = f.CertManagerClientSet
 	f.helper.KubeClient = f.KubeClientSet
@@ -113,6 +129,73 @@ func (f *Framework) AfterEach() {
 
 func (f *Framework) Helper() *helper.Helper {
 	return f.helper
+}
+
+func (f *Framework) RandomPod() *corev1.Pod {
+	volumes := make([]corev1.Volume, f.testdata.Int(5))
+
+	for i := range volumes {
+		volumes[i] = corev1.Volume{
+			Name: f.testdata.RandomName(),
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver:           csi.GroupName,
+					VolumeAttributes: f.testdata.RandomVolumeAttributes(),
+				},
+			},
+		}
+	}
+
+	containers := make([]corev1.Container, f.testdata.Int(4)+1)
+	for i := range containers {
+		containers[i] = corev1.Container{
+			Name:    f.testdata.RandomName(),
+			Image:   "busybox",
+			Command: []string{"sleep", "10000"},
+		}
+
+		// Set a random number of volumes taken from the pool of volume. Can and
+		// will mount the same volume multiple times.
+		if len(volumes) > 0 {
+			for j := 0; j < f.testdata.Int(len(volumes)); j++ {
+				containers[i].VolumeMounts = append(containers[i].VolumeMounts,
+					corev1.VolumeMount{
+						Name: volumes[f.testdata.Int(len(volumes))].Name,
+					},
+				)
+			}
+
+			for j := range containers[i].VolumeMounts {
+				var hasRoot bool
+				randomFile := f.testdata.RandomFilePath()
+
+				// only one single root mount per volume
+				if randomFile == "/" {
+					if hasRoot {
+						j--
+						continue
+					} else {
+						hasRoot = true
+					}
+				}
+
+				By(randomFile)
+
+				containers[i].VolumeMounts[j].MountPath = randomFile
+			}
+		}
+	}
+
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: f.BaseName + "-",
+			Namespace:    f.Namespace.Name,
+		},
+		Spec: corev1.PodSpec{
+			Containers: containers,
+			Volumes:    volumes,
+		},
+	}
 }
 
 func CasesDescribe(text string, body func()) bool {

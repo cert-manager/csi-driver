@@ -30,8 +30,8 @@ func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {
 	return attr, nil
 }
 
-func setDefaultIfEmpty(attr map[string]string, k, s string) {
+func setDefaultIfEmpty(attr map[string]string, k, v string) {
 	if len(attr[string(k)]) == 0 {
-		attr[string(k)] = s
+		attr[string(k)] = v
 	}
 }

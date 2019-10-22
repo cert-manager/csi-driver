@@ -100,12 +100,12 @@ func (f *Framework) CreateKubeNamespace(baseName string) (*corev1.Namespace, err
 	return f.KubeClientSet.CoreV1().Namespaces().Create(ns)
 }
 
-// CreateSelfSignedIssuer creates a selfsigned issuer used for creating certificates
+// CreateCAIssuer creates a CA issuer used for creating certificates
 func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectReference, error) {
 	sec, err := f.KubeClientSet.CoreV1().Secrets(namespace).Create(&corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      baseName,
-			Namespace: namespace,
+			GenerateName: baseName + "-",
+			Namespace:    namespace,
 		},
 		Data: map[string][]byte{
 			corev1.TLSCertKey:       []byte(rootCert),
@@ -118,8 +118,47 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 
 	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().Issuers(namespace).Create(&cmapi.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ca-issuer",
-			Namespace: namespace,
+			GenerateName: "ca-issuer-",
+			Namespace:    namespace,
+		},
+		Spec: cmapi.IssuerSpec{
+			IssuerConfig: cmapi.IssuerConfig{
+				CA: &cmapi.CAIssuer{
+					SecretName: sec.Name,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return cmmeta.ObjectReference{}, err
+	}
+
+	return cmmeta.ObjectReference{
+		Name:  issuer.Name,
+		Kind:  issuer.Kind,
+		Group: cm.GroupName,
+	}, nil
+}
+
+// CreateCAClusterIssuer creates a CA cluster issuer used for creating certificates
+func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReference, error) {
+	sec, err := f.KubeClientSet.CoreV1().Secrets("kube-system").Create(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: baseName + "-",
+			Namespace:    "kube-system",
+		},
+		Data: map[string][]byte{
+			corev1.TLSCertKey:       []byte(rootCert),
+			corev1.TLSPrivateKeyKey: []byte(rootKey),
+		},
+	})
+	if err != nil {
+		return cmmeta.ObjectReference{}, err
+	}
+
+	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().ClusterIssuers().Create(&cmapi.ClusterIssuer{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "ca-clusterissuer-",
 		},
 		Spec: cmapi.IssuerSpec{
 			IssuerConfig: cmapi.IssuerConfig{
