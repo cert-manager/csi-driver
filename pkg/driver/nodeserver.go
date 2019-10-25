@@ -101,7 +101,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	if s, ok := attr[csiapi.DisableAutoRenewKey]; !ok || s != "true" {
-		if err := ns.renewer.WatchFile(vol, cert.NotAfter); err != nil {
+		if err := ns.renewer.WatchCert(vol, cert.NotAfter); err != nil {
 			return nil, fmt.Errorf("failed to watch file %s:%s:%s: %s",
 				attr[csiapi.CSIPodNamespaceKey], attr[csiapi.CSIPodNameKey], vol.ID, err)
 		}

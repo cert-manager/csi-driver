@@ -1,6 +1,7 @@
 package renew
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
-	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
 )
 
 type Renewer struct {
@@ -24,26 +24,59 @@ type Renewer struct {
 	watchingVols map[string]chan struct{}
 	muVol        sync.RWMutex
 
-	cm *certmanager.CertManager
+	renewFunc RenewFunc
 }
 
-func New(dataDir string, cm *certmanager.CertManager) *Renewer {
+type certToWatch struct {
+	base     string
+	metaData *csiapi.MetaData
+	notAfter time.Time
+}
+
+type RenewFunc func(vol *csiapi.MetaData) (*x509.Certificate, error)
+
+func New(dataDir string, renewFunc RenewFunc) *Renewer {
 	return &Renewer{
 		dataDir:      dataDir,
 		watchingVols: make(map[string]chan struct{}),
-		cm:           cm,
+		renewFunc:    renewFunc,
 	}
 }
 
 func (r *Renewer) Discover() error {
-	glog.V(4).Infof("renewer: starting discovery on %q", r.dataDir)
+	glog.Infof("renewer: starting discovery on %q", r.dataDir)
 
-	files, err := ioutil.ReadDir(r.dataDir)
+	certsToWatch, err := r.walkDir()
 	if err != nil {
-		return fmt.Errorf("failed to read data dir: %s", err)
+		return err
 	}
 
 	var errs []string
+	for _, f := range certsToWatch {
+		glog.Infof("renewer: watching new volume for certificate renewal %q", f.base)
+
+		if err := r.WatchCert(f.metaData, f.notAfter); err != nil {
+			errs = append(errs, fmt.Sprintf("%q: %s",
+				f.metaData.Name, err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to start watching certs: %s",
+			strings.Join(errs, ", "))
+	}
+
+	return nil
+}
+
+func (r *Renewer) walkDir() ([]certToWatch, error) {
+	files, err := ioutil.ReadDir(r.dataDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read data dir: %s", err)
+	}
+
+	var errs []string
+	var certsToWatch []certToWatch
 	for _, f := range files {
 		fPath := filepath.Join(r.dataDir, f.Name())
 
@@ -66,7 +99,9 @@ func (r *Renewer) Discover() error {
 				continue
 			}
 
-			return fmt.Errorf("failed to read metadata file: %s", err)
+			errs = append(errs,
+				fmt.Sprintf("failed to read metadata file: %s", err))
+			continue
 		}
 
 		metaData := new(csiapi.MetaData)
@@ -102,22 +137,21 @@ func (r *Renewer) Discover() error {
 			continue
 		}
 
-		glog.Infof("renewer: watching new volume for certificate renewal %q", base)
-
-		if err := r.WatchFile(metaData, cert.NotAfter); err != nil {
-			errs = append(errs, fmt.Sprintf("%q: %s",
-				f.Name(), err))
-		}
+		certsToWatch = append(certsToWatch, certToWatch{
+			base:     base,
+			metaData: metaData,
+			notAfter: cert.NotAfter,
+		})
 	}
 
 	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ", "))
+		return nil, errors.New(strings.Join(errs, ", "))
 	}
 
-	return nil
+	return certsToWatch, nil
 }
 
-func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error {
+func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error {
 	r.muVol.Lock()
 	defer r.muVol.Unlock()
 
@@ -139,6 +173,7 @@ func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error
 	glog.Infof("renewer: starting to watch certificate for renewal: %q", metaData.Name)
 
 	renewalTime := notAfter.Add(-renewBefore)
+
 	timer := time.NewTimer(time.Until(renewalTime))
 
 	go func() {
@@ -147,14 +182,14 @@ func (r *Renewer) WatchFile(metaData *csiapi.MetaData, notAfter time.Time) error
 			timer.Stop()
 			return
 		case <-timer.C:
-			cert, err := r.cm.RenewCertificate(metaData)
+			cert, err := r.renewFunc(metaData)
 			if err != nil {
 				glog.Errorf("renewer: failed to renew certificate %q: %s",
 					metaData.Name, err)
 				return
 			}
 
-			if err := r.WatchFile(metaData, cert.NotBefore); err != nil {
+			if err := r.WatchCert(metaData, cert.NotBefore); err != nil {
 				glog.Errorf("renewer: failed to watch certificate %q: %s",
 					metaData.Name, err)
 			}
