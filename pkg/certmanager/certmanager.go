@@ -46,96 +46,91 @@ func New() (*CertManager, error) {
 
 func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
 	attr := vol.Attributes
-
-	uris, err := util.ParseURIs(attr[csiapi.URISANsKey])
-	if err != nil {
-		return nil, err
-	}
-
-	ips := util.ParseIPAddresses(attr[csiapi.IPSANsKey])
-
-	dnsNames := strings.Split(attr[csiapi.DNSNamesKey], ",")
-	commonName := attr[csiapi.CommonNameKey]
-
-	duration := cmapi.DefaultCertificateDuration
-	if durStr, ok := attr[csiapi.DurationKey]; ok {
-		duration, err = time.ParseDuration(durStr)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	isCA := false
-	if isCAStr, ok := attr[csiapi.IsCAKey]; ok {
-		switch strings.ToLower(isCAStr) {
-		case "true":
-			isCA = true
-		case "false":
-			isCA = false
-		}
-	}
-
-	csr := &x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: commonName,
-		},
-		DNSNames:           dnsNames,
-		IPAddresses:        ips,
-		URIs:               uris,
-		PublicKey:          keyBundle.PrivateKey.Public(),
-		PublicKeyAlgorithm: keyBundle.PublicKeyAlgorithm,
-		SignatureAlgorithm: keyBundle.SignatureAlgorithm,
-	}
-
-	csrPEM, err := util.EncodeCSR(csr, keyBundle.PrivateKey)
-	if err != nil {
-		return nil, err
-	}
-
 	namespace := attr[csiapi.CSIPodNamespaceKey]
-	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
-	if err != nil {
-		if !k8sErrors.IsNotFound(err) {
-			return nil, err
-		}
-	} else {
-		glog.Infof("cert-manager: deleting existing CertificateRequest %s", vol.Name)
 
-		// exists so delete old
-		// TODO (@joshvanl): change this to matches spec
-		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
+	// Check if a certificate request exists and matches the current volume spec
+	ok, err := c.checkExistingCertificateRequest(vol)
+	if err != nil {
+		return nil, err
+	}
+
+	// Not ok so create a new certificate request
+	if !ok {
+		uris, err := util.ParseURIs(attr[csiapi.URISANsKey])
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      vol.Name,
-			Namespace: namespace,
-		},
-		Spec: cmapi.CertificateRequestSpec{
-			CSRPEM: csrPEM,
-			IsCA:   isCA,
-			Duration: &metav1.Duration{
-				Duration: duration,
+		ips := util.ParseIPAddresses(attr[csiapi.IPSANsKey])
+
+		dnsNames := strings.Split(attr[csiapi.DNSNamesKey], ",")
+		commonName := attr[csiapi.CommonNameKey]
+
+		duration := cmapi.DefaultCertificateDuration
+		if durStr, ok := attr[csiapi.DurationKey]; ok {
+			duration, err = time.ParseDuration(durStr)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		isCA := false
+		if isCAStr, ok := attr[csiapi.IsCAKey]; ok {
+			switch strings.ToLower(isCAStr) {
+			case "true":
+				isCA = true
+			case "false":
+				isCA = false
+			}
+		}
+
+		csr := &x509.CertificateRequest{
+			Subject: pkix.Name{
+				CommonName: commonName,
 			},
-			IssuerRef: cmmeta.ObjectReference{
-				Name:  attr[csiapi.IssuerNameKey],
-				Kind:  attr[csiapi.IssuerKindKey],
-				Group: attr[csiapi.IssuerGroupKey],
+			DNSNames:           dnsNames,
+			IPAddresses:        ips,
+			URIs:               uris,
+			PublicKey:          keyBundle.PrivateKey.Public(),
+			PublicKeyAlgorithm: keyBundle.PublicKeyAlgorithm,
+			SignatureAlgorithm: keyBundle.SignatureAlgorithm,
+		}
+
+		csrPEM, err := util.EncodeCSR(csr, keyBundle.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+		// Build certificate request for volume
+		cr := &cmapi.CertificateRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      vol.Name,
+				Namespace: namespace,
 			},
-		},
+			Spec: cmapi.CertificateRequestSpec{
+				CSRPEM: csrPEM,
+				IsCA:   isCA,
+				Duration: &metav1.Duration{
+					Duration: duration,
+				},
+				IssuerRef: cmmeta.ObjectReference{
+					Name:  attr[csiapi.IssuerNameKey],
+					Kind:  attr[csiapi.IssuerKindKey],
+					Group: attr[csiapi.IssuerGroupKey],
+				},
+			},
+		}
+
+		// if it doesn't exit yet then create it
+		cr, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	glog.Infof("cert-manager: created CertificateRequest %s", vol.Name)
-	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
-	if err != nil {
-		return nil, err
-	}
 
-	glog.Infof("cert-manager: waiting for CertificateRequest to= become ready %s", vol.Name)
-	cr, err = c.waitForCertificateRequestReady(cr.Name, namespace, time.Second*30)
+	glog.Infof("cert-manager: waiting for CertificateRequest to become ready %s", vol.Name)
+	cr, err := c.waitForCertificateRequestReady(vol.Name, namespace, time.Second*30)
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +210,34 @@ func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate,
 	}
 
 	return cert, nil
+}
+
+func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (bool, error) {
+	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
+
+	// get current certificate request
+	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
+	if err != nil {
+		if !k8sErrors.IsNotFound(err) {
+			return false, err
+		}
+
+		// certificate request doesn't exist so create a new one
+		return false, nil
+	}
+
+	// If certificate request doesn't match the volume spec then delete the current one
+	if err := util.CertificateRequestMatchesSpec(cr, vol.Attributes); err != nil {
+		glog.Infof("cert-manager: deleting existing CertificateRequest since it doesn't match spec %s: %s", vol.Name, err)
+		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (c *CertManager) DeleteCertificateRequest(vol *csiapi.MetaData) error {

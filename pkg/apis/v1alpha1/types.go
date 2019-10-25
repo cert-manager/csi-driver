@@ -1,6 +1,5 @@
 package v1alpha1
 
-// TODO (@joshvanl): check for csiapi.DisableAutoRenewKey
 const (
 	MetaDataFileName = "metadata.json"
 )

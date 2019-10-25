@@ -51,7 +51,6 @@ func (t *TestData) RandomVolumeAttributes() map[string]string {
 		t.maybeAddAttribute(attr, "issuer-kind", issKind)
 	}
 
-	// TODO (@joshvanl): add cert and key random path
 	for _, a := range []struct {
 		k, v string
 	}{
@@ -62,6 +61,8 @@ func (t *TestData) RandomVolumeAttributes() map[string]string {
 		{"ip-duration", t.Duration()},
 		{"is-ca", t.IsCA()},
 		{"common-name", t.CommonName()},
+		{"certificate-file", filepath.Join(t.RandomDirPath(), t.RandomName()+".pem")},
+		{"privatekey-file", filepath.Join(t.RandomDirPath(), t.RandomName()+".pem")},
 	} {
 		t.maybeAddAttribute(attr, a.k, a.v)
 	}

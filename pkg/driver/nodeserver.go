@@ -36,8 +36,6 @@ type NodeServer struct {
 	cm      *certmanager.CertManager
 	renewer *renew.Renewer
 
-	// TODO (@joshval): do we really need this arround? We can probably do away
-	// with it
 	volumes map[string]*csiapi.MetaData
 }
 
@@ -171,7 +169,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	}
 
 	// kill the renewal Go routine watching this volume
-	ns.renewer.KillWatcher(vol)
+	ns.renewer.KillWatcher(vol.Name)
 
 	if err := ns.cm.DeleteCertificateRequest(vol); err != nil {
 		return nil, err

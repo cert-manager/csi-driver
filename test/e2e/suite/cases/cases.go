@@ -103,7 +103,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		cr, err := f.Helper().WaitForCertificateRequestReady(f.Namespace.Name, crName, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = f.Helper().CertificateRequestMatchesSpec(cr, testVolume.CSI.VolumeAttributes)
+		err = util.CertificateRequestMatchesSpec(cr, testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the certificate key pair exists in the pod and matches that in the CertificateRequest")
@@ -202,7 +202,7 @@ func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.Cert
 			cr, err := f.Helper().FindCertificateRequestReady(crs, pod, &vol)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = f.Helper().CertificateRequestMatchesSpec(cr, *attributesMap[vol.Name])
+			err = util.CertificateRequestMatchesSpec(cr, *attributesMap[vol.Name])
 			Expect(err).NotTo(HaveOccurred())
 
 			err = f.Helper().CertificateKeyExistInPodPath(f.Namespace.Name, pod.Name, container.Name, vol.MountPath, cr, *attributesMap[vol.Name])

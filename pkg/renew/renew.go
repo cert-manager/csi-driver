@@ -111,7 +111,6 @@ func (r *Renewer) walkDir() ([]certToWatch, error) {
 			continue
 		}
 
-		// TODO (@joshvanl): do we really need to check the key?
 		keyBytes, err := r.readFile(fPath, metaData.Attributes[csiapi.KeyFileKey])
 		if err != nil {
 			errs = append(errs, err.Error())
@@ -199,13 +198,13 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 	return nil
 }
 
-func (r *Renewer) KillWatcher(vol *csiapi.MetaData) {
+func (r *Renewer) KillWatcher(volName string) {
 	r.muVol.RLock()
 	defer r.muVol.RUnlock()
 
-	ch, ok := r.watchingVols[vol.Name]
+	ch, ok := r.watchingVols[volName]
 	if ok {
-		glog.Infof("renewer: killing watcher for %q", vol.Name)
+		glog.Infof("renewer: killing watcher for %q", volName)
 		close(ch)
 	}
 }

@@ -23,8 +23,6 @@ func ValidateAttributes(attr map[string]string) error {
 	errs = filepathBreakout(attr[csiapi.CertFileKey], csiapi.CertFileKey, errs)
 	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
 
-	// TODO (@joshvanl): add better validation for renew before to ensure we
-	// don't go into a crazy renew loop
 	errs = durationParse(attr[csiapi.RenewBeforeKey], csiapi.RenewBeforeKey, errs)
 	errs = boolValue(attr[csiapi.DisableAutoRenewKey], csiapi.DisableAutoRenewKey, errs)
 	errs = boolValue(attr[csiapi.ReusePrivateKey], csiapi.ReusePrivateKey, errs)
