@@ -47,7 +47,7 @@ func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
 		return nil, err
 	}
 
-	renewer := renew.New(dataRoot, cm)
+	renewer := renew.New(dataRoot, cm.RenewCertificate)
 
 	if err := renewer.Discover(); err != nil {
 		glog.Errorf("renewer: %s", err)

@@ -12,40 +12,6 @@ import (
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-//func TestNodePublishVolume(t *testing.T) {
-//	type npvT struct {
-//		req      csi.NodePublishVolumeRequest
-//		expError error
-//	}
-//
-//	dir, err := ioutil.TempDir(os.TempDir(),
-//		"cert-manager-csi-NodePublishVolume")
-//	if err != nil {
-//		t.Error(err)
-//		t.FailNow()
-//	}
-//
-//	for name, test := range tests {
-//		t.Run(name, func(t *testing.T) {
-//			ns := new(NodeServer)
-//			err := ns.validateAttributes(&test.req)
-//			if test.expError == nil {
-//				if err != nil {
-//					t.Errorf("unexpected error, got=%s",
-//						err)
-//				}
-//
-//				return
-//			}
-//
-//			if err == nil || err.Error() != test.expError.Error() {
-//				t.Errorf("unexpected error, exp=%s got=%s",
-//					test.expError, err)
-//			}
-//		})
-//	}
-//}
-
 func TestValidateNodeServerAttributes(t *testing.T) {
 	type vaT struct {
 		req      csi.NodePublishVolumeRequest

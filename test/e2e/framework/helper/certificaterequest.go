@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/jetstack/cert-manager-csi/pkg/util"
 	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -31,13 +33,14 @@ import (
 
 // WaitForCertificateRequestReady waits for the CertificateRequest resource to
 // enter a Ready state.
-func (h *Helper) WaitForCertificateRequestReady(ns, name string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
+func (h *Helper) WaitForCertificateRequestReady(namespace, name string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
 	var cr *cmapi.CertificateRequest
-	err := wait.PollImmediate(time.Second, timeout,
+
+	err := wait.PollImmediate(time.Second/4, timeout,
 		func() (bool, error) {
 			var err error
-			log.Logf("Waiting for CertificateRequest %s to be ready", name)
-			cr, err = h.CMClient.CertmanagerV1alpha2().CertificateRequests(ns).Get(name, metav1.GetOptions{})
+			log.Logf("Waiting for CertificateRequest %s/%s to be ready", namespace, name)
+			cr, err = h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}
@@ -46,7 +49,8 @@ func (h *Helper) WaitForCertificateRequestReady(ns, name string, timeout time.Du
 				Status: cmmeta.ConditionTrue,
 			})
 			if !isReady {
-				log.Logf("Expected CertificateReques to have Ready condition 'true' but it has: %v", cr.Status.Conditions)
+				log.Logf("Expected CertificateRequest %s/%s to have Ready condition 'true' but it has: %v",
+					namespace, name, cr.Status.Conditions)
 				return false, nil
 			}
 			return true, nil
@@ -58,4 +62,28 @@ func (h *Helper) WaitForCertificateRequestReady(ns, name string, timeout time.Du
 	}
 
 	return cr, nil
+}
+
+func (h *Helper) FindCertificateRequestReady(crs []cmapi.CertificateRequest, pod *corev1.Pod, volM *corev1.VolumeMount) (*cmapi.CertificateRequest, error) {
+	crName := util.BuildVolumeName(pod.Name, util.BuildVolumeID(string(pod.GetUID()), volM.Name))
+	cr, err := h.findCertificateRequest(crs, crName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !util.CertificateRequestReady(cr) {
+		return nil, fmt.Errorf("CertificateRequest not ready: %+v", cr)
+	}
+
+	return cr, nil
+}
+
+func (h *Helper) findCertificateRequest(crs []cmapi.CertificateRequest, name string) (*cmapi.CertificateRequest, error) {
+	for _, cr := range crs {
+		if cr.Name == name {
+			return &cr, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find CertificateRequest %q", name)
 }

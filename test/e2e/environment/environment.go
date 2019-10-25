@@ -65,8 +65,10 @@ func Create(masterNodes, workerNodes int) (*Environment, error) {
 }
 
 func (e *Environment) Destory() error {
-	if err := e.kind.Destroy(); err != nil {
-		return err
+	if e.kind != nil {
+		if err := e.kind.Destroy(); err != nil {
+			return err
+		}
 	}
 
 	return nil

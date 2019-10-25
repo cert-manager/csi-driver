@@ -8,7 +8,6 @@ import (
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
-	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager/test/e2e/framework/log"
 )
 
 func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName, mountPath string,
@@ -33,12 +33,12 @@ func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName,
 	}
 	keyPath = filepath.Join(mountPath, keyPath)
 
-	certData, err := h.readFilePath(namespace, podName, containerName, certPath)
+	certData, err := h.readFilePathFromContainer(namespace, podName, containerName, certPath)
 	if err != nil {
 		return fmt.Errorf("failed to read cert data from pod: %s", err)
 	}
 
-	keyData, err := h.readFilePath(namespace, podName, containerName, keyPath)
+	keyData, err := h.readFilePathFromContainer(namespace, podName, containerName, keyPath)
 	if err != nil {
 		return fmt.Errorf("failed to read key data from pod: %s", err)
 	}
@@ -80,13 +80,13 @@ func (h *Helper) certKeyMatch(cr *cmapi.CertificateRequest, certData, keyData []
 	return nil
 }
 
-func (h *Helper) readFilePath(namespace, podName, containerName, path string) ([]byte, error) {
+func (h *Helper) readFilePathFromContainer(namespace, podName, containerName, path string) ([]byte, error) {
 	coreclient, err := corev1client.NewForConfig(h.RestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build core client form rest config: %s", err)
 	}
 
-	log.Infof("helper: reading from file %s:%s:%s:%s",
+	log.Logf("helper: reading from file %s:%s:%s:%s",
 		namespace, podName, containerName, path)
 
 	// TODO (@joshvanl): use tar compression
@@ -117,25 +117,23 @@ func (h *Helper) readFilePath(namespace, podName, containerName, path string) ([
 		Tty:    false,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create exec stream: %s", err)
-	}
-
-	if b := execErr.Bytes(); len(b) > 0 {
-		return nil, fmt.Errorf("received output in from StdErr: %s", b)
+		return nil, fmt.Errorf("failed to create exec stream (%s): %s", execErr.String(), err)
 	}
 
 	return execOut.Bytes(), nil
 }
 
-func (h *Helper) WaitForPodReady(namespace, name string) error {
-	err := wait.PollImmediate(time.Second*5, time.Minute, func() (bool, error) {
+func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) error {
+	log.Logf("Waiting for Pod to become ready %s/%s", namespace, name)
+
+	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
 		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 
 		if pod.Status.Phase != corev1.PodRunning {
-			log.Infof("helper: pod not ready %s:%s %v",
+			log.Logf("helper: pod not ready %s/%s: %v",
 				pod.Namespace, pod.Name, pod.Status.Conditions)
 			return false, nil
 		}

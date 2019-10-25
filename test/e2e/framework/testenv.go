@@ -142,10 +142,10 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 
 // CreateCAClusterIssuer creates a CA cluster issuer used for creating certificates
 func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReference, error) {
-	sec, err := f.KubeClientSet.CoreV1().Secrets("kube-system").Create(&corev1.Secret{
+	sec, err := f.KubeClientSet.CoreV1().Secrets("cert-manager").Create(&corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: baseName + "-",
-			Namespace:    "kube-system",
+			Namespace:    "cert-manager",
 		},
 		Data: map[string][]byte{
 			corev1.TLSCertKey:       []byte(rootCert),

@@ -44,8 +44,8 @@ func (h *Helper) CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, att
 			issuerGroup, cr.Spec.IssuerRef.Group))
 	}
 
-	isCA, ok := attr[csiapi.IsCAKey]
-	if !ok {
+	isCA := attr[csiapi.IsCAKey]
+	if len(isCA) == 0 {
 		isCA = "false"
 	}
 
@@ -53,12 +53,10 @@ func (h *Helper) CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, att
 		errs = append(errs,
 			fmt.Sprintf("isCA value must be 'true', 'false', or '', got %q",
 				isCA))
-	} else {
-		if (isCA == "true" && !cr.Spec.IsCA) || (isCA == "false" && cr.Spec.IsCA) {
-			errs = append(errs,
-				fmt.Sprintf("expected IsCA value to be %s, got %t",
-					isCA, cr.Spec.IsCA))
-		}
+	} else if (isCA == "true" && !cr.Spec.IsCA) || (isCA == "false" && cr.Spec.IsCA) {
+		errs = append(errs,
+			fmt.Sprintf("expected IsCA value to be %s, got %t",
+				isCA, cr.Spec.IsCA))
 	}
 
 	duration, ok := attr[csiapi.DurationKey]

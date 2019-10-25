@@ -69,7 +69,6 @@ func NewFramework(baseName string, cfg *config.Config) *Framework {
 
 func (f *Framework) BeforeEach() {
 	f.helper = helper.NewHelper(f.Config)
-	f.cleanupHandle = AddCleanupAction(f.AfterEach)
 
 	By("Creating a kubernetes client")
 	kubeConfig, err := util.LoadConfig(f.Config.KubeConfigPath)
@@ -121,6 +120,7 @@ func (f *Framework) AfterEach() {
 	By("Deleting test namespace")
 	err := f.DeleteKubeNamespace(f.Namespace.Name)
 	Expect(err).NotTo(HaveOccurred())
+	panic("here")
 
 	By("Waiting for test namespace to no longer exist")
 	err = f.WaitForKubeNamespaceNotExist(f.Namespace.Name)
@@ -132,7 +132,7 @@ func (f *Framework) Helper() *helper.Helper {
 }
 
 func (f *Framework) RandomPod() *corev1.Pod {
-	volumes := make([]corev1.Volume, f.testdata.Int(5))
+	volumes := make([]corev1.Volume, (f.testdata.Int(10))+1)
 
 	for i := range volumes {
 		volumes[i] = corev1.Volume{
@@ -146,7 +146,7 @@ func (f *Framework) RandomPod() *corev1.Pod {
 		}
 	}
 
-	containers := make([]corev1.Container, f.testdata.Int(4)+1)
+	containers := make([]corev1.Container, f.testdata.Int(3)+1)
 	for i := range containers {
 		containers[i] = corev1.Container{
 			Name:    f.testdata.RandomName(),
@@ -156,33 +156,13 @@ func (f *Framework) RandomPod() *corev1.Pod {
 
 		// Set a random number of volumes taken from the pool of volume. Can and
 		// will mount the same volume multiple times.
-		if len(volumes) > 0 {
-			for j := 0; j < f.testdata.Int(len(volumes)); j++ {
-				containers[i].VolumeMounts = append(containers[i].VolumeMounts,
-					corev1.VolumeMount{
-						Name: volumes[f.testdata.Int(len(volumes))].Name,
-					},
-				)
-			}
-
-			for j := range containers[i].VolumeMounts {
-				var hasRoot bool
-				randomFile := f.testdata.RandomFilePath()
-
-				// only one single root mount per volume
-				if randomFile == "/" {
-					if hasRoot {
-						j--
-						continue
-					} else {
-						hasRoot = true
-					}
-				}
-
-				By(randomFile)
-
-				containers[i].VolumeMounts[j].MountPath = randomFile
-			}
+		for j := 0; j < (f.testdata.Int(len(volumes)) + 1); j++ {
+			containers[i].VolumeMounts = append(containers[i].VolumeMounts,
+				corev1.VolumeMount{
+					Name:      volumes[f.testdata.Int(len(volumes))].Name,
+					MountPath: f.testdata.RandomDirPath(),
+				},
+			)
 		}
 	}
 

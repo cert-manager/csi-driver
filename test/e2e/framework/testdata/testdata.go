@@ -69,8 +69,8 @@ func (t *TestData) RandomVolumeAttributes() map[string]string {
 	return attr
 }
 
-func (t *TestData) RandomFilePath() string {
-	dirs := make([]string, t.r.Int()%5)
+func (t *TestData) RandomDirPath() string {
+	dirs := make([]string, (t.r.Int()%5)+1)
 	for i := range dirs {
 		dirs[i] = t.RandomName()
 	}
