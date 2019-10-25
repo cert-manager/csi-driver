@@ -17,6 +17,7 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
@@ -103,8 +104,18 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 		// Build certificate request for volume
 		cr := &cmapi.CertificateRequest{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      vol.Name,
+				Name:      vol.ID,
 				Namespace: namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					metav1.OwnerReference{
+						APIVersion:         "core/v1",
+						BlockOwnerDeletion: util.BoolPointer(true),
+						Controller:         util.BoolPointer(false),
+						Kind:               "Pod",
+						Name:               vol.Attributes[csiapi.CSIPodNamespaceKey],
+						UID:                types.UID(vol.Attributes[csiapi.CSIPodUIDKey]),
+					},
+				},
 			},
 			Spec: cmapi.CertificateRequestSpec{
 				CSRPEM: csrPEM,
@@ -127,10 +138,10 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 		}
 	}
 
-	glog.Infof("cert-manager: created CertificateRequest %s", vol.Name)
+	glog.Infof("cert-manager: created CertificateRequest %s", vol.ID)
 
-	glog.Infof("cert-manager: waiting for CertificateRequest to become ready %s", vol.Name)
-	cr, err := c.waitForCertificateRequestReady(vol.Name, namespace, time.Second*30)
+	glog.Infof("cert-manager: waiting for CertificateRequest to become ready %s", vol.ID)
+	cr, err := c.waitForCertificateRequestReady(vol.ID, namespace, time.Second*30)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +186,7 @@ func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate,
 	var err error
 	var keyBundle *util.KeyBundle
 
-	glog.Infof("cert-manager: renewing certicate %s", vol.Name)
+	glog.Infof("cert-manager: renewing certicate %s", vol.ID)
 
 	if b, ok := vol.Attributes[csiapi.ReusePrivateKey]; !ok || b != "true" {
 		keyBundle, err = util.NewRSAKey()
@@ -216,7 +227,7 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
 
 	// get current certificate request
-	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.Name, metav1.GetOptions{})
+	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.ID, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return false, err
@@ -228,8 +239,8 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 
 	// If certificate request doesn't match the volume spec then delete the current one
 	if err := util.CertificateRequestMatchesSpec(cr, vol.Attributes); err != nil {
-		glog.Infof("cert-manager: deleting existing CertificateRequest since it doesn't match spec %s: %s", vol.Name, err)
-		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.Name, &metav1.DeleteOptions{})
+		glog.Infof("cert-manager: deleting existing CertificateRequest since it doesn't match spec %s: %s", vol.ID, err)
+		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.ID, &metav1.DeleteOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -238,12 +249,6 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 	}
 
 	return true, nil
-}
-
-func (c *CertManager) DeleteCertificateRequest(vol *csiapi.MetaData) error {
-	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
-	name := vol.Attributes[csiapi.CSIPodNameKey]
-	return c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(name, &metav1.DeleteOptions{})
 }
 
 func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {

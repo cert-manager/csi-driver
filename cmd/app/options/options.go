@@ -16,6 +16,9 @@ type Options struct {
 
 	// Endpoint that Kubelet should connect to driver.
 	KubeletRegistrationEndpoint string
+
+	// Size in Mbytes to create the tmpfs file system to write and mount from.
+	TmpfsSize string
 }
 
 func AddFlags(cmd *cobra.Command) *Options {
@@ -32,6 +35,9 @@ func AddFlags(cmd *cobra.Command) *Options {
 
 	cmd.PersistentFlags().StringVar(&opts.DataRoot, "data-root",
 		"/csi-data-dir", "directory to store ephemeral data")
+
+	cmd.PersistentFlags().StringVar(&opts.TmpfsSize, "tmpfs-size",
+		"100", "size in Mbytes to create the tmpfs file system to store ephemeral data")
 
 	return &opts
 }

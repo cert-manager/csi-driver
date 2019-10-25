@@ -132,3 +132,7 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 
 	return nil
 }
+
+func BoolPointer(b bool) *bool {
+	return &b
+}

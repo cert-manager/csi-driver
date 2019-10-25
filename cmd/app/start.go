@@ -27,7 +27,7 @@ var RootCmd = &cobra.Command{
 	Use:   "cert-manager-csi",
 	Short: "Container Storage Interface driver to issue certificates from Cert-Manager",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		d, err := driver.New(opts.DriverName, opts.NodeID, opts.Endpoint, opts.DataRoot)
+		d, err := driver.New(opts.DriverName, opts.NodeID, opts.Endpoint, opts.DataRoot, opts.TmpfsSize)
 		if err != nil {
 			return err
 		}

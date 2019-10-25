@@ -136,7 +136,6 @@ func TestCreateDeleteVolume(t *testing.T) {
 
 	ns := &NodeServer{
 		dataRoot: dir,
-		volumes:  make(map[string]*csiapi.MetaData),
 	}
 
 	id := "test-id"
@@ -146,13 +145,13 @@ func TestCreateDeleteVolume(t *testing.T) {
 		csiapi.CSIPodNamespaceKey: "test-namespace",
 	}
 
-	vol, err := ns.createVolume(id, targetPath, attr)
+	_, err = ns.createVolume(id, targetPath, attr)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	path := filepath.Join(dir, "cert-manager-csi-test-pod-test-id")
+	path := filepath.Join(dir, "test-id")
 
 	t.Logf("expecting path: %s", path)
 
@@ -169,25 +168,4 @@ func TestCreateDeleteVolume(t *testing.T) {
 		return
 	}
 
-	if _, ok := ns.volumes[id]; !ok {
-		t.Errorf("expected volume to exist in nodeserver map: %s",
-			id)
-	}
-
-	if err := ns.deleteVolume(vol); err != nil {
-		t.Error(err)
-		return
-	}
-
-	_, err = os.Stat(path)
-	if err == nil || !os.IsNotExist(err) {
-		t.Errorf("expected is not exist error but got: %s",
-			err)
-		return
-	}
-
-	if _, ok := ns.volumes[id]; ok {
-		t.Errorf("expected volume to not exist in nodeserver map: %s",
-			id)
-	}
 }

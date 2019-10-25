@@ -57,7 +57,7 @@ func (r *Renewer) Discover() error {
 
 		if err := r.WatchCert(f.metaData, f.notAfter); err != nil {
 			errs = append(errs, fmt.Sprintf("%q: %s",
-				f.metaData.Name, err))
+				f.metaData.ID, err))
 		}
 	}
 
@@ -154,9 +154,9 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 	r.muVol.Lock()
 	defer r.muVol.Unlock()
 
-	if _, ok := r.watchingVols[metaData.Name]; ok {
+	if _, ok := r.watchingVols[metaData.ID]; ok {
 		glog.Errorf("volume already being watched, aborting second watcher: %s",
-			metaData.Name)
+			metaData.ID)
 		return nil
 	}
 
@@ -167,9 +167,9 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 	}
 
 	ch := make(chan struct{})
-	r.watchingVols[metaData.Name] = ch
+	r.watchingVols[metaData.ID] = ch
 
-	glog.Infof("renewer: starting to watch certificate for renewal: %q", metaData.Name)
+	glog.Infof("renewer: starting to watch certificate for renewal: %q", metaData.ID)
 
 	renewalTime := notAfter.Add(-renewBefore)
 
@@ -184,13 +184,13 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 			cert, err := r.renewFunc(metaData)
 			if err != nil {
 				glog.Errorf("renewer: failed to renew certificate %q: %s",
-					metaData.Name, err)
+					metaData.ID, err)
 				return
 			}
 
 			if err := r.WatchCert(metaData, cert.NotBefore); err != nil {
 				glog.Errorf("renewer: failed to watch certificate %q: %s",
-					metaData.Name, err)
+					metaData.ID, err)
 			}
 		}
 	}()
@@ -198,13 +198,13 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 	return nil
 }
 
-func (r *Renewer) KillWatcher(volName string) {
+func (r *Renewer) KillWatcher(volID string) {
 	r.muVol.RLock()
 	defer r.muVol.RUnlock()
 
-	ch, ok := r.watchingVols[volName]
+	ch, ok := r.watchingVols[volID]
 	if ok {
-		glog.Infof("renewer: killing watcher for %q", volName)
+		glog.Infof("renewer: killing watcher for %q", volID)
 		close(ch)
 	}
 }

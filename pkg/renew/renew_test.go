@@ -284,7 +284,7 @@ func TestWatchCert(t *testing.T) {
 
 	tests := map[string]watchFileT{
 		"if volume already being watched then should exit with no error": {
-			watchingVols: map[string]chan struct{}{"test-name": nil},
+			watchingVols: map[string]chan struct{}{"test-id": nil},
 			expError:     nil,
 			expectCall:   false,
 		},
@@ -329,7 +329,7 @@ func TestWatchCert(t *testing.T) {
 			}
 
 			metaData := &csiapi.MetaData{
-				Name: "test-name",
+				ID: "test-id",
 				Attributes: map[string]string{
 					csiapi.RenewBeforeKey: test.renewBefore,
 				},
@@ -339,7 +339,7 @@ func TestWatchCert(t *testing.T) {
 			errMatch(t, test.expError, err)
 
 			if test.killWatcher == true {
-				r.KillWatcher(metaData)
+				r.KillWatcher(metaData.ID)
 			}
 
 			time.Sleep(time.Second / 2)

@@ -7,6 +7,7 @@ const (
 const (
 	CSIPodNameKey      = "csi.storage.k8s.io/pod.name"
 	CSIPodNamespaceKey = "csi.storage.k8s.io/pod.namespace"
+	CSIPodUIDKey       = "csi.storage.k8s.io/pod.uid"
 	CSIEphemeralKey    = "csi.storage.k8s.io/ephemeral"
 )
 

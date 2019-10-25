@@ -35,8 +35,6 @@ type NodeServer struct {
 
 	cm      *certmanager.CertManager
 	renewer *renew.Renewer
-
-	volumes map[string]*csiapi.MetaData
 }
 
 func NewNodeServer(nodeID, dataRoot, tmpfsSize string) (*NodeServer, error) {
@@ -56,7 +54,6 @@ func NewNodeServer(nodeID, dataRoot, tmpfsSize string) (*NodeServer, error) {
 		dataRoot: dataRoot,
 		renewer:  renewer,
 		cm:       cm,
-		volumes:  make(map[string]*csiapi.MetaData),
 	}, nil
 }
 
@@ -162,29 +159,21 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
 	}
 
-	vol, ok := ns.volumes[volumeID]
-	if !ok {
-		return nil, status.Error(codes.NotFound,
-			fmt.Sprintf("volume id %s does not exist in the volumes list", volumeID))
-	}
-
 	// kill the renewal Go routine watching this volume
-	ns.renewer.KillWatcher(vol.Name)
-
-	if err := ns.cm.DeleteCertificateRequest(vol); err != nil {
-		return nil, err
-	}
+	ns.renewer.KillWatcher(volumeID)
 
 	// Unmounting the image
 	err := util.Unmount(targetPath)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, nil
 	}
 	glog.V(4).Infof("node: volume %s/%s has been unmounted.", targetPath, volumeID)
 
 	glog.V(4).Infof("node: deleting volume %s", volumeID)
-	if err := ns.deleteVolume(vol); err != nil && !os.IsNotExist(err) {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to delete volume: %s", err))
+
+	path := filepath.Join(ns.dataRoot, volumeID)
+	if err := os.RemoveAll(path); err != nil && !os.IsNotExist(err) {
+		return nil, err
 	}
 
 	return &csi.NodeUnpublishVolumeResponse{}, nil
@@ -237,7 +226,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	podName := attr[csiapi.CSIPodNameKey]
 
 	name := util.BuildVolumeName(podName, id)
-	path := filepath.Join(ns.dataRoot, name)
+	path := filepath.Join(ns.dataRoot, id)
 
 	err := os.MkdirAll(path, 0700)
 	if err != nil {
@@ -253,20 +242,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 		Attributes: attr,
 	}
 
-	ns.volumes[id] = vol
 	return vol, nil
-}
-
-func (ns *NodeServer) deleteVolume(vol *csiapi.MetaData) error {
-	glog.V(4).Infof("node: deleting volume: %s", vol.ID)
-
-	if err := os.RemoveAll(vol.Path); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	delete(ns.volumes, vol.ID)
-
-	return nil
 }
 
 func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
