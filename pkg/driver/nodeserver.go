@@ -39,7 +39,7 @@ type NodeServer struct {
 	volumes map[string]*csiapi.MetaData
 }
 
-func NewNodeServer(nodeID, dataRoot string) (*NodeServer, error) {
+func NewNodeServer(nodeID, dataRoot, tmpfsSize string) (*NodeServer, error) {
 	cm, err := certmanager.New()
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(targetPath, 0750); err != nil {
+		if err = os.MkdirAll(targetPath, 0700); err != nil {
 			return nil, status.Error(codes.Internal,
 				fmt.Sprintf("failed to create target path directory %s: %s", targetPath, err))
 		}
@@ -121,7 +121,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		mntPoint = false
 	}
 
-	if err = os.MkdirAll(mountPath, 0750); err != nil {
+	if err = os.MkdirAll(mountPath, 0700); err != nil {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("failed to create mount path directory %s: %s", mountPath, err))
 	}

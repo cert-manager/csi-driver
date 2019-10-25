@@ -83,7 +83,7 @@ func makeMountArgs(source, target string, options []string) []string {
 	// Build mount command as follows:
 	//   mount [-t $fstype] [-o $options] [$source] $target
 	mountArgs := []string{}
-	options = append(options, "bind")
+	options = append(options, "bind", "ro")
 	mountArgs = append(mountArgs, "-o", strings.Join(options, ","))
 	if len(source) > 0 {
 		mountArgs = append(mountArgs, source)
