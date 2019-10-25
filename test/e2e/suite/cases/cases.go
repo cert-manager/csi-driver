@@ -98,8 +98,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-		crName := util.BuildVolumeName(testPod.Name,
-			util.BuildVolumeID(string(testPod.GetUID()), "tls"))
+		crName := util.BuildVolumeID(string(testPod.GetUID()), "tls")
 		cr, err := f.Helper().WaitForCertificateRequestReady(f.Namespace.Name, crName, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -149,6 +148,22 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 			go testPod(wg, f, i, crs.Items, pod)
 		}
 		wg.Wait()
+
+		// Ensure all pods can be deleted and their equivalent CertificateRequest deleted
+
+		By("Ensuing all Pods can be deleted")
+		wg.Add(len(pods))
+		for i, pod := range pods {
+			go deletePod(wg, f, i, pod)
+		}
+		wg.Wait()
+
+		By("Ensuring all CertificateRequets have been deleted")
+		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		if len(crs.Items) > 0 {
+			Expect(fmt.Errorf("expected all CertificateRequests to be deleted, got=%+v", crs.Items)).NotTo(HaveOccurred())
+		}
 	})
 })
 
@@ -159,6 +174,18 @@ func createPod(wg *sync.WaitGroup, f *framework.Framework, i int, pods []*corev1
 
 	By(fmt.Sprintf("Pod Created %d: %s", i, pod.Name))
 	pods[i] = pod
+	wg.Done()
+}
+
+func deletePod(wg *sync.WaitGroup, f *framework.Framework, i int, pod *corev1.Pod) {
+	By(fmt.Sprintf("Deleting Pod %d: %s", i, pod.Name))
+	err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(pod.Name, nil)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = f.Helper().WaitForPodDeletion(pod.Namespace, pod.Name, time.Second*90)
+	Expect(err).NotTo(HaveOccurred())
+
+	By(fmt.Sprintf("Pod Deleted %d: %s", i, pod.Name))
 	wg.Done()
 }
 

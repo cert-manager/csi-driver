@@ -9,6 +9,7 @@ import (
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -139,6 +140,31 @@ func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) 
 		}
 
 		return true, nil
+	})
+	if err != nil {
+		h.Kubectl(namespace).DescribeResource("pod", name)
+		return err
+	}
+
+	return nil
+}
+
+func (h *Helper) WaitForPodDeletion(namespace, name string, timeout time.Duration) error {
+	log.Logf("Waiting for Pod to be deleted %s/%s", namespace, name)
+	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
+		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		if k8sErrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		log.Logf("helper: pod not deleted %s/%s: %v",
+			pod.Namespace, pod.Name, pod.Status.Conditions)
+
+		return false, nil
 	})
 	if err != nil {
 		h.Kubectl(namespace).DescribeResource("pod", name)

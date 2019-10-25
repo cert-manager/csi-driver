@@ -22,7 +22,7 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 	pod *corev1.Pod, attr map[string]string, podMountPath, dataDir string) error {
 	volID := util.BuildVolumeID(string(pod.UID), podMountPath)
 	volName := util.BuildVolumeName(pod.Name, volID)
-	dirPath := filepath.Join(dataDir, volName)
+	dirPath := filepath.Join(dataDir, volID)
 
 	// set defaults and csi storage attrubutes from pod
 	attr, err := csidefaults.SetDefaultAttributes(attr)
@@ -59,7 +59,7 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 		ID:   volID,
 		Name: volName,
 		Size: 102400,
-		Path: filepath.Join("/csi-data-dir", volName),
+		Path: filepath.Join("/csi-data-dir", volID),
 		TargetPath: fmt.Sprintf("/var/lib/kubelet/pods/%s/volumes/kubernetes.io~csi/%s/mount",
 			string(pod.UID), podMountPath),
 		Attributes: attr,

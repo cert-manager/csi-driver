@@ -21,6 +21,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -65,7 +66,7 @@ func (h *Helper) WaitForCertificateRequestReady(namespace, name string, timeout 
 }
 
 func (h *Helper) FindCertificateRequestReady(crs []cmapi.CertificateRequest, pod *corev1.Pod, volM *corev1.VolumeMount) (*cmapi.CertificateRequest, error) {
-	crName := util.BuildVolumeName(pod.Name, util.BuildVolumeID(string(pod.GetUID()), volM.Name))
+	crName := util.BuildVolumeID(string(pod.GetUID()), volM.Name)
 	cr, err := h.findCertificateRequest(crs, crName)
 	if err != nil {
 		return nil, err
@@ -76,6 +77,31 @@ func (h *Helper) FindCertificateRequestReady(crs []cmapi.CertificateRequest, pod
 	}
 
 	return cr, nil
+}
+
+func (h *Helper) WaitForCertificateRequestDeletion(namespace, name string, timeout time.Duration) error {
+	log.Logf("Waiting for CertificateRequest to be deleted %s/%s", namespace, name)
+	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
+		cr, err := h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+		if k8sErrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		log.Logf("helper: CertificateRequest not deleted %s/%s: %v",
+			cr.Namespace, cr.Name, cr.Status.Conditions)
+
+		return false, nil
+	})
+	if err != nil {
+		h.Kubectl(namespace).DescribeResource("certificaterequest", name)
+		return err
+	}
+
+	return nil
 }
 
 func (h *Helper) findCertificateRequest(crs []cmapi.CertificateRequest, name string) (*cmapi.CertificateRequest, error) {
