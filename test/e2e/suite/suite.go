@@ -32,7 +32,7 @@ var (
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	env, err = environment.Create(3, 3)
+	env, err = environment.Create(1, 3)
 	if err != nil {
 		framework.Failf("Error provisioning environment: %v", err)
 	}

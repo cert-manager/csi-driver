@@ -1,13 +1,18 @@
 package kind
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,9 +24,93 @@ const (
 func (k *Kind) DeployCertManager(version string) error {
 	log.Infof("kind: deploying cert-manager version %q", version)
 
-	path := fmt.Sprintf(certManagerManifestPath, version)
-	if err := k.kubectlApplyF(path); err != nil {
-		return err
+	if !strings.HasPrefix(version, "file://") {
+		log.Info("kind: numeric version found so deploying remote image")
+
+		path := fmt.Sprintf(certManagerManifestPath, version)
+		if err := k.kubectlApplyF(path); err != nil {
+			return err
+		}
+
+	} else {
+		log.Infof("kind: file version found so building images from source")
+
+		cmRepoRoot := strings.Replace(version, "file://", "", 1)
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		if err := os.Chdir(cmRepoRoot); err != nil {
+			return err
+		}
+		defer os.Chdir(wd)
+
+		out, err := k.runCmd("go", "run",
+			"./hack/release/main.go",
+			"--repo-root="+cmRepoRoot,
+			"--images",
+			"--images.export=true",
+			"--images.goarch=amd64",
+			"--app-version=v0.1.0-csi",
+			"--manifests",
+			"--docker-repo=cert-manager-csi",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to build cert-manager images and manifests from file: %s", err)
+		}
+
+		tmpDir, err := ioutil.TempDir(os.TempDir(), "cert-manager-csi-e2e")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(tmpDir)
+
+		if err := os.Mkdir(filepath.Join(tmpDir,
+			"cert-manager-csi"), 0755); err != nil {
+			return err
+		}
+
+		for _, image := range []string{
+			"cert-manager-csi/cert-manager-controller-amd64:v0.1.0-csi",
+			"cert-manager-csi/cert-manager-cainjector-amd64:v0.1.0-csi",
+			"cert-manager-csi/cert-manager-webhook-amd64:v0.1.0-csi",
+		} {
+			if err := k.loadImage(tmpDir, image); err != nil {
+				return err
+			}
+		}
+
+		// TODO (@joshvanl): update cert-manager to expose target manifests build
+		// so it doesn't require a log parse hack
+
+		// get manifests target path from log output
+		var manifestsPath string
+		for _, l := range out {
+			if strings.Contains(l, "cert-manager.yaml") {
+				for _, ll := range strings.Split(l, " ") {
+					if strings.HasPrefix(ll, `"path"="`) {
+						manifestsPath = strings.Split(ll, `"`)[3]
+						break
+					}
+				}
+			}
+		}
+
+		log.Infof("kind: deploying manifests file %q", manifestsPath)
+		manifests, err := ioutil.ReadFile(manifestsPath)
+		if err != nil {
+			return err
+		}
+
+		manifests = bytes.ReplaceAll(manifests, []byte(`image: "quay.io/jetstack/cert-manager-controller`), []byte(`image: "cert-manager-csi/cert-manager-controller-amd64`))
+		manifests = bytes.ReplaceAll(manifests, []byte(`image: "quay.io/jetstack/cert-manager-cainjector`), []byte(`image: "cert-manager-csi/cert-manager-cainjector-amd64`))
+		manifests = bytes.ReplaceAll(manifests, []byte(`image: "quay.io/jetstack/cert-manager-webhook`), []byte(`image: "cert-manager-csi/cert-manager-webhook-amd64`))
+
+		//r := ioutil.NopCloser(bytes.NewReader(manifests))
+		if err := k.kubectlApplyF("-", manifests); err != nil {
+			return err
+		}
 	}
 
 	if err := k.waitForPodsReady(
@@ -97,7 +186,7 @@ func (k *Kind) ensureKubectl() error {
 	return nil
 }
 
-func (k *Kind) kubectlApplyF(manifestPath string) error {
+func (k *Kind) kubectlApplyF(manifestPath string, ins ...[]byte) error {
 	log.Infof("kind: applying manifests %s", manifestPath)
 
 	if err := k.ensureKubectl(); err != nil {
@@ -105,25 +194,70 @@ func (k *Kind) kubectlApplyF(manifestPath string) error {
 	}
 
 	kubectlPath := filepath.Join(k.rootPath, "bin", "kubectl")
-	err := k.runCmd(kubectlPath,
+
+	cmd := exec.Command(kubectlPath,
 		"--kubeconfig="+k.ctx.KubeConfigPath(),
 		"apply",
 		"-f",
 		manifestPath)
+
+	wc, err := cmd.StdinPipe()
 	if err != nil {
+		return err
+	}
+
+	if len(ins) > 0 {
+		go func() {
+			defer wc.Close()
+			for _, i := range ins {
+				wc.Write(i)
+			}
+		}()
+	}
+
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (k *Kind) runCmd(command string, args ...string) error {
+func (k *Kind) runCmd(command string, args ...string) ([]string, error) {
+	log.Infof("kind: running command '%s %s'", command, strings.Join(args, " "))
 	cmd := exec.Command(command, args...)
 
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	cmd.Env = append(cmd.Env,
-		"GO111MODULE=on", "CGO_ENABLED=0", "HOME="+os.Getenv("HOME"))
+		"GO111MODULE=on", "CGO_ENABLED=0", "HOME="+os.Getenv("HOME"),
+		"PATH="+os.Getenv("PATH"))
 
-	return cmd.Run()
+	pr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+	bs := bufio.NewScanner(pr)
+
+	var out []string
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	defer wg.Wait()
+	go func() {
+		for bs.Scan() {
+			log.Infof("kind (exec): %s", bs.Text())
+			out = append(out, bs.Text())
+		}
+		wg.Done()
+	}()
+
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return out, err
+	}
+	wg.Wait()
+
+	return out, nil
 }

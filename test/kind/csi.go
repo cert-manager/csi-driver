@@ -20,14 +20,14 @@ func (k *Kind) DeployCSIDriver(version string) error {
 	csiPath := filepath.Join(k.rootPath, "./bin/cert-manager-csi")
 	cmdPath := filepath.Join(k.rootPath, "./cmd/.")
 
-	err := k.runCmd("go", "build", "-v", "-o", csiPath, cmdPath)
+	_, err := k.runCmd("go", "build", "-v", "-o", csiPath, cmdPath)
 	if err != nil {
 		return err
 	}
 
 	image := fmt.Sprintf(e2eImage, version)
 	log.Infof("kind: building CSI driver image %q", image)
-	err = k.runCmd("docker", "build", "-t", image, k.rootPath)
+	_, err = k.runCmd("docker", "build", "-t", image, k.rootPath)
 	if err != nil {
 		return err
 	}
@@ -38,9 +38,39 @@ func (k *Kind) DeployCSIDriver(version string) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	imageArchive := filepath.Join(tmpDir, "cert-manager-csi-e2e.tar")
+	if err := k.loadImage(tmpDir, image); err != nil {
+		return err
+	}
+
+	manifests, err := ioutil.ReadFile(
+		filepath.Join(k.rootPath, "deploy", "cert-manager-csi-driver.yaml"))
+	if err != nil {
+		return err
+	}
+
+	manifests = bytes.ReplaceAll(manifests,
+		[]byte("gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1"), []byte(image))
+
+	deployPath := filepath.Join(tmpDir, "cert-manager-csi-driver.yaml")
+	if err := ioutil.WriteFile(deployPath, manifests, 0644); err != nil {
+		return err
+	}
+
+	if err := k.kubectlApplyF(deployPath); err != nil {
+		return err
+	}
+
+	if err := k.waitForPodsReady("cert-manager", "app=cert-manager-csi"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (k *Kind) loadImage(dir, image string) error {
+	imageArchive := filepath.Join(dir, fmt.Sprintf("%s-e2e.tar", image))
 	log.Infof("kind: saving image to archive %q", imageArchive)
-	err = k.runCmd("docker", "save", "--output="+imageArchive, image)
+	_, err := k.runCmd("docker", "save", "--output="+imageArchive, image)
 	if err != nil {
 		return err
 	}
@@ -67,28 +97,6 @@ func (k *Kind) DeployCSIDriver(version string) error {
 			return fmt.Errorf("failed to create directory %q: %s",
 				"/tmp/cert-manager-csi", err)
 		}
-	}
-
-	manifests, err := ioutil.ReadFile(
-		filepath.Join(k.rootPath, "deploy", "cert-manager-csi-driver.yaml"))
-	if err != nil {
-		return err
-	}
-
-	manifests = bytes.ReplaceAll(manifests,
-		[]byte("gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1"), []byte(image))
-
-	deployPath := filepath.Join(tmpDir, "cert-manager-csi-driver.yaml")
-	if err := ioutil.WriteFile(deployPath, manifests, 0644); err != nil {
-		return err
-	}
-
-	if err := k.kubectlApplyF(deployPath); err != nil {
-		return err
-	}
-
-	if err := k.waitForPodsReady("cert-manager", "app=cert-manager-csi"); err != nil {
-		return err
 	}
 
 	return nil
