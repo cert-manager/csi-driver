@@ -32,7 +32,7 @@ var (
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	env, err = environment.Create(1, 3)
+	env, err = environment.Create(3, 3)
 	if err != nil {
 		framework.Failf("Error provisioning environment: %v", err)
 	}
@@ -54,8 +54,10 @@ var globalLogs map[string]string
 
 var _ = SynchronizedAfterSuite(func() {},
 	func() {
-		if err := env.Destory(); err != nil {
-			framework.Failf("Failed to destory environment: %s", err)
+		if env != nil {
+			if err := env.Destory(); err != nil {
+				framework.Failf("Failed to destory environment: %s", err)
+			}
 		}
 	},
 )
