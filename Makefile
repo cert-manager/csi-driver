@@ -3,6 +3,8 @@ help:  ## display this help
 
 .PHONY: help build docker_build test depend verify all clean generate
 
+all: test build image ## runs test, build and image build
+
 clean: ## clean all bin data
 	rm -rf ./bin
 
