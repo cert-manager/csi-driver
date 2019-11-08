@@ -120,7 +120,6 @@ func (f *Framework) AfterEach() {
 	By("Deleting test namespace")
 	err := f.DeleteKubeNamespace(f.Namespace.Name)
 	Expect(err).NotTo(HaveOccurred())
-	panic("here")
 
 	By("Waiting for test namespace to no longer exist")
 	err = f.WaitForKubeNamespaceNotExist(f.Namespace.Name)

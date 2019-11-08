@@ -203,7 +203,17 @@ func (k *Kind) waitForPodsReady(namespace, labelSelector string) error {
 
 		var notReady []string
 		for _, pod := range pods.Items {
-			if pod.Status.Phase != corev1.PodRunning {
+			var ready bool
+
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady &&
+					cond.Status == corev1.ConditionTrue {
+					ready = true
+					break
+				}
+			}
+
+			if !ready {
 				notReady = append(notReady, fmt.Sprintf("%s:%s (%s)",
 					pod.Namespace, pod.Name, pod.Status.Phase))
 			}

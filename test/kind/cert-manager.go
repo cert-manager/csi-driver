@@ -107,7 +107,6 @@ func (k *Kind) DeployCertManager(version string) error {
 		manifests = bytes.ReplaceAll(manifests, []byte(`image: "quay.io/jetstack/cert-manager-cainjector`), []byte(`image: "cert-manager-csi/cert-manager-cainjector-amd64`))
 		manifests = bytes.ReplaceAll(manifests, []byte(`image: "quay.io/jetstack/cert-manager-webhook`), []byte(`image: "cert-manager-csi/cert-manager-webhook-amd64`))
 
-		//r := ioutil.NopCloser(bytes.NewReader(manifests))
 		if err := k.kubectlApplyF("-", manifests); err != nil {
 			return err
 		}
