@@ -26,8 +26,8 @@ This project is experimental.
 ## Requirements and Installation
 
 This CSI driver plugin makes use of the 'CSI inline volume' feature - Alpha as
-of v1.15. As such, Kubernetes must be of at least version v1.15 and have the
-following feature gate set;
+of `v1.15` and beta in `v1.16`. Kubernetes versions `v1.16` and higher require
+no extra configuration however `v1.15` requires the following feature gate set:
 ```
 --feature-gates=CSIInlineVolume=true
 ```
