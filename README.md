@@ -9,6 +9,20 @@ provides.
 
 This project is experimental.
 
+## Why a CSI Driver?
+
+- Ensure private keys never leave the node and are never sent over the network.
+  All private keys are stored locally on the node.
+- Unique key and certificate per application replica with a grantee to be
+  present on application run time.
+- Reduce resource management overhead by defining certificate request spec
+  in-line of the Kubernetes Pod template.
+- Automatic renewal of certificates based on expiry of each individual
+  certificate.
+- Keys and certificates are destroyed during application termination.
+- Scope for extending plugin behaviour with visibility on each replica's
+  certificate request and termination.
+
 ## Requirements and Installation
 
 This CSI driver plugin makes use of the 'CSI inline volume' feature - Alpha as
