@@ -133,7 +133,16 @@ func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) 
 			return false, err
 		}
 
-		if pod.Status.Phase != corev1.PodRunning {
+		var ready bool
+		for _, cond := range pod.Status.Conditions {
+			if cond.Type == corev1.PodReady &&
+				cond.Status == corev1.ConditionTrue {
+				ready = true
+				break
+			}
+		}
+
+		if !ready {
 			log.Logf("helper: pod not ready %s/%s: %v",
 				pod.Namespace, pod.Name, pod.Status.Conditions)
 			return false, nil
