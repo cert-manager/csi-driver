@@ -1,5 +1,9 @@
 package v1alpha1
 
+import (
+	"time"
+)
+
 const (
 	MetaDataFileName = "metadata.json"
 )
@@ -42,4 +46,15 @@ type MetaData struct {
 	TargetPath string `json:"targetPath"`
 
 	Attributes map[string]string `json:"attributes"`
+}
+
+type WebhookPost struct {
+	*MetaData
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Webhook interface {
+	Create(*MetaData)
+	Renew(*MetaData)
+	Destroy(*MetaData)
 }

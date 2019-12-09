@@ -19,6 +19,15 @@ type Options struct {
 
 	// Size in Mbytes to create the tmpfs file system to write and mount from.
 	TmpfsSize string
+
+	// Optional Webhook configuration
+	Webhook Webhook
+}
+
+// Optional Webhook configuration
+type Webhook struct {
+	// URL to server to consume Webhook Create, Renew, Destroy
+	NetHost string
 }
 
 func AddFlags(cmd *cobra.Command) *Options {
@@ -39,5 +48,12 @@ func AddFlags(cmd *cobra.Command) *Options {
 	cmd.PersistentFlags().StringVar(&opts.TmpfsSize, "tmpfs-size",
 		"100", "size in Mbytes to create the tmpfs file system to store ephemeral data")
 
+	addWebhookFlags(cmd, &opts)
+
 	return &opts
+}
+
+func addWebhookFlags(cmd *cobra.Command, opts *Options) {
+	cmd.PersistentFlags().StringVar(&opts.Webhook.NetHost, "webhook-net-host",
+		"", "optional URL to a server to consume Create,Renew,Destroy webhooks for certificates")
 }
