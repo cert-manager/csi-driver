@@ -19,6 +19,7 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/webhook"
 )
 
 type walkDirT struct {
@@ -253,7 +254,7 @@ func TestWalkDir(t *testing.T) {
 				}
 			}
 
-			r := New(dir, nil)
+			r := New(dir, nil, webhook.New(nil))
 			certsToWatch, err := r.walkDir()
 			errMatch(t, test.expError, err)
 
@@ -323,7 +324,7 @@ func TestWatchCert(t *testing.T) {
 				return new(x509.Certificate), nil
 			}
 
-			r := New(dir, renF)
+			r := New(dir, renF, webhook.New(nil))
 			if test.watchingVols != nil {
 				r.watchingVols = test.watchingVols
 			}

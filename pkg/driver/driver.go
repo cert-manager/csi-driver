@@ -7,9 +7,12 @@ import (
 	"os/exec"
 
 	"github.com/golang/glog"
-	"github.com/jetstack/cert-manager-csi/pkg/util"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/util"
+	"github.com/jetstack/cert-manager-csi/pkg/webhook"
 )
 
 const (
@@ -19,13 +22,16 @@ const (
 type Driver struct {
 	endpoint string
 
+	wh *webhook.Webhook
+
 	ids *identityServer
 	cs  *ControllerServer
 	ns  *NodeServer
 }
 
-func New(driverName, nodeID, endpoint, dataRoot, tmpfsSize string) (*Driver, error) {
-	glog.Infof("driver: %v version: %v", driverName, Version)
+func New(driverID *csiapi.DriverID, endpoint,
+	dataRoot, tmpfsSize string, wh *webhook.Webhook) (*Driver, error) {
+	glog.Infof("driver: %v version: %v", driverID.DriverName, Version)
 
 	mntPoint, err := util.IsLikelyMountPoint(dataRoot)
 	if os.IsNotExist(err) {
@@ -49,14 +55,15 @@ func New(driverName, nodeID, endpoint, dataRoot, tmpfsSize string) (*Driver, err
 		}
 	}
 
-	ns, err := NewNodeServer(nodeID, dataRoot, tmpfsSize)
+	ns, err := NewNodeServer(driverID, dataRoot, tmpfsSize, wh)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Driver{
 		endpoint: endpoint,
-		ids:      NewIdentityServer(driverName, Version),
+		wh:       wh,
+		ids:      NewIdentityServer(driverID.DriverName, Version),
 		cs:       NewControllerServer(),
 		ns:       ns,
 	}, nil

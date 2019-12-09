@@ -5,6 +5,9 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,17 +20,20 @@ import (
 )
 
 const (
-	CreatePath  = "/create"
-	RenewPath   = "/renew"
-	DestroyPath = "/desroy"
+	RegisterPath = "/register"
+	CreatePath   = "/create"
+	RenewPath    = "/renew"
+	DestroyPath  = "/desroy"
 )
 
 type Net struct {
 	url    *url.URL
 	client *http.Client
+
+	driverID *csiapi.DriverID
 }
 
-func New(host string, skipTLSVerify bool) (csiapi.Webhook, error) {
+func New(host string, skipTLSVerify bool) (csiapi.WebhookClient, error) {
 	url, err := url.Parse(host)
 	if err != nil {
 		return nil, err
@@ -39,24 +45,50 @@ func New(host string, skipTLSVerify bool) (csiapi.Webhook, error) {
 	}, nil
 }
 
+func (n *Net) Register(id *csiapi.DriverID) error {
+	if n.driverID != nil {
+		return errors.New("driver has already registered")
+	}
+
+	b, err := json.Marshal(id)
+	if err != nil {
+		fmt.Errorf("failed to marshal driver ID for registration: %s", err)
+	}
+
+	urlPath := n.url.String() + CreatePath
+	if err := n.post(urlPath, b); err != nil {
+		return err
+	}
+
+	n.driverID = id
+
+	return nil
+}
+
 func (n *Net) Create(meta *csiapi.MetaData) {
-	n.post(meta, CreatePath)
+	n.postMeta(meta, CreatePath)
 }
 
 func (n *Net) Renew(meta *csiapi.MetaData) {
-	n.post(meta, RenewPath)
+	n.postMeta(meta, RenewPath)
 }
 
 func (n *Net) Destroy(meta *csiapi.MetaData) {
-	n.post(meta, DestroyPath)
+	n.postMeta(meta, DestroyPath)
 }
 
-func (n *Net) post(meta *csiapi.MetaData, path string) {
+func (n *Net) postMeta(meta *csiapi.MetaData, path string) {
+	if n.driverID == nil {
+		glog.Error("webhook/net: wehbook client not yet registered")
+		return
+	}
+
 	timestamp := time.Now()
 
-	b, err := json.Marshal(&csiapi.WebhookPost{
-		MetaData:  meta,
+	b, err := json.Marshal(&csiapi.WebhookClientPost{
+		DriverID:  n.driverID,
 		Timestamp: timestamp,
+		MetaData:  meta,
 	})
 	if err != nil {
 		glog.Errorf("webhook/net: failed to marshal POST data: %s",
@@ -66,18 +98,16 @@ func (n *Net) post(meta *csiapi.MetaData, path string) {
 
 	urlPath := n.url.String() + CreatePath
 
-	err = wait.PollImmediate(time.Second/4, time.Second*20,
-		func() (bool, error) {
-			resp, err := n.client.Post(urlPath, "application/json",
-				bytes.NewReader(b))
-			if err != nil {
-				return false, err
+	err = wait.PollImmediate(time.Second/4,
+		time.Second*20, func() (bool, error) {
+			err := n.post(urlPath, b)
+			if isRetryError(err) {
+				glog.Error(err.Error())
+				return false, nil
 			}
 
-			if resp.StatusCode != 200 {
-				glog.Errorf("webhook/net: got %d status code from %s",
-					resp.StatusCode, urlPath)
-				return false, nil
+			if err != nil {
+				return false, err
 			}
 
 			return true, nil
@@ -92,6 +122,27 @@ func (n *Net) post(meta *csiapi.MetaData, path string) {
 
 	glog.V(4).Infof("webhook/net: POST %s %s:%s",
 		path, meta.ID, timestamp)
+}
+
+func (n *Net) post(url string, b []byte) error {
+	resp, err := n.client.Post(url, "application/json",
+		bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return newRetryError("webhook/net: failed to post %s and decode response (%d): %s",
+				url, resp.StatusCode, err)
+		}
+
+		return newRetryError("webhook/net: failed to post %s (%d): %s",
+			url, resp.StatusCode, respBody)
+	}
+
+	return nil
 }
 
 func buildHTTPClient(skipTLSVerify bool) *http.Client {
@@ -111,4 +162,17 @@ func buildHTTPClient(skipTLSVerify bool) *http.Client {
 func dialTimeout(ctx context.Context, network, addr string) (net.Conn, error) {
 	d := net.Dialer{Timeout: time.Duration(5 * time.Second)}
 	return d.DialContext(ctx, network, addr)
+}
+
+type retryError struct {
+	error
+}
+
+func newRetryError(err string, formatting ...interface{}) *retryError {
+	return &retryError{fmt.Errorf(err, formatting...)}
+}
+
+func isRetryError(err error) bool {
+	_, ok := err.(*retryError)
+	return ok
 }

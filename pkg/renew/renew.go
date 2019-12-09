@@ -2,7 +2,6 @@ package renew
 
 import (
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,9 +15,12 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/util"
+	"github.com/jetstack/cert-manager-csi/pkg/webhook"
 )
 
 type Renewer struct {
+	wh      *webhook.Webhook
 	dataDir string
 
 	watchingVols map[string]chan struct{}
@@ -35,8 +37,9 @@ type certToWatch struct {
 
 type RenewFunc func(vol *csiapi.MetaData) (*x509.Certificate, error)
 
-func New(dataDir string, renewFunc RenewFunc) *Renewer {
+func New(dataDir string, renewFunc RenewFunc, wh *webhook.Webhook) *Renewer {
 	return &Renewer{
+		wh:           wh,
 		dataDir:      dataDir,
 		watchingVols: make(map[string]chan struct{}),
 		renewFunc:    renewFunc,
@@ -91,23 +94,15 @@ func (r *Renewer) walkDir() ([]certToWatch, error) {
 		}
 
 		metaPath := filepath.Join(fPath, csiapi.MetaDataFileName)
-		b, err := ioutil.ReadFile(metaPath)
-		if err != nil {
+		metaData, err := util.ReadMetaDataFile(metaPath)
+		if os.IsNotExist(err) {
 			// meta data file doesn't exist, move on
-			if os.IsNotExist(err) {
-				glog.V(4).Infof("renewer: metadata file not found: %q", metaPath)
-				continue
-			}
-
-			errs = append(errs,
-				fmt.Sprintf("failed to read metadata file: %s", err))
+			glog.V(4).Infof("renewer: metadata file not found: %q", metaPath)
 			continue
 		}
-
-		metaData := new(csiapi.MetaData)
-		if err := json.Unmarshal(b, metaData); err != nil {
+		if err != nil {
 			errs = append(errs,
-				fmt.Sprintf("failed to unmarshal metadata file for %q: %s", f.Name(), err.Error()))
+				fmt.Sprintf("failed to read metadata file: %s", err))
 			continue
 		}
 
@@ -187,6 +182,9 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 					metaData.ID, err)
 				return
 			}
+
+			// Send renew signal to webhook
+			r.wh.Renew(metaData)
 
 			if err := r.WatchCert(metaData, cert.NotBefore); err != nil {
 				glog.Errorf("renewer: failed to watch certificate %q: %s",

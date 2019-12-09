@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -31,6 +32,20 @@ func WriteMetaDataFile(vol *csiapi.MetaData) error {
 
 	metaPath := filepath.Join(vol.Path, csiapi.MetaDataFileName)
 	return WriteFile(metaPath, b, 0600)
+}
+
+func ReadMetaDataFile(path string) (*csiapi.MetaData, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	metaData := new(csiapi.MetaData)
+	if err := json.Unmarshal(b, metaData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metadata file: %s", err)
+	}
+
+	return metaData, nil
 }
 
 func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string]string) error {

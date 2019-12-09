@@ -35,6 +35,11 @@ const (
 	ReusePrivateKey     string = "csi.cert-manager.io/reuse-private-key"
 )
 
+type DriverID struct {
+	NodeID     string `json:"nodeID"`
+	DriverName string `json:"driverName"`
+}
+
 type MetaData struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -48,13 +53,15 @@ type MetaData struct {
 	Attributes map[string]string `json:"attributes"`
 }
 
-type WebhookPost struct {
-	*MetaData
-	Timestamp time.Time `json:"timestamp"`
-}
-
-type Webhook interface {
+type WebhookClient interface {
+	Register(*DriverID) error
 	Create(*MetaData)
 	Renew(*MetaData)
 	Destroy(*MetaData)
+}
+
+type WebhookClientPost struct {
+	Timestamp time.Time `json:"timestamp"`
+	DriverID  *DriverID `json:"driverID"`
+	*MetaData
 }

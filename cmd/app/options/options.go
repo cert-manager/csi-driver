@@ -2,20 +2,18 @@ package options
 
 import (
 	"github.com/spf13/cobra"
+
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 type Options struct {
-	NodeID     string
-	DriverName string
+	DriverID csiapi.DriverID
 
 	// CSI driver endpoint.
 	Endpoint string
 
 	// Root directory to write data and mount from.
 	DataRoot string
-
-	// Endpoint that Kubelet should connect to driver.
-	KubeletRegistrationEndpoint string
 
 	// Size in Mbytes to create the tmpfs file system to write and mount from.
 	TmpfsSize string
@@ -28,19 +26,21 @@ type Options struct {
 type Webhook struct {
 	// URL to server to consume Webhook Create, Renew, Destroy
 	NetHost string
+	//TODO: add New CA trust bundle
 }
 
 func AddFlags(cmd *cobra.Command) *Options {
 	var opts Options
 
-	cmd.PersistentFlags().StringVar(&opts.NodeID, "node-id", "", "node ID")
+	cmd.PersistentFlags().StringVar(&opts.DriverID.NodeID, "node-id", "", "node ID")
 	cmd.MarkPersistentFlagRequired("node-id")
+
+	cmd.PersistentFlags().StringVar(&opts.DriverID.DriverName, "driver-name",
+		"csi.cert-manager.io", "name of the driver")
+	cmd.MarkPersistentFlagRequired("driver-name")
 
 	cmd.PersistentFlags().StringVar(&opts.Endpoint, "endpoint", "", "CSI endpoint")
 	cmd.MarkPersistentFlagRequired("endpoint")
-
-	cmd.PersistentFlags().StringVar(&opts.DriverName, "driver-name",
-		"csi.cert-manager.io", "name of the driver")
 
 	cmd.PersistentFlags().StringVar(&opts.DataRoot, "data-root",
 		"/csi-data-dir", "directory to store ephemeral data")

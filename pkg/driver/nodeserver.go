@@ -19,6 +19,7 @@ import (
 	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
 	"github.com/jetstack/cert-manager-csi/pkg/renew"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
+	"github.com/jetstack/cert-manager-csi/pkg/webhook"
 )
 
 const (
@@ -30,27 +31,31 @@ const (
 )
 
 type NodeServer struct {
-	nodeID   string
+	driverID *csiapi.DriverID
+	wh       *webhook.Webhook
+
 	dataRoot string
 
 	cm      *certmanager.CertManager
 	renewer *renew.Renewer
 }
 
-func NewNodeServer(nodeID, dataRoot, tmpfsSize string) (*NodeServer, error) {
+func NewNodeServer(driverID *csiapi.DriverID,
+	dataRoot, tmpfsSize string, wh *webhook.Webhook) (*NodeServer, error) {
 	cm, err := certmanager.New()
 	if err != nil {
 		return nil, err
 	}
 
-	renewer := renew.New(dataRoot, cm.RenewCertificate)
+	renewer := renew.New(dataRoot, cm.RenewCertificate, wh)
 
 	if err := renewer.Discover(); err != nil {
 		glog.Errorf("renewer: %s", err)
 	}
 
 	return &NodeServer{
-		nodeID:   nodeID,
+		driverID: driverID,
+		wh:       wh,
 		dataRoot: dataRoot,
 		renewer:  renewer,
 		cm:       cm,
@@ -143,6 +148,9 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	glog.V(2).Infof("node: mount successful %s:%s:%s",
 		attr[csiapi.CSIPodNamespaceKey], attr[csiapi.CSIPodNameKey], vol.ID)
 
+	// Send create signal to webhook
+	ns.wh.Create(vol)
+
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
@@ -159,21 +167,32 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 		return nil, status.Error(codes.InvalidArgument, "target path missing in request")
 	}
 
+	metaPath := filepath.Join(ns.dataRoot, volumeID, csiapi.MetaDataFileName)
+	metaData, err := util.ReadMetaDataFile(metaPath)
+	if err != nil {
+		glog.Errorf("failed to get metadata file when deleting %s: %s",
+			volumeID, err)
+	}
+
 	// kill the renewal Go routine watching this volume
 	ns.renewer.KillWatcher(volumeID)
 
 	// Unmounting the image
-	err := util.Unmount(targetPath)
-	if err != nil {
+	if err := util.Unmount(targetPath); err != nil {
 		return nil, nil
 	}
 	glog.V(4).Infof("node: volume %s/%s has been unmounted.", targetPath, volumeID)
 
-	glog.V(4).Infof("node: deleting volume %s", volumeID)
-
 	path := filepath.Join(ns.dataRoot, volumeID)
 	if err := os.RemoveAll(path); err != nil && !os.IsNotExist(err) {
 		return nil, err
+	}
+
+	glog.V(4).Infof("node: deleted volume %s", volumeID)
+
+	// Send destroy signal to webhook
+	if metaData != nil {
+		ns.wh.Destroy(metaData)
 	}
 
 	return &csi.NodeUnpublishVolumeResponse{}, nil
@@ -253,7 +272,7 @@ func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 	glog.Info("node: getting default node info")
 
 	return &csi.NodeGetInfoResponse{
-		NodeId: ns.nodeID,
+		NodeId: ns.driverID.NodeID,
 	}, nil
 }
 
