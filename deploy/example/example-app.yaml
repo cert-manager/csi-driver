@@ -9,7 +9,7 @@ metadata:
   name: selfsigned-issuer
   namespace: sandbox
 spec:
-  selfsigned: {}
+  selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
