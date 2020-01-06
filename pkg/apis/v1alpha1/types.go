@@ -23,6 +23,7 @@ const (
 	DurationKey   string = "csi.cert-manager.io/duration"
 	IsCAKey       string = "csi.cert-manager.io/is-ca"
 
+	CAFileKey   string = "csi.cert-manager.io/ca-file"
 	CertFileKey string = "csi.cert-manager.io/certificate-file"
 	KeyFileKey  string = "csi.cert-manager.io/privatekey-file"
 
