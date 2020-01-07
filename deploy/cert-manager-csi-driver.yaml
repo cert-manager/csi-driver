@@ -116,5 +116,5 @@ spec:
           name: registration-dir
         - hostPath:
             path: /tmp/cert-manager-csi
-            type: Directory
+            type: DirectoryOrCreate
           name: csi-data-dir
