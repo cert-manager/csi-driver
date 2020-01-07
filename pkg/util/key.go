@@ -56,3 +56,7 @@ func KeyPath(vol *csiapi.MetaData) string {
 func CertPath(vol *csiapi.MetaData) string {
 	return filepath.Join(vol.Path, "data", vol.Attributes[csiapi.CertFileKey])
 }
+
+func CAPath(vol *csiapi.MetaData) string {
+	return filepath.Join(vol.Path, "data", vol.Attributes[csiapi.CAFileKey])
+}

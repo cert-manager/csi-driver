@@ -165,6 +165,14 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 		return nil, err
 	}
 
+	if len(cr.Status.CA) > 0 {
+		caPath := util.CAPath(vol)
+
+		if err := util.WriteFile(caPath, cr.Status.CA, 0600); err != nil {
+			return nil, err
+		}
+	}
+
 	cert, err := pki.DecodeX509CertificateBytes(cr.Status.Certificate)
 	if err != nil {
 		return nil, err

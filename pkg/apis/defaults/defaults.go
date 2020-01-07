@@ -16,6 +16,7 @@ func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {
 	setDefaultIfEmpty(attr, csiapi.IsCAKey, "false")
 	setDefaultIfEmpty(attr, csiapi.DurationKey, cmapi.DefaultCertificateDuration.String())
 
+	setDefaultIfEmpty(attr, csiapi.CAFileKey, "ca.pem")
 	setDefaultIfEmpty(attr, csiapi.CertFileKey, "crt.pem")
 	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "key.pem")
 

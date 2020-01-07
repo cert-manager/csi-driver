@@ -20,6 +20,7 @@ func ValidateAttributes(attr map[string]string) error {
 
 	errs = durationParse(attr[csiapi.DurationKey], csiapi.DurationKey, errs)
 
+	errs = filepathBreakout(attr[csiapi.CAFileKey], csiapi.CAFileKey, errs)
 	errs = filepathBreakout(attr[csiapi.CertFileKey], csiapi.CertFileKey, errs)
 	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
 
