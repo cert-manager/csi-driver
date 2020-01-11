@@ -171,6 +171,8 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 		if err := util.WriteFile(caPath, cr.Status.CA, 0600); err != nil {
 			return nil, err
 		}
+
+		glog.Infof("cert-manager: CA certificate written to file %s", certPath)
 	}
 
 	cert, err := pki.DecodeX509CertificateBytes(cr.Status.Certificate)

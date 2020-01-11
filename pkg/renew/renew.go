@@ -188,6 +188,8 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 				return
 			}
 
+			delete(r.watchingVols, metaData.ID)
+
 			if err := r.WatchCert(metaData, cert.NotBefore); err != nil {
 				glog.Errorf("renewer: failed to watch certificate %q: %s",
 					metaData.ID, err)
