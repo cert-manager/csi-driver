@@ -20,8 +20,23 @@ import (
 	"github.com/jetstack/cert-manager/test/e2e/framework/log"
 )
 
-func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName, mountPath string,
-	cr *cmapi.CertificateRequest, attr map[string]string) error {
+func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, mountPath string,
+	cr *cmapi.CertificateRequest, attr map[string]string) ([]byte, []byte, error) {
+
+	certData, keyData, err := h.certificateKeyData(namespace, podName, containerName, mountPath, attr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := h.certKeyMatch(cr, certData, keyData); err != nil {
+		return nil, nil, fmt.Errorf("failed to match certificate and key: %s", err)
+	}
+
+	return certData, keyData, nil
+}
+
+func (h *Helper) certificateKeyData(namespace, podName, containerName, mountPath string,
+	attr map[string]string) ([]byte, []byte, error) {
 	certPath, ok := attr[csiapi.CertFileKey]
 	if !ok {
 		certPath = "crt.pem"
@@ -36,20 +51,15 @@ func (h *Helper) CertificateKeyExistInPodPath(namespace, podName, containerName,
 
 	certData, err := h.readFilePathFromContainer(namespace, podName, containerName, certPath)
 	if err != nil {
-		return fmt.Errorf("failed to read cert data from pod: %s", err)
+		return nil, nil, fmt.Errorf("failed to read cert data from pod: %s", err)
 	}
 
 	keyData, err := h.readFilePathFromContainer(namespace, podName, containerName, keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to read key data from pod: %s", err)
+		return nil, nil, fmt.Errorf("failed to read key data from pod: %s", err)
 	}
 
-	if err := h.certKeyMatch(cr, certData, keyData); err != nil {
-		return fmt.Errorf("failed to match certificate and key %q %q: %s",
-			certPath, keyPath, err)
-	}
-
-	return nil
+	return certData, keyData, nil
 }
 
 func (h *Helper) certKeyMatch(cr *cmapi.CertificateRequest, certData, keyData []byte) error {
