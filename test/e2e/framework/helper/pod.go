@@ -21,21 +21,6 @@ import (
 )
 
 func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, mountPath string,
-	cr *cmapi.CertificateRequest, attr map[string]string) ([]byte, []byte, error) {
-
-	certData, keyData, err := h.certificateKeyData(namespace, podName, containerName, mountPath, attr)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err := h.certKeyMatch(cr, certData, keyData); err != nil {
-		return nil, nil, fmt.Errorf("failed to match certificate and key: %s", err)
-	}
-
-	return certData, keyData, nil
-}
-
-func (h *Helper) certificateKeyData(namespace, podName, containerName, mountPath string,
 	attr map[string]string) ([]byte, []byte, error) {
 	certPath, ok := attr[csiapi.CertFileKey]
 	if !ok {
@@ -62,9 +47,9 @@ func (h *Helper) certificateKeyData(namespace, podName, containerName, mountPath
 	return certData, keyData, nil
 }
 
-func (h *Helper) certKeyMatch(cr *cmapi.CertificateRequest, certData, keyData []byte) error {
+func (h *Helper) CertificateKeyMatch(cr *cmapi.CertificateRequest, certData, keyData []byte) error {
 	if !bytes.Equal(certData, cr.Status.Certificate) {
-		return fmt.Errorf("certificate at s does not match that in the CertificateRequest %q, exp=%s got=%s",
+		return fmt.Errorf("certificate does not match that in the CertificateRequest %q, exp=%s got=%s",
 			cr.Name, cr.Status.Certificate, certData)
 	}
 

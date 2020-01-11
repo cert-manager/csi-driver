@@ -94,7 +94,7 @@ func (c *CertManager) EnsureCertificate(vol *csiapi.MetaData, keyBundle *util.Ke
 			return nil, err
 		}
 
-		glog.Infof("cert-manager: CA certificate written to file %s", certPath)
+		glog.Infof("cert-manager: CA certificate written to file %s", caPath)
 	}
 
 	cert, err := pki.DecodeX509CertificateBytes(cr.Status.Certificate)

@@ -100,7 +100,7 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 		return err
 	}
 
-	return h.certKeyMatch(cr, certData, keyData)
+	return h.CertificateKeyMatch(cr, certData, keyData)
 }
 
 func (h *Helper) readFile(node *nodes.Node, path string) ([]byte, error) {
