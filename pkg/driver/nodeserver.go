@@ -90,7 +90,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, err
 	}
 
-	cert, err := ns.cm.CreateNewCertificate(vol, keyBundle)
+	cert, err := ns.cm.EnsureCertificate(vol, keyBundle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new certificate: %s", err)
 	}
