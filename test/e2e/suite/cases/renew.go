@@ -67,6 +67,8 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 					cert = newCert
 					break
 				}
+
+				j++
 			}
 		}
 	})
@@ -102,6 +104,8 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 					key = newKey
 					break
 				}
+
+				j++
 			}
 		}
 	})
@@ -137,6 +141,8 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 					key = newKey
 					break
 				}
+
+				j++
 			}
 		}
 	})
