@@ -82,7 +82,7 @@ func TestWalkDir(t *testing.T) {
 				},
 			},
 			expCertsToWatch: nil,
-			expError:        errors.New(`"cert-manager-csi-test-1": failed to parse key file: error decoding private key PEM block`),
+			expError:        errors.New(`"csi-test-1": failed to parse key file: error decoding private key PEM block`),
 		},
 
 		"if key but bad cert data then error": {
@@ -100,7 +100,7 @@ func TestWalkDir(t *testing.T) {
 				},
 			},
 			expCertsToWatch: nil,
-			expError:        errors.New(`"cert-manager-csi-test-1": failed to parse cert file: error decoding cert PEM block`),
+			expError:        errors.New(`"csi-test-1": failed to parse cert file: error decoding cert PEM block`),
 		},
 
 		"if a single cert key pair exist then return pair to watch": {
@@ -119,13 +119,14 @@ func TestWalkDir(t *testing.T) {
 			},
 			expCertsToWatch: []certToWatch{
 				{
-					"cert-manager-csi-test-1",
+					"csi-test-1",
 					&csiapi.MetaData{
 						Attributes: map[string]string{
 							csiapi.KeyFileKey:  "key.pem",
 							csiapi.CertFileKey: "cert.pem",
 						},
 					},
+					keyCertPair1.cert.NotBefore,
 					keyCertPair1.cert.NotAfter,
 				},
 			},
@@ -158,7 +159,7 @@ func TestWalkDir(t *testing.T) {
 				},
 			},
 			expCertsToWatch: nil,
-			expError:        errors.New(`"cert-manager-csi-test-2": failed to parse key file: error decoding private key PEM block`),
+			expError:        errors.New(`"csi-test-2": failed to parse key file: error decoding private key PEM block`),
 		},
 
 		"two good volumes should return two watches": {
@@ -188,23 +189,25 @@ func TestWalkDir(t *testing.T) {
 			},
 			expCertsToWatch: []certToWatch{
 				{
-					"cert-manager-csi-test-1",
+					"csi-test-1",
 					&csiapi.MetaData{
 						Attributes: map[string]string{
 							csiapi.KeyFileKey:  "key.pem",
 							csiapi.CertFileKey: "cert.pem",
 						},
 					},
+					keyCertPair1.cert.NotBefore,
 					keyCertPair1.cert.NotAfter,
 				},
 				{
-					"cert-manager-csi-test-2",
+					"csi-test-2",
 					&csiapi.MetaData{
 						Attributes: map[string]string{
 							csiapi.KeyFileKey:  "foo.bar",
 							csiapi.CertFileKey: "bar.foo",
 						},
 					},
+					keyCertPair2.cert.NotBefore,
 					keyCertPair2.cert.NotAfter,
 				},
 			},
@@ -222,7 +225,7 @@ func TestWalkDir(t *testing.T) {
 			defer os.RemoveAll(dir)
 
 			for _, v := range test.volDirs {
-				v.name = fmt.Sprintf("cert-manager-csi-%s", v.name)
+				v.name = fmt.Sprintf("csi-%s", v.name)
 
 				volPath := filepath.Join(dir, v.name)
 				if err := os.Mkdir(volPath, 0700); err != nil {
@@ -290,7 +293,7 @@ func TestWatchCert(t *testing.T) {
 		},
 
 		"if unable to parse duration then should error": {
-			expError:    errors.New("failed to parse renew before: time: invalid duration foo"),
+			expError:    errors.New(`failed to watch certificate "test-id": failed to parse renew before: time: invalid duration foo`),
 			expectCall:  false,
 			renewBefore: "foo",
 		},
@@ -298,7 +301,7 @@ func TestWatchCert(t *testing.T) {
 		"if renewBefore is now then expect call": {
 			expError:    nil,
 			expectCall:  true,
-			renewBefore: "5s",
+			renewBefore: "59.9s",
 		},
 
 		"if watcher is killed then expect no renewal": {
@@ -335,7 +338,7 @@ func TestWatchCert(t *testing.T) {
 				},
 			}
 
-			err := r.WatchCert(metaData, time.Now().Add(time.Second/2))
+			err := r.WatchCert(metaData, time.Now(), time.Now().Add(time.Second*60))
 			errMatch(t, test.expError, err)
 
 			if test.killWatcher == true {

@@ -16,6 +16,7 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	"github.com/jetstack/cert-manager-csi/pkg/util"
 )
 
 type Renewer struct {
@@ -30,7 +31,8 @@ type Renewer struct {
 type certToWatch struct {
 	base     string
 	metaData *csiapi.MetaData
-	notAfter time.Time
+
+	notBefore, notAfter time.Time
 }
 
 type RenewFunc func(vol *csiapi.MetaData) (*x509.Certificate, error)
@@ -51,11 +53,15 @@ func (r *Renewer) Discover() error {
 		return err
 	}
 
+	for v := range r.watchingVols {
+		r.KillWatcher(v)
+	}
+
 	var errs []string
 	for _, f := range certsToWatch {
 		glog.Infof("renewer: watching new volume for certificate renewal %q", f.base)
 
-		if err := r.WatchCert(f.metaData, f.notAfter); err != nil {
+		if err := r.WatchCert(f.metaData, f.notBefore, f.notAfter); err != nil {
 			errs = append(errs, fmt.Sprintf("%q: %s",
 				f.metaData.ID, err))
 		}
@@ -85,8 +91,8 @@ func (r *Renewer) walkDir() ([]certToWatch, error) {
 		// not a directory or not a csi directory
 		base := filepath.Base(fPath)
 		if !f.IsDir() ||
-			!strings.HasPrefix(base, "cert-manager-csi") {
-			glog.V(4).Infof("renewer: file not a directory or doesn't have \"cert-manger-csi\" prefix: %q", f.Name())
+			!strings.HasPrefix(base, "csi-") {
+			glog.V(4).Infof("renewer: file not a directory or doesn't have \"cert-manger-csi\" prefix: %q", base)
 			continue
 		}
 
@@ -137,9 +143,10 @@ func (r *Renewer) walkDir() ([]certToWatch, error) {
 		}
 
 		certsToWatch = append(certsToWatch, certToWatch{
-			base:     base,
-			metaData: metaData,
-			notAfter: cert.NotAfter,
+			base:      base,
+			metaData:  metaData,
+			notBefore: cert.NotBefore,
+			notAfter:  cert.NotAfter,
 		})
 	}
 
@@ -150,7 +157,7 @@ func (r *Renewer) walkDir() ([]certToWatch, error) {
 	return certsToWatch, nil
 }
 
-func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error {
+func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notBefore, notAfter time.Time) error {
 	r.muVol.Lock()
 	defer r.muVol.Unlock()
 
@@ -160,25 +167,24 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 		return nil
 	}
 
-	renewBefore, err := time.ParseDuration(
-		metaData.Attributes[csiapi.RenewBeforeKey])
-	if err != nil {
-		return fmt.Errorf("failed to parse renew before: %s", err)
-	}
-
 	ch := make(chan struct{})
 	r.watchingVols[metaData.ID] = ch
 
-	glog.Infof("renewer: starting to watch certificate for renewal: %q", metaData.ID)
+	renewalTime, err := util.RenewTimeFromNotAfter(notBefore, notAfter, metaData.Attributes[csiapi.RenewBeforeKey])
+	if err != nil {
+		return fmt.Errorf("failed to watch certificate %q: %s",
+			metaData.ID, err)
+	}
 
-	renewalTime := notAfter.Add(-renewBefore)
+	timer := time.NewTimer(renewalTime)
 
-	timer := time.NewTimer(time.Until(renewalTime))
+	glog.Infof("renewer: renewal set for certificate in %s: %q", renewalTime, metaData.ID)
 
 	go func() {
+		defer timer.Stop()
+
 		select {
 		case <-ch:
-			timer.Stop()
 			return
 		case <-timer.C:
 			cert, err := r.renewFunc(metaData)
@@ -190,7 +196,7 @@ func (r *Renewer) WatchCert(metaData *csiapi.MetaData, notAfter time.Time) error
 
 			delete(r.watchingVols, metaData.ID)
 
-			if err := r.WatchCert(metaData, cert.NotBefore); err != nil {
+			if err := r.WatchCert(metaData, cert.NotBefore, cert.NotAfter); err != nil {
 				glog.Errorf("renewer: failed to watch certificate %q: %s",
 					metaData.ID, err)
 			}

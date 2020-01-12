@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"time"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -50,4 +51,21 @@ func CertificateRequestFailed(cr *cmapi.CertificateRequest) (string, bool) {
 	}
 
 	return "", false
+}
+
+func RenewTimeFromNotAfter(notBefore time.Time, notAfter time.Time, renewBeforeString string) (time.Duration, error) {
+	renewBefore, err := time.ParseDuration(renewBeforeString)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse renew before: %s", err)
+	}
+
+	validity := notAfter.Sub(notBefore)
+	if renewBefore > validity {
+		return 0, fmt.Errorf("renewal duration is longer than certificate validity: %s %s",
+			renewBefore, validity)
+	}
+
+	dur := notAfter.Add(-renewBefore).Sub(time.Now())
+
+	return dur, nil
 }
