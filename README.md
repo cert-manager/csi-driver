@@ -1,11 +1,11 @@
 # cert-manager-csi
 
 cert-manager-csi is a Container Storage Interface (CSI) driver plugin for
-Kubernetes to work along cert-manager. The goal for this plugin is to facilitate
-requesting and mounting certificate key pairs to pods seamlessly. This is useful
-for facilitating mTLS, or otherwise securing connections of pods with guaranteed
-present certificates whilst having all of the features that cert-manager
-provides.
+Kubernetes to work along [cert-manager](https://cert-manager.io/). The goal
+for this plugin is to facilitate requesting and mounting certificate key
+pairs to pods seamlessly. This is useful for facilitating mTLS, or otherwise
+securing connections of pods with guaranteed present certificates whilst
+having all of the features that cert-manager provides.
 
 This project is experimental.
 
