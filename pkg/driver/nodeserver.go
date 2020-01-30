@@ -106,13 +106,13 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, err
 	}
 
-	cert, err := ns.cm.CreateNewCertificate(vol, keyBundle)
+	cert, err := ns.cm.EnsureCertificate(vol, keyBundle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new certificate: %s", err)
 	}
 
 	if s, ok := attr[csiapi.DisableAutoRenewKey]; !ok || s != "true" {
-		if err := ns.renewer.WatchCert(vol, cert.NotAfter); err != nil {
+		if err := ns.renewer.WatchCert(vol, cert.NotBefore, cert.NotAfter); err != nil {
 			return nil, fmt.Errorf("failed to watch file %s:%s:%s: %s",
 				attr[csiapi.CSIPodNamespaceKey], attr[csiapi.CSIPodNameKey], vol.ID, err)
 		}

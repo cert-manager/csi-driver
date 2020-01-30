@@ -61,7 +61,7 @@ func New() (*CertManager, error) {
 	}, nil
 }
 
-func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
+func (c *CertManager) EnsureCertificate(vol *csiapi.MetaData, keyBundle *util.KeyBundle) (*x509.Certificate, error) {
 	attr := vol.Attributes
 	namespace := attr[csiapi.CSIPodNamespaceKey]
 
@@ -73,88 +73,10 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 
 	// Not ok so create a new certificate request
 	if !ok {
-		uris, err := util.ParseURIs(attr[csiapi.URISANsKey])
-		if err != nil {
-			return nil, err
-		}
-
-		ips := util.ParseIPAddresses(attr[csiapi.IPSANsKey])
-
-		dnsNames := strings.Split(attr[csiapi.DNSNamesKey], ",")
-		commonName := attr[csiapi.CommonNameKey]
-
-		duration := cmapi.DefaultCertificateDuration
-		if durStr, ok := attr[csiapi.DurationKey]; ok {
-			duration, err = time.ParseDuration(durStr)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		isCA := false
-		if isCAStr, ok := attr[csiapi.IsCAKey]; ok {
-			switch strings.ToLower(isCAStr) {
-			case "true":
-				isCA = true
-			case "false":
-				isCA = false
-			}
-		}
-
-		csr := &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: commonName,
-			},
-			DNSNames:           dnsNames,
-			IPAddresses:        ips,
-			URIs:               uris,
-			PublicKey:          keyBundle.PrivateKey.Public(),
-			PublicKeyAlgorithm: keyBundle.PublicKeyAlgorithm,
-			SignatureAlgorithm: keyBundle.SignatureAlgorithm,
-		}
-
-		csrPEM, err := util.EncodeCSR(csr, keyBundle.PrivateKey)
-		if err != nil {
-			return nil, err
-		}
-		// Build certificate request for volume
-		cr := &cmapi.CertificateRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      vol.ID,
-				Namespace: namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					metav1.OwnerReference{
-						APIVersion:         "core/v1",
-						BlockOwnerDeletion: util.BoolPointer(true),
-						Controller:         util.BoolPointer(false),
-						Kind:               "Pod",
-						Name:               vol.Attributes[csiapi.CSIPodNamespaceKey],
-						UID:                types.UID(vol.Attributes[csiapi.CSIPodUIDKey]),
-					},
-				},
-			},
-			Spec: cmapi.CertificateRequestSpec{
-				CSRPEM: csrPEM,
-				IsCA:   isCA,
-				Duration: &metav1.Duration{
-					Duration: duration,
-				},
-				IssuerRef: cmmeta.ObjectReference{
-					Name:  attr[csiapi.IssuerNameKey],
-					Kind:  attr[csiapi.IssuerKindKey],
-					Group: attr[csiapi.IssuerGroupKey],
-				},
-			},
-		}
-
-		// if it doesn't exit yet then create it
-		cr, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
-		if err != nil {
+		if err := c.createNewCertificateRequest(vol, keyBundle); err != nil {
 			return nil, err
 		}
 	}
-
-	glog.Infof("cert-manager: created CertificateRequest %s", vol.ID)
 
 	glog.Infof("cert-manager: waiting for CertificateRequest to become ready %s", vol.ID)
 	cr, err := c.waitForCertificateRequestReady(vol.ID, namespace, time.Second*30)
@@ -187,6 +109,8 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 		if err := util.WriteFile(caPath, cr.Status.CA, 0600); err != nil {
 			return nil, err
 		}
+
+		glog.Infof("cert-manager: CA certificate written to file %s", caPath)
 	}
 
 	cert, err := pki.DecodeX509CertificateBytes(cr.Status.Certificate)
@@ -204,6 +128,94 @@ func (c *CertManager) CreateNewCertificate(vol *csiapi.MetaData, keyBundle *util
 	glog.Infof("cert-manager: private key written to file: %s", keyPath)
 
 	return cert, nil
+}
+
+func (c *CertManager) createNewCertificateRequest(vol *csiapi.MetaData, keyBundle *util.KeyBundle) error {
+	attr := vol.Attributes
+	namespace := attr[csiapi.CSIPodNamespaceKey]
+
+	uris, err := util.ParseURIs(attr[csiapi.URISANsKey])
+	if err != nil {
+		return err
+	}
+
+	ips := util.ParseIPAddresses(attr[csiapi.IPSANsKey])
+
+	dnsNames := strings.Split(attr[csiapi.DNSNamesKey], ",")
+	commonName := attr[csiapi.CommonNameKey]
+
+	duration := cmapi.DefaultCertificateDuration
+	if durStr, ok := attr[csiapi.DurationKey]; ok {
+		duration, err = time.ParseDuration(durStr)
+		if err != nil {
+			return err
+		}
+	}
+
+	isCA := false
+	if isCAStr, ok := attr[csiapi.IsCAKey]; ok {
+		switch strings.ToLower(isCAStr) {
+		case "true":
+			isCA = true
+		case "false":
+			isCA = false
+		}
+	}
+
+	csr := &x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName: commonName,
+		},
+		DNSNames:           dnsNames,
+		IPAddresses:        ips,
+		URIs:               uris,
+		PublicKey:          keyBundle.PrivateKey.Public(),
+		PublicKeyAlgorithm: keyBundle.PublicKeyAlgorithm,
+		SignatureAlgorithm: keyBundle.SignatureAlgorithm,
+	}
+
+	csrPEM, err := util.EncodeCSR(csr, keyBundle.PrivateKey)
+	if err != nil {
+		return err
+	}
+	// Build certificate request for volume
+	cr := &cmapi.CertificateRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      vol.ID,
+			Namespace: namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				metav1.OwnerReference{
+					APIVersion:         "core/v1",
+					BlockOwnerDeletion: util.BoolPointer(true),
+					Controller:         util.BoolPointer(false),
+					Kind:               "Pod",
+					Name:               vol.Attributes[csiapi.CSIPodNamespaceKey],
+					UID:                types.UID(vol.Attributes[csiapi.CSIPodUIDKey]),
+				},
+			},
+		},
+		Spec: cmapi.CertificateRequestSpec{
+			CSRPEM: csrPEM,
+			IsCA:   isCA,
+			Duration: &metav1.Duration{
+				Duration: duration,
+			},
+			IssuerRef: cmmeta.ObjectReference{
+				Name:  attr[csiapi.IssuerNameKey],
+				Kind:  attr[csiapi.IssuerKindKey],
+				Group: attr[csiapi.IssuerGroupKey],
+			},
+		},
+	}
+
+	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
+	if err != nil {
+		return err
+	}
+
+	glog.Infof("cert-manager: created CertificateRequest %s", vol.ID)
+
+	return nil
 }
 
 func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate, error) {
@@ -239,7 +251,13 @@ func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate,
 		}
 	}
 
-	cert, err := c.CreateNewCertificate(vol, keyBundle)
+	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
+	err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.ID, &metav1.DeleteOptions{})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return nil, err
+	}
+
+	cert, err := c.EnsureCertificate(vol, keyBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +270,13 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 
 	// get current certificate request
 	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.ID, metav1.GetOptions{})
-	if err != nil {
-		if !k8sErrors.IsNotFound(err) {
-			return false, err
-		}
-
-		// certificate request doesn't exist so create a new one
+	// certificate request doesn't exist so create a new one
+	if k8sErrors.IsNotFound(err) {
 		return false, nil
+	}
+
+	if err != nil {
+		return false, err
 	}
 
 	// If certificate request doesn't match the volume spec then delete the current one

@@ -58,9 +58,14 @@ func (h *Helper) WaitForCertificateRequestReady(namespace, name string, timeout 
 			var err error
 			log.Logf("Waiting for CertificateRequest %s/%s to be ready", namespace, name)
 			cr, err = h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+			if k8sErrors.IsNotFound(err) {
+				return false, nil
+			}
+
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}
+
 			isReady := apiutil.CertificateRequestHasCondition(cr, cmapi.CertificateRequestCondition{
 				Type:   cmapi.CertificateRequestConditionReady,
 				Status: cmmeta.ConditionTrue,

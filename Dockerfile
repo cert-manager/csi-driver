@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.11
 LABEL maintainers="joshvanl"
 LABEL description="cert-manager CSI Driver"
 
