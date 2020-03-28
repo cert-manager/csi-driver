@@ -63,7 +63,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsages:     "client auth",
+				csiapi.KeyUsagesKey:  "client auth",
 			},
 			expError: nil,
 		},
@@ -71,7 +71,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsages:     "code signing,email protection,s/mime,ipsec end system",
+				csiapi.KeyUsagesKey:  "code signing,email protection,s/mime,ipsec end system",
 			},
 			expError: nil,
 		},
@@ -79,7 +79,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsages:     "foo,bar,hello world",
+				csiapi.KeyUsagesKey:  "foo,bar,hello world",
 			},
 			expError: errors.New(
 				`"foo" is not a valid key usage, "bar" is not a valid key usage, "hello world" is not a valid key usage`,
