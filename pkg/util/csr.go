@@ -22,10 +22,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
+
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
 // EncodeCSR calls x509.CreateCertificateRequest to sign the given CSR.
@@ -84,4 +87,20 @@ func RenewTimeFromNotAfter(notBefore time.Time, notAfter time.Time, renewBeforeS
 	dur := notAfter.Add(-renewBefore).Sub(time.Now())
 
 	return dur, nil
+}
+
+func KeyUsagesFromAttributes(attr map[string]string) []cmapi.KeyUsage {
+	usageCSV := attr[csiapi.KeyUsagesKey]
+
+	if len(usageCSV) == 0 {
+		return nil
+	}
+
+	var keyUsages []cmapi.KeyUsage
+	for _, usage := range strings.Split(usageCSV, ",") {
+		keyUsages = append(keyUsages, cmapi.KeyUsage(usage))
+	}
+
+	return keyUsages
+
 }

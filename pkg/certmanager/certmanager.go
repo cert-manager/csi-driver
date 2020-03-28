@@ -200,6 +200,7 @@ func (c *CertManager) createNewCertificateRequest(vol *csiapi.MetaData, keyBundl
 			Duration: &metav1.Duration{
 				Duration: duration,
 			},
+			Usages: util.KeyUsagesFromAttributes(attr),
 			IssuerRef: cmmeta.ObjectReference{
 				Name:  attr[csiapi.IssuerNameKey],
 				Kind:  attr[csiapi.IssuerKindKey],

@@ -22,6 +22,9 @@ import (
 	"strings"
 	"time"
 
+	cmapiutil "github.com/jetstack/cert-manager/pkg/api/util"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
@@ -36,6 +39,8 @@ func ValidateAttributes(attr map[string]string) error {
 
 	errs = durationParse(attr[csiapi.DurationKey], csiapi.DurationKey, errs)
 
+	errs = keyUsages(attr[csiapi.KeyUsagesKey], errs)
+
 	errs = filepathBreakout(attr[csiapi.CAFileKey], csiapi.CAFileKey, errs)
 	errs = filepathBreakout(attr[csiapi.CertFileKey], csiapi.CertFileKey, errs)
 	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
@@ -49,6 +54,24 @@ func ValidateAttributes(attr map[string]string) error {
 	}
 
 	return nil
+}
+
+func keyUsages(ss string, errs []string) []string {
+	if len(ss) == 0 {
+		return errs
+	}
+
+	usages := strings.Split(ss, ",")
+
+	for _, usage := range usages {
+		if _, ok := cmapiutil.ExtKeyUsageType(cmapi.KeyUsage(usage)); !ok {
+			if _, ok := cmapiutil.KeyUsageType(cmapi.KeyUsage(usage)); !ok {
+				errs = append(errs, fmt.Sprintf("%q is not a valid key usage", usage))
+			}
+		}
+	}
+
+	return errs
 }
 
 func filepathBreakout(s, k string, errs []string) []string {
