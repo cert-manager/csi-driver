@@ -26,6 +26,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilpointer "k8s.io/utils/pointer"
 
 	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
@@ -63,6 +64,11 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 				Namespace:    f.Namespace.Name,
 			},
 			Spec: corev1.PodSpec{
+				SecurityContext: &corev1.PodSecurityContext{
+					RunAsUser:  utilpointer.Int64Ptr(1000),
+					RunAsGroup: utilpointer.Int64Ptr(3000),
+					FSGroup:    utilpointer.Int64Ptr(2000),
+				},
 				Containers: []corev1.Container{
 					corev1.Container{
 						Name:    "test-container-1",
@@ -125,14 +131,20 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		wg := new(sync.WaitGroup)
 		wg.Add(len(pods))
 		for i := range pods {
-			go createPod(wg, f, i, pods)
+			go func() {
+				defer GinkgoRecover()
+				createPod(wg, f, i, pods)
+			}()
 		}
 		wg.Wait()
 
 		// Wait for all the pods to become ready
 		wg.Add(len(pods))
 		for i := range pods {
-			go waitForPodToBecomeReady(wg, f, i, pods)
+			go func() {
+				defer GinkgoRecover()
+				waitForPodToBecomeReady(wg, f, i, pods)
+			}()
 		}
 		wg.Wait()
 
@@ -144,7 +156,10 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		// and cert match both in pod, and on host.
 		wg.Add(len(pods))
 		for i, pod := range pods {
-			go testPod(wg, f, i, crs.Items, pod)
+			go func() {
+				defer GinkgoRecover()
+				testPod(wg, f, i, crs.Items, pod)
+			}()
 		}
 		wg.Wait()
 
@@ -153,7 +168,10 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		By("Ensuing all Pods can be deleted")
 		wg.Add(len(pods))
 		for i, pod := range pods {
-			go deletePod(wg, f, i, pod)
+			go func() {
+				defer GinkgoRecover()
+				deletePod(wg, f, i, pod)
+			}()
 		}
 		wg.Wait()
 

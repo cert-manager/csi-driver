@@ -91,7 +91,7 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 	}
 
 	dataDirPath := filepath.Join(dirPath, "data")
-	if err := h.matchFilePerm(node, dataDirPath, 744); err != nil {
+	if err := h.matchFilePerm(node, dataDirPath, 755); err != nil {
 		return err
 	}
 
