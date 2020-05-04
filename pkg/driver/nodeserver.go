@@ -134,7 +134,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		mntPoint = false
 	}
 
-	if err = os.MkdirAll(mountPath, 0700); err != nil {
+	if err = os.MkdirAll(mountPath, 0755); err != nil {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("failed to create mount path directory %s: %s", mountPath, err))
 	}

@@ -58,7 +58,7 @@ func NewRSAKey() (*KeyBundle, error) {
 }
 
 func WriteFile(path string, b []byte, perm os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0744); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
