@@ -18,7 +18,6 @@ package cases
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -128,25 +127,14 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		}
 
 		// Create random pods
-		wg := new(sync.WaitGroup)
-		wg.Add(len(pods))
 		for i := range pods {
-			go func() {
-				defer GinkgoRecover()
-				createPod(wg, f, i, pods)
-			}()
+			createPod(f, i, pods)
 		}
-		wg.Wait()
 
 		// Wait for all the pods to become ready
-		wg.Add(len(pods))
 		for i := range pods {
-			go func() {
-				defer GinkgoRecover()
-				waitForPodToBecomeReady(wg, f, i, pods)
-			}()
+			waitForPodToBecomeReady(f, i, pods)
 		}
-		wg.Wait()
 
 		// List all certificate requests that should be ready
 		crs, err := f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
@@ -161,14 +149,18 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		// Ensure all pods can be deleted and their equivalent CertificateRequest deleted
 
 		By("Ensuing all Pods can be deleted")
-		wg.Add(len(pods))
 		for i, pod := range pods {
-			go func() {
-				defer GinkgoRecover()
-				deletePod(wg, f, i, pod)
-			}()
+			By(fmt.Sprintf("Deleting Pod %d: %s", i, pod.Name))
+			err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(pod.Name, nil)
+			Expect(err).NotTo(HaveOccurred())
 		}
-		wg.Wait()
+
+		for i, pod := range pods {
+			err = f.Helper().WaitForPodDeletion(pod.Namespace, pod.Name, time.Second*90)
+			Expect(err).NotTo(HaveOccurred())
+
+			By(fmt.Sprintf("Pod Deleted %d: %s", i, pod.Name))
+		}
 
 		By("Ensuring all CertificateRequets have been deleted")
 		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
@@ -179,29 +171,16 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 	})
 })
 
-func createPod(wg *sync.WaitGroup, f *framework.Framework, i int, pods []*corev1.Pod) {
+func createPod(f *framework.Framework, i int, pods []*corev1.Pod) {
 	By(fmt.Sprintf("Creating a Pod %d", i))
 	pod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(pods[i])
 	Expect(err).NotTo(HaveOccurred())
 
 	By(fmt.Sprintf("Pod Created %d: %s", i, pod.Name))
 	pods[i] = pod
-	wg.Done()
 }
 
-func deletePod(wg *sync.WaitGroup, f *framework.Framework, i int, pod *corev1.Pod) {
-	By(fmt.Sprintf("Deleting Pod %d: %s", i, pod.Name))
-	err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(pod.Name, nil)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = f.Helper().WaitForPodDeletion(pod.Namespace, pod.Name, time.Second*90)
-	Expect(err).NotTo(HaveOccurred())
-
-	By(fmt.Sprintf("Pod Deleted %d: %s", i, pod.Name))
-	wg.Done()
-}
-
-func waitForPodToBecomeReady(wg *sync.WaitGroup, f *framework.Framework, i int, pods []*corev1.Pod) {
+func waitForPodToBecomeReady(f *framework.Framework, i int, pods []*corev1.Pod) {
 	err := f.Helper().WaitForPodReady(f.Namespace.Name, pods[i].Name, time.Second*90)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -209,7 +188,6 @@ func waitForPodToBecomeReady(wg *sync.WaitGroup, f *framework.Framework, i int, 
 	Expect(err).NotTo(HaveOccurred())
 
 	pods[i] = readyPod
-	wg.Done()
 }
 
 func testPod(f *framework.Framework, i int, crs []cmapi.CertificateRequest, pod *corev1.Pod) {
