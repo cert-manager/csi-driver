@@ -191,7 +191,7 @@ func (f *Framework) RandomPod() *corev1.Pod {
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser:  utilpointer.Int64Ptr(1000),
 				RunAsGroup: utilpointer.Int64Ptr(3000),
-				FSGroup:    utilpointer.Int64Ptr(2000),
+				FSGroup:    utilpointer.Int64Ptr(1000),
 			},
 			Containers: containers,
 			Volumes:    volumes,

@@ -215,7 +215,7 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser:  utilpointer.Int64Ptr(1000),
 				RunAsGroup: utilpointer.Int64Ptr(3000),
-				FSGroup:    utilpointer.Int64Ptr(2000),
+				FSGroup:    utilpointer.Int64Ptr(1000),
 			},
 			Containers: []corev1.Container{
 				corev1.Container{

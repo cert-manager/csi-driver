@@ -67,7 +67,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 				SecurityContext: &corev1.PodSecurityContext{
 					RunAsUser:  utilpointer.Int64Ptr(1000),
 					RunAsGroup: utilpointer.Int64Ptr(3000),
-					FSGroup:    utilpointer.Int64Ptr(2000),
+					FSGroup:    utilpointer.Int64Ptr(1000),
 				},
 				Containers: []corev1.Container{
 					corev1.Container{
@@ -154,14 +154,9 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 
 		// Ensure the pods volumes spec match CertificateRequest spec and the key
 		// and cert match both in pod, and on host.
-		wg.Add(len(pods))
 		for i, pod := range pods {
-			go func() {
-				defer GinkgoRecover()
-				testPod(wg, f, i, crs.Items, pod)
-			}()
+			testPod(f, i, crs.Items, pod)
 		}
-		wg.Wait()
 
 		// Ensure all pods can be deleted and their equivalent CertificateRequest deleted
 
@@ -217,7 +212,7 @@ func waitForPodToBecomeReady(wg *sync.WaitGroup, f *framework.Framework, i int, 
 	wg.Done()
 }
 
-func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.CertificateRequest, pod *corev1.Pod) {
+func testPod(f *framework.Framework, i int, crs []cmapi.CertificateRequest, pod *corev1.Pod) {
 	By(fmt.Sprintf("Ensuring corresponding CertificateRequests exists with the correct spec %d: %s/%s", i, pod.Namespace, pod.Name))
 
 	attributesMap := make(map[string]*map[string]string)
@@ -272,6 +267,4 @@ func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.Cert
 			Expect(err).NotTo(HaveOccurred())
 		}
 	}
-
-	wg.Done()
 }
