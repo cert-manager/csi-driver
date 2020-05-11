@@ -102,5 +102,4 @@ func KeyUsagesFromAttributes(attr map[string]string) []cmapi.KeyUsage {
 	}
 
 	return keyUsages
-
 }

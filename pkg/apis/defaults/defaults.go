@@ -59,7 +59,10 @@ func setDefaultIfEmpty(attr map[string]string, k, v string) {
 func defaultKeyUsages() string {
 	var defKU []string
 
-	for _, ku := range cmapi.DefaultKeyUsages() {
+	for _, ku := range []cmapi.KeyUsage{
+		cmapi.UsageDigitalSignature,
+		cmapi.UsageKeyEncipherment,
+	} {
 		defKU = append(defKU, string(ku))
 	}
 
