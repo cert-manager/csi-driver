@@ -99,14 +99,14 @@ func (c *CertManager) EnsureCertificate(vol *csiapi.MetaData, keyBundle *util.Ke
 
 	certPath := util.CertPath(vol)
 
-	if err := util.WriteFile(certPath, cr.Status.Certificate, 0644); err != nil {
+	if err := util.WriteFile(certPath, cr.Status.Certificate, 0640); err != nil {
 		return nil, err
 	}
 
 	if len(cr.Status.CA) > 0 {
 		caPath := util.CAPath(vol)
 
-		if err := util.WriteFile(caPath, cr.Status.CA, 0644); err != nil {
+		if err := util.WriteFile(caPath, cr.Status.CA, 0640); err != nil {
 			return nil, err
 		}
 
@@ -121,7 +121,7 @@ func (c *CertManager) EnsureCertificate(vol *csiapi.MetaData, keyBundle *util.Ke
 	glog.Infof("cert-manager: certificate written to file %s", certPath)
 
 	keyPath := util.KeyPath(vol)
-	if err := util.WriteFile(keyPath, keyBundle.PEM, 0644); err != nil {
+	if err := util.WriteFile(keyPath, keyBundle.PEM, 0640); err != nil {
 		return nil, fmt.Errorf("faild to write key data to file: %s", err)
 	}
 

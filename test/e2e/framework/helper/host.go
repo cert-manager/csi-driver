@@ -97,13 +97,13 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 
 	certPath := attr[csiapi.CertFileKey]
 	certPath = filepath.Join(dataDirPath, certPath)
-	if err := h.matchFilePerm(node, certPath, 644); err != nil {
+	if err := h.matchFilePerm(node, certPath, 640); err != nil {
 		return err
 	}
 
 	keyPath := attr[csiapi.KeyFileKey]
 	keyPath = filepath.Join(dataDirPath, keyPath)
-	if err := h.matchFilePerm(node, keyPath, 644); err != nil {
+	if err := h.matchFilePerm(node, keyPath, 640); err != nil {
 		return err
 	}
 
