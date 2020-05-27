@@ -45,7 +45,7 @@ func New(driverName, nodeID, endpoint, dataRoot, tmpfsSize string) (*Driver, err
 
 	mntPoint, err := util.IsLikelyMountPoint(dataRoot)
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(dataRoot, 0700); err != nil {
+		if err = os.MkdirAll(dataRoot, (0700 | os.ModeSticky)); err != nil {
 			return nil, status.Error(codes.Internal,
 				fmt.Sprintf("failed to create data root directory %s: %s", dataRoot, err))
 		}

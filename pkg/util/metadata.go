@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -46,7 +47,7 @@ func WriteMetaDataFile(vol *csiapi.MetaData) error {
 	}
 
 	metaPath := filepath.Join(vol.Path, csiapi.MetaDataFileName)
-	return WriteFile(metaPath, b, 0600)
+	return WriteFile(metaPath, b, (0600 | os.ModeSticky))
 }
 
 func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string]string) error {
