@@ -119,7 +119,7 @@ cert-manager documentation
 ## Supported Volume Attributes
 
 The cert-manager-csi driver aims to have complete feature parity with all
-possible values availble through the cert-manager API however currently supports
+possible values available through the cert-manager API however currently supports
 the following values;
 
 | Attribute                                | Description                                                                                           | Default                              | Example                          |
@@ -133,7 +133,7 @@ the following values;
 | `csi.cert-manager.io/uri-sans`           | URI names the certificate will be requested for.                                                      |                                      | `spiffe://foo.bar.cluster.local` |
 | `csi.cert-manager.io/duration`           | Requested duration the signed certificate will be valid for.                                          | `720h`                               | `1880h`                          |
 | `csi.cert-manager.io/is-ca`              | Mark the certificate as a certificate authority.                                                      | `false`                              | `true`                           |
-| `csi.cert-manager.io/key-usgaes`         | Set the key usages on the certificate request.                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
+| `csi.cert-manager.io/key-usages`         | Set the key usages on the certificate request.                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
 | `csi.cert-manager.io/certificate-file`   | File name to store the certificate file at.                                                           | `crt.pem`                            | `bar/foo.crt`                    |
 | `csi.cert-manager.io/ca-file`            | File name to store the ca certificate file at.                                                        | `ca.pem`                             | `bar/foo.ca`                     |
 | `csi.cert-manager.io/privatekey-file`    | File name to store the key file at.                                                                   | `key.pem`                            | `bar/foo.key`                    |
