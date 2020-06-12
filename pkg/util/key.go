@@ -58,12 +58,12 @@ func NewRSAKey() (*KeyBundle, error) {
 }
 
 func WriteFile(path string, b []byte, perm os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), os.FileMode(0755)|os.ModeSticky); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
 	// We need to ensure unix permissions if the file already exists
-	if err := os.Chmod(filepath.Dir(path), os.FileMode(0755)|os.ModeSticky); err != nil {
+	if err := os.Chmod(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 

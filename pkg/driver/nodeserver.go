@@ -126,7 +126,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	mntPoint, err := util.IsLikelyMountPoint(targetPath)
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(targetPath, (0700 | os.ModeSticky)); err != nil {
+		if err = os.MkdirAll(targetPath, 0700); err != nil {
 			return nil, status.Error(codes.Internal,
 				fmt.Sprintf("failed to create target path directory %s: %s", targetPath, err))
 		}
@@ -134,7 +134,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		mntPoint = false
 	}
 
-	if err = os.MkdirAll(mountPath, (0700 | os.ModeSticky)); err != nil {
+	if err = os.MkdirAll(mountPath, 0700); err != nil {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("failed to create mount path directory %s: %s", mountPath, err))
 	}
@@ -157,7 +157,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	}
 
 	// We need to ensure unix permissions if the file already exists
-	if err := os.Chmod(targetPath, (700 | os.ModeSticky)); err != nil {
+	if err := os.Chmod(targetPath, 700); err != nil {
 		return nil, err
 	}
 
@@ -249,7 +249,7 @@ func (ns *NodeServer) createVolume(id, targetPath string,
 	name := util.BuildVolumeName(podName, id)
 	path := filepath.Join(ns.dataRoot, id)
 
-	err := os.MkdirAll(path, (0700 | os.ModeSticky))
+	err := os.MkdirAll(path, 0700)
 	if err != nil {
 		return nil, err
 	}

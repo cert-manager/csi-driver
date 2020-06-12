@@ -80,7 +80,7 @@ func (k *Kind) DeployCertManager(version string) error {
 		if err != nil {
 			return err
 		}
-		//defer os.RemoveAll(tmpDir)
+		defer os.RemoveAll(tmpDir)
 
 		if err := os.Mkdir(filepath.Join(tmpDir,
 			"cert-manager-csi"), 0755); err != nil {

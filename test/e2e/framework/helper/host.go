@@ -56,12 +56,12 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 		return err
 	}
 
-	if err := h.matchFilePerm(node, dirPath, "1755"); err != nil {
+	if err := h.matchFilePerm(node, dirPath, "755"); err != nil {
 		return err
 	}
 
 	metaPath := filepath.Join(dirPath, "metadata.json")
-	if err := h.matchFilePerm(node, metaPath, "1600"); err != nil {
+	if err := h.matchFilePerm(node, metaPath, "600"); err != nil {
 		return err
 	}
 
@@ -90,25 +90,25 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 	}
 
 	dataDirPath := filepath.Join(dirPath, "data")
-	if err := h.matchFilePerm(node, dataDirPath, "1755"); err != nil {
+	if err := h.matchFilePerm(node, dataDirPath, "755"); err != nil {
 		return err
 	}
 
 	certPath := attr[csiapi.CertFileKey]
 	certPath = filepath.Join(dataDirPath, certPath)
-	if err := h.matchFilePerm(node, certPath, "1644"); err != nil {
+	if err := h.matchFilePerm(node, certPath, "644"); err != nil {
 		return err
 	}
 
 	keyPath := attr[csiapi.KeyFileKey]
 	keyPath = filepath.Join(dataDirPath, keyPath)
-	if err := h.matchFilePerm(node, keyPath, "1644"); err != nil {
+	if err := h.matchFilePerm(node, keyPath, "644"); err != nil {
 		return err
 	}
 
 	caPath := attr[csiapi.CAFileKey]
 	caPath = filepath.Join(dataDirPath, caPath)
-	if err := h.matchFilePerm(node, caPath, "1644"); err != nil {
+	if err := h.matchFilePerm(node, caPath, "644"); err != nil {
 		return err
 	}
 
