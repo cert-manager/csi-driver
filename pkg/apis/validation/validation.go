@@ -64,9 +64,10 @@ func keyUsages(ss string, errs []string) []string {
 	usages := strings.Split(ss, ",")
 
 	for _, usage := range usages {
-		if _, ok := cmapiutil.ExtKeyUsageType(cmapi.KeyUsage(usage)); !ok {
-			if _, ok := cmapiutil.KeyUsageType(cmapi.KeyUsage(usage)); !ok {
-				errs = append(errs, fmt.Sprintf("%q is not a valid key usage", usage))
+		trimedUsage := strings.TrimSpace(usage)
+		if _, ok := cmapiutil.ExtKeyUsageType(cmapi.KeyUsage(trimedUsage)); !ok {
+			if _, ok := cmapiutil.KeyUsageType(cmapi.KeyUsage(trimedUsage)); !ok {
+				errs = append(errs, fmt.Sprintf("%q is not a valid key usage", trimedUsage))
 			}
 		}
 	}

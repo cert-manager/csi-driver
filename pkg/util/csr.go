@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -98,8 +99,33 @@ func KeyUsagesFromAttributes(attr map[string]string) []cmapi.KeyUsage {
 
 	var keyUsages []cmapi.KeyUsage
 	for _, usage := range strings.Split(usageCSV, ",") {
-		keyUsages = append(keyUsages, cmapi.KeyUsage(usage))
+		keyUsages = append(keyUsages, cmapi.KeyUsage(strings.TrimSpace(usage)))
 	}
 
 	return keyUsages
+}
+
+func keyUsagesMatch(a, b []cmapi.KeyUsage) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	aa, bb := make([]cmapi.KeyUsage, len(a)), make([]cmapi.KeyUsage, len(b))
+	copy(aa, a)
+	copy(bb, b)
+
+	sort.SliceStable(aa, func(i, j int) bool {
+		return aa[i] < aa[j]
+	})
+	sort.SliceStable(bb, func(i, j int) bool {
+		return bb[i] < bb[j]
+	})
+
+	for i, s := range aa {
+		if s != bb[i] {
+			return false
+		}
+	}
+
+	return true
 }

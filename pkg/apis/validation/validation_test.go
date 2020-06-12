@@ -71,7 +71,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:  "code signing,email protection,s/mime,ipsec end system",
+				csiapi.KeyUsagesKey:  "code signing  ,      email protection,    s/mime,ipsec end system",
 			},
 			expError: nil,
 		},

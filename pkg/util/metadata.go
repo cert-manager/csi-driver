@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -109,7 +108,7 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 	}
 
 	if usages := KeyUsagesFromAttributes(attr); len(usages) > 0 {
-		if !KeyUsagesMatch(usages, cr.Spec.Usages) {
+		if !keyUsagesMatch(usages, cr.Spec.Usages) {
 			errs = append(errs, fmt.Sprintf("key usages do not match, exp=%s got=%s",
 				usages, cr.Spec.Usages))
 		}
@@ -159,29 +158,4 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 
 func BoolPointer(b bool) *bool {
 	return &b
-}
-
-func KeyUsagesMatch(a, b []cmapi.KeyUsage) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	aa, bb := make([]cmapi.KeyUsage, len(a)), make([]cmapi.KeyUsage, len(b))
-	copy(aa, a)
-	copy(bb, b)
-
-	sort.SliceStable(aa, func(i, j int) bool {
-		return aa[i] < aa[j]
-	})
-	sort.SliceStable(bb, func(i, j int) bool {
-		return bb[i] < bb[j]
-	})
-
-	for i, s := range aa {
-		if s != bb[i] {
-			return false
-		}
-	}
-
-	return true
 }
