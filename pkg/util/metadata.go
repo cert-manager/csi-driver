@@ -107,6 +107,13 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 		}
 	}
 
+	if usages := KeyUsagesFromAttributes(attr); len(usages) > 0 {
+		if !keyUsagesMatch(usages, cr.Spec.Usages) {
+			errs = append(errs, fmt.Sprintf("key usages do not match, exp=%s got=%s",
+				usages, cr.Spec.Usages))
+		}
+	}
+
 	csr, err := pki.DecodeX509CertificateRequestBytes(
 		cr.Spec.CSRPEM)
 	if err != nil {

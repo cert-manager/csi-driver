@@ -38,6 +38,7 @@ const (
 	URISANsKey    string = "csi.cert-manager.io/uri-sans"
 	DurationKey   string = "csi.cert-manager.io/duration"
 	IsCAKey       string = "csi.cert-manager.io/is-ca"
+	KeyUsagesKey  string = "csi.cert-manager.io/key-usages"
 
 	CAFileKey   string = "csi.cert-manager.io/ca-file"
 	CertFileKey string = "csi.cert-manager.io/certificate-file"

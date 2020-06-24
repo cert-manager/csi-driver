@@ -17,6 +17,7 @@ limitations under the License.
 package defaults
 
 import (
+	"strings"
 	"time"
 
 	"github.com/jetstack/cert-manager/pkg/apis/certmanager"
@@ -36,6 +37,8 @@ func SetDefaultAttributes(attr map[string]string) (map[string]string, error) {
 	setDefaultIfEmpty(attr, csiapi.CertFileKey, "crt.pem")
 	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "key.pem")
 
+	setDefaultIfEmpty(attr, csiapi.KeyUsagesKey, defaultKeyUsages())
+
 	// TODO (@joshvanl): add a smarter defaulting mechanism
 	dur, err := time.ParseDuration(attr[string(csiapi.DurationKey)])
 	if err != nil {
@@ -51,4 +54,17 @@ func setDefaultIfEmpty(attr map[string]string, k, v string) {
 	if len(attr[string(k)]) == 0 {
 		attr[string(k)] = v
 	}
+}
+
+func defaultKeyUsages() string {
+	var defKU []string
+
+	for _, ku := range []cmapi.KeyUsage{
+		cmapi.UsageDigitalSignature,
+		cmapi.UsageKeyEncipherment,
+	} {
+		defKU = append(defKU, string(ku))
+	}
+
+	return strings.Join(defKU, ",")
 }

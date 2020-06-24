@@ -59,6 +59,32 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 			},
 			expError: nil,
 		},
+		"valid attributes with one key usages should return no error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey: "test-issuer",
+				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:  "client auth",
+			},
+			expError: nil,
+		},
+		"valid attributes with key usages extended key usages should return no error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey: "test-issuer",
+				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:  "code signing  ,      email protection,    s/mime,ipsec end system",
+			},
+			expError: nil,
+		},
+		"attributes with wrong key usages should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey: "test-issuer",
+				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:  "foo,bar,hello world",
+			},
+			expError: errors.New(
+				`"foo" is not a valid key usage, "bar" is not a valid key usage, "hello world" is not a valid key usage`,
+			),
+		},
 	}
 
 	for name, test := range tests {
