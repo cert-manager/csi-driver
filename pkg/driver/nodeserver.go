@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
+	"github.com/jetstack/cert-manager-csi/pkg/apis/templating"
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
 	"github.com/jetstack/cert-manager-csi/pkg/certmanager"
@@ -81,7 +82,12 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	attr, err := defaults.SetDefaultAttributes(attr)
+	attr, err := templating.RenderAttributeTemplates(attr)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	attr, err = defaults.SetDefaultAttributes(attr)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

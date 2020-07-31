@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 
+	csitemplating "github.com/jetstack/cert-manager-csi/pkg/apis/templating"
 	csidefaults "github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
@@ -40,8 +41,13 @@ func (h *Helper) MetaDataCertificateKeyExistInHostPath(cr *cmapi.CertificateRequ
 	volName := util.BuildVolumeName(pod.Name, volID)
 	dirPath := filepath.Join(dataDir, volID)
 
-	// set defaults and csi storage attrubutes from pod
-	attr, err := csidefaults.SetDefaultAttributes(attr)
+	// render templated attributes
+	attr, err := csitemplating.RenderAttributeTemplates(attr)
+	if err != nil {
+		return fmt.Errorf("failed to render volume attributes: %s", err)
+	}
+	// set defaults and csi storage attributes from pod
+	attr, err = csidefaults.SetDefaultAttributes(attr)
 	if err != nil {
 		return fmt.Errorf("failed to set default volume attributes: %s", err)
 	}

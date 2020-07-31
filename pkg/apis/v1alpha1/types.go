@@ -61,3 +61,9 @@ type MetaData struct {
 
 	Attributes map[string]string `json:"attributes"`
 }
+
+type TemplatingData struct {
+	PodName      string
+	PodNamespace string
+	PodUID       string
+}
