@@ -119,9 +119,9 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("should create 30 pods with random containers, volumes, and attributes set", func() {
+	It("should create 5 pods with random containers, volumes, and attributes set", func() {
 		// Generate random pods
-		pods := make([]*corev1.Pod, 30)
+		pods := make([]*corev1.Pod, 5)
 		for i := range pods {
 			pods[i] = f.RandomPod()
 		}
@@ -147,7 +147,6 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		}
 
 		// Ensure all pods can be deleted and their equivalent CertificateRequest deleted
-
 		By("Ensuing all Pods can be deleted")
 		for i, pod := range pods {
 			By(fmt.Sprintf("Deleting Pod %d: %s", i, pod.Name))
@@ -165,8 +164,9 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		By("Ensuring all CertificateRequets have been deleted")
 		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
-		if len(crs.Items) > 0 {
-			Expect(fmt.Errorf("expected all CertificateRequests to be deleted, got=%+v", crs.Items)).NotTo(HaveOccurred())
+		for _, cr := range crs.Items {
+			err = f.Helper().WaitForCertificateRequestDeletion(cr.Namespace, cr.Name, time.Second*90)
+			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 })
