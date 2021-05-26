@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/kind/pkg/cluster/nodeutils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -91,7 +92,7 @@ func (k *Kind) loadImage(dir, image string) error {
 		return err
 	}
 
-	nodes, err := k.ctx.ListNodes()
+	nodes, err := k.provider.ListNodes(k.clusterName)
 	if err != nil {
 		return err
 	}
@@ -102,9 +103,9 @@ func (k *Kind) loadImage(dir, image string) error {
 	}
 
 	for _, node := range nodes {
-		log.Infof("kind: loading image %q to node %q", image, node.Name())
+		log.Infof("kind: loading image %q to node %q", image, node.String())
 		r := bytes.NewBuffer(b)
-		if err := node.LoadImageArchive(r); err != nil {
+		if err := nodeutils.LoadImageArchive(node, r); err != nil {
 			return err
 		}
 

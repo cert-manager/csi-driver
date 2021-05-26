@@ -17,10 +17,12 @@ limitations under the License.
 package kind
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -31,22 +33,24 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	configv1alpha3 "sigs.k8s.io/kind/pkg/apis/config/v1alpha3"
+	configv1alpha4 "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster"
-	"sigs.k8s.io/kind/pkg/cluster/create"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 )
 
 const (
-	kubectlURL       = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/%s/amd64/kubectl"
-	kubectlSHALinux  = "69cfb3eeaa0b77cc4923428855acdfc9ca9786544eeaff9c21913be830869d29"
-	kubectlSHADarwin = "9b45260bb16f251cf2bb4b4c5f90bc847ab752c9c936b784dc2bae892e10205a"
+	kubectlURL       = "https://storage.googleapis.com/kubernetes-release/release/v1.21.0/bin/%s/amd64/kubectl"
+	kubectlSHALinux  = "9f74f2fa7ee32ad07e17211725992248470310ca1988214518806b39b1dad9f0"
+	kubectlSHADarwin = "f9dcc271590486dcbde481a65e89fbda0f79d71c59b78093a418aa35c980c41b"
 )
 
 type Kind struct {
 	rootPath string
 
-	ctx        *cluster.Context
+	provider       *cluster.Provider
+	clusterName    string
+	kubeconfigPath string
+
 	restConfig *rest.Config
 	client     *kubernetes.Clientset
 }
@@ -56,39 +60,48 @@ func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error
 
 	k := &Kind{
 		rootPath: rootPath,
-		ctx:      cluster.NewContext("cert-manager-csi-e2e"),
+		provider: cluster.NewProvider(cluster.ProviderWithDocker()),
 	}
 
-	conf := new(configv1alpha3.Cluster)
-	configv1alpha3.SetDefaults_Cluster(conf)
+	conf := new(configv1alpha4.Cluster)
+	configv1alpha4.SetDefaultsCluster(conf)
 	conf.Nodes = nil
 
 	for i := 0; i < masterNodes; i++ {
 		conf.Nodes = append(conf.Nodes,
-			configv1alpha3.Node{
+			configv1alpha4.Node{
 				Image: nodeImage,
-				Role:  configv1alpha3.ControlPlaneRole,
+				Role:  configv1alpha4.ControlPlaneRole,
 			})
 	}
 	for i := 0; i < workerNodes; i++ {
 		conf.Nodes = append(conf.Nodes,
-			configv1alpha3.Node{
+			configv1alpha4.Node{
 				Image: nodeImage,
-				Role:  configv1alpha3.WorkerRole,
+				Role:  configv1alpha4.WorkerRole,
 			})
 	}
 
 	conf.Networking.ServiceSubnet = "10.0.0.0/16"
 
+	k.clusterName = "cert-manager-csi-e2e"
 	// create kind cluster
-	log.Infof("kind: creating kind cluster %q", k.ctx.Name())
-	if err := k.ctx.Create(create.WithV1Alpha3(conf)); err != nil {
+	log.Infof("kind: creating kind cluster %q", k.clusterName)
+	if err := k.provider.Create(k.clusterName, cluster.CreateWithV1Alpha4Config(conf)); err != nil {
 		return nil, fmt.Errorf("failed to create cluster: %s", err)
 	}
 
+	tmpdir, err := os.MkdirTemp("", "*")
+	if err != nil {
+		return nil, k.errDestroy(fmt.Errorf("failed to make tmpdir: %v", err))
+	}
+	k.kubeconfigPath = filepath.Join(tmpdir, "kubeconfig")
 	// generate rest config to kind cluster
-	kubeconfig := k.ctx.KubeConfigPath()
-	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	err = k.provider.ExportKubeConfig(k.clusterName, k.kubeconfigPath)
+	if err != nil {
+		return nil, k.errDestroy(fmt.Errorf("failed to fetch kubeconfig file"))
+	}
+	restConfig, err := clientcmd.BuildConfigFromFlags("", k.kubeconfigPath)
 	if err != nil {
 		return nil, k.errDestroy(fmt.Errorf("failed to build kind rest client: %s", err))
 	}
@@ -108,31 +121,22 @@ func New(rootPath, nodeImage string, masterNodes, workerNodes int) (*Kind, error
 		return nil, k.errDestroy(fmt.Errorf("failed to wait for DNS pods to become ready: %s", err))
 	}
 
-	log.Infof("kind: cluster ready %q", k.ctx.Name())
+	log.Infof("kind: cluster ready %q", k.clusterName)
 
 	return k, nil
 }
 
-func DeleteFromName(name string) error {
-	ok, err := cluster.IsKnown(name)
-	if err != nil {
-		return err
-	}
-
-	if !ok {
-		return fmt.Errorf("cluster unknown: %q", name)
-	}
-
-	return cluster.NewContext(name).Delete()
+func (k *Kind) DeleteFromName(name string) error {
+	return k.provider.Delete(k.clusterName, "")
 }
 
 func (k *Kind) Destroy() error {
-	log.Infof("kind: destroying cluster %q", k.ctx.Name())
-	if err := k.ctx.Delete(); err != nil {
+	log.Infof("kind: destroying cluster %q", k.clusterName)
+	if err := k.provider.Delete(k.clusterName, ""); err != nil {
 		return fmt.Errorf("failed to delete kind cluster: %s", err)
 	}
 
-	log.Infof("kind: destroyed cluster %q", k.ctx.Name())
+	log.Infof("kind: destroyed cluster %q", k.clusterName)
 
 	return nil
 }
@@ -142,7 +146,7 @@ func (k *Kind) KubeClient() *kubernetes.Clientset {
 }
 
 func (k *Kind) KubeConfigPath() string {
-	return k.ctx.KubeConfigPath()
+	return k.kubeconfigPath
 }
 
 func (k *Kind) RestConfig() *rest.Config {
@@ -150,7 +154,7 @@ func (k *Kind) RestConfig() *rest.Config {
 }
 
 func (k *Kind) Nodes() ([]nodes.Node, error) {
-	return k.ctx.ListNodes()
+	return k.provider.ListNodes(k.clusterName)
 }
 
 func (k *Kind) errDestroy(err error) error {
@@ -162,7 +166,7 @@ func (k *Kind) waitForNodesReady() error {
 	log.Infof("kind: waiting for all nodes to become ready...")
 
 	return wait.PollImmediate(time.Second*5, time.Minute*10, func() (bool, error) {
-		nodes, err := k.client.CoreV1().Nodes().List(metav1.ListOptions{})
+		nodes, err := k.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -204,7 +208,7 @@ func (k *Kind) waitForCoreDNSReady() error {
 
 func (k *Kind) waitForPodsReady(namespace, labelSelector string) error {
 	return wait.PollImmediate(time.Second*5, time.Minute*10, func() (bool, error) {
-		pods, err := k.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		pods, err := k.client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labelSelector,
 		})
 		if err != nil {

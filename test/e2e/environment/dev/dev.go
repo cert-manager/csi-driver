@@ -19,9 +19,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"sigs.k8s.io/kind/pkg/cluster"
 
 	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
-	"github.com/jetstack/cert-manager-csi/test/kind"
 )
 
 func main() {
@@ -50,7 +50,7 @@ func create() {
 }
 
 func destroy() {
-	errExit(kind.DeleteFromName("cert-manager-csi-e2e"))
+	errExit(cluster.NewProvider(cluster.ProviderWithDocker()).Delete("cert-manager-csi-e2e", ""))
 	fmt.Printf("dev environment destroyed.\n")
 }
 

@@ -211,7 +211,7 @@ func (k *Kind) kubectlApplyF(manifestPath string, ins ...[]byte) error {
 	kubectlPath := filepath.Join(k.rootPath, "bin", "kubectl")
 
 	cmd := exec.Command(kubectlPath,
-		"--kubeconfig="+k.ctx.KubeConfigPath(),
+		"--kubeconfig="+k.KubeConfigPath(),
 		"apply",
 		"-f",
 		manifestPath)
@@ -243,7 +243,7 @@ func (k *Kind) runCmd(command string, args ...string) ([]string, error) {
 
 	cmd.Stdout = os.Stdout
 	cmd.Env = append(cmd.Env,
-		"GO111MODULE=on", "CGO_ENABLED=0", "HOME="+os.Getenv("HOME"),
+		"GOOS=linux", "GOARCH=amd64", "GO111MODULE=on", "CGO_ENABLED=0", "HOME="+os.Getenv("HOME"),
 		"PATH="+os.Getenv("PATH"))
 
 	pr, err := cmd.StderrPipe()

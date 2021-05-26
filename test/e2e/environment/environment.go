@@ -102,16 +102,16 @@ func (e *Environment) RootPath() string {
 	return e.rootPath
 }
 
-func (e *Environment) Node(name string) (*nodes.Node, error) {
+func (e *Environment) Node(name string) (nodes.Node, error) {
 	ns, err := e.kind.Nodes()
 	if err != nil {
 		return nil, err
 	}
 
-	var node *nodes.Node
+	var node nodes.Node
 	for _, n := range ns {
-		if n.Name() == name {
-			node = &n
+		if n.String() == name {
+			node = n
 			break
 		}
 	}
