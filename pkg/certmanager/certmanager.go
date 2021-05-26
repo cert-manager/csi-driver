@@ -17,6 +17,7 @@ limitations under the License.
 package certmanager
 
 import (
+	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
@@ -209,7 +210,7 @@ func (c *CertManager) createNewCertificateRequest(vol *csiapi.MetaData, keyBundl
 		},
 	}
 
-	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(cr)
+	_, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Create(context.TODO(), cr, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -253,7 +254,7 @@ func (c *CertManager) RenewCertificate(vol *csiapi.MetaData) (*x509.Certificate,
 	}
 
 	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
-	err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.ID, &metav1.DeleteOptions{})
+	err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(context.TODO(), vol.ID, metav1.DeleteOptions{})
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -270,7 +271,7 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 	namespace := vol.Attributes[csiapi.CSIPodNamespaceKey]
 
 	// get current certificate request
-	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(vol.ID, metav1.GetOptions{})
+	cr, err := c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(context.TODO(), vol.ID, metav1.GetOptions{})
 	// certificate request doesn't exist so create a new one
 	if k8sErrors.IsNotFound(err) {
 		return false, nil
@@ -283,7 +284,7 @@ func (c *CertManager) checkExistingCertificateRequest(vol *csiapi.MetaData) (boo
 	// If certificate request doesn't match the volume spec then delete the current one
 	if err := util.CertificateRequestMatchesSpec(cr, vol.Attributes); err != nil {
 		glog.Infof("cert-manager: deleting existing CertificateRequest since it doesn't match spec %s: %s", vol.ID, err)
-		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(vol.ID, &metav1.DeleteOptions{})
+		err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(namespace).Delete(context.TODO(), vol.ID, metav1.DeleteOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -302,7 +303,7 @@ func (c *CertManager) waitForCertificateRequestReady(name, ns string, timeout ti
 			glog.V(4).Infof("cert-manager: polling CertificateRequest %s/%s for ready status", name, ns)
 
 			var err error
-			cr, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(ns).Get(name, metav1.GetOptions{})
+			cr, err = c.cmClient.CertmanagerV1alpha2().CertificateRequests(ns).Get(context.TODO(), name, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}
