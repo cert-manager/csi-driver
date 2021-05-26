@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
