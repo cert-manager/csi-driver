@@ -28,8 +28,8 @@ import (
 )
 
 const (
-	defaultNodeImage          = "1.16.1"
-	defaultCertManagerVersion = "0.12.0"
+	defaultNodeImage          = "1.20.2"
+	defaultCertManagerVersion = "1.3.1"
 	defaultRootPath           = "../../../."
 )
 
