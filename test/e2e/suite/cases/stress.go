@@ -31,7 +31,7 @@ import (
 	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
 	"github.com/jetstack/cert-manager-csi/pkg/util"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 )
 
 var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
@@ -134,7 +134,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		wg.Wait()
 
 		// List all certificate requests that should be ready
-		crs, err := f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		crs, err := f.CertManagerClientSet.CertmanagerV1().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// Ensure the pods volumes spec match CertificateRequest spec and the key
@@ -155,7 +155,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		wg.Wait()
 
 		By("Ensuring all CertificateRequets have been deleted")
-		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		crs, err = f.CertManagerClientSet.CertmanagerV1().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		if len(crs.Items) > 0 {
 			Expect(fmt.Errorf("expected all CertificateRequests to be deleted, got=%+v", crs.Items)).NotTo(HaveOccurred())

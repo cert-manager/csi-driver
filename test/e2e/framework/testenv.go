@@ -22,7 +22,7 @@ import (
 	"time"
 
 	cm "github.com/jetstack/cert-manager/pkg/apis/certmanager"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -117,7 +117,7 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 		return cmmeta.ObjectReference{}, err
 	}
 
-	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().Issuers(namespace).Create(context.TODO(), &cmapi.Issuer{
+	issuer, err := f.CertManagerClientSet.CertmanagerV1().Issuers(namespace).Create(context.TODO(), &cmapi.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "ca-issuer-",
 			Namespace:    namespace,
@@ -157,7 +157,7 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 		return cmmeta.ObjectReference{}, err
 	}
 
-	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().ClusterIssuers().Create(context.TODO(), &cmapi.ClusterIssuer{
+	issuer, err := f.CertManagerClientSet.CertmanagerV1().ClusterIssuers().Create(context.TODO(), &cmapi.ClusterIssuer{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "ca-clusterissuer-",
 		},
