@@ -33,6 +33,7 @@ limitations under the License.
 package helper
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -57,7 +58,7 @@ func (h *Helper) WaitForCertificateRequestReady(namespace, name string, timeout 
 		func() (bool, error) {
 			var err error
 			log.Logf("Waiting for CertificateRequest %s/%s to be ready", namespace, name)
-			cr, err = h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+			cr, err = h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 			if k8sErrors.IsNotFound(err) {
 				return false, nil
 			}
@@ -103,7 +104,7 @@ func (h *Helper) FindCertificateRequestReady(crs []cmapi.CertificateRequest, pod
 func (h *Helper) WaitForCertificateRequestDeletion(namespace, name string, timeout time.Duration) error {
 	log.Logf("Waiting for CertificateRequest to be deleted %s/%s", namespace, name)
 	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
-		cr, err := h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(name, metav1.GetOptions{})
+		cr, err := h.CMClient.CertmanagerV1alpha2().CertificateRequests(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if k8sErrors.IsNotFound(err) {
 			return true, nil
 		}

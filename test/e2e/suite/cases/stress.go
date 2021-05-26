@@ -17,6 +17,7 @@ limitations under the License.
 package cases
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -83,14 +84,14 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		}
 
 		By("Creating a Pod")
-		testPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(testPod)
+		testPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), testPod, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
 		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Second*10)
 		Expect(err).NotTo(HaveOccurred())
 
-		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(testPod.Name, metav1.GetOptions{})
+		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
@@ -133,7 +134,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		wg.Wait()
 
 		// List all certificate requests that should be ready
-		crs, err := f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
+		crs, err := f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// Ensure the pods volumes spec match CertificateRequest spec and the key
@@ -154,7 +155,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		wg.Wait()
 
 		By("Ensuring all CertificateRequets have been deleted")
-		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(metav1.ListOptions{})
+		crs, err = f.CertManagerClientSet.CertmanagerV1alpha2().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		if len(crs.Items) > 0 {
 			Expect(fmt.Errorf("expected all CertificateRequests to be deleted, got=%+v", crs.Items)).NotTo(HaveOccurred())
@@ -164,7 +165,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 
 func createPod(wg *sync.WaitGroup, f *framework.Framework, i int, pods []*corev1.Pod) {
 	By(fmt.Sprintf("Creating a Pod %d", i))
-	pod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(pods[i])
+	pod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), pods[i], metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	By(fmt.Sprintf("Pod Created %d: %s", i, pod.Name))
@@ -174,7 +175,7 @@ func createPod(wg *sync.WaitGroup, f *framework.Framework, i int, pods []*corev1
 
 func deletePod(wg *sync.WaitGroup, f *framework.Framework, i int, pod *corev1.Pod) {
 	By(fmt.Sprintf("Deleting Pod %d: %s", i, pod.Name))
-	err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(pod.Name, nil)
+	err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	err = f.Helper().WaitForPodDeletion(pod.Namespace, pod.Name, time.Second*90)
@@ -188,7 +189,7 @@ func waitForPodToBecomeReady(wg *sync.WaitGroup, f *framework.Framework, i int, 
 	err := f.Helper().WaitForPodReady(f.Namespace.Name, pods[i].Name, time.Second*90)
 	Expect(err).NotTo(HaveOccurred())
 
-	readyPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(pods[i].Name, metav1.GetOptions{})
+	readyPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), pods[i].Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	pods[i] = readyPod
