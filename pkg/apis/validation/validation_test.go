@@ -159,7 +159,7 @@ func TestDurationParse(t *testing.T) {
 		},
 		"a bad duration should error": {
 			"20days",
-			"T must be a valid duration string: time: unknown unit days in duration 20days",
+			`T must be a valid duration string: time: unknown unit "days" in duration "20days"`,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
