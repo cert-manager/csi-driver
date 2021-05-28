@@ -40,7 +40,7 @@ publish: image ## build cert-manager-csi docker image and publish image
 	docker push gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1
 
 e2e: ## run end to end tests
-	CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go test -timeout 30m -v ./test/e2e/suite/.
+	ip route show && CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go test -timeout 30m -v ./test/e2e/suite/. || ip route show
 
 dev_cluster_create: ## create dev cluster for development testing
 	CERT_MANAGER_CSI_ROOT_PATH="$$(pwd)" go run -v ./test/e2e/environment/dev create
