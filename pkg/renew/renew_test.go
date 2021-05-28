@@ -116,7 +116,7 @@ func TestWalkDir(t *testing.T) {
 				},
 			},
 			expCertsToWatch: nil,
-			expError:        errors.New(`"csi-test-1": failed to parse cert file: error decoding cert PEM block`),
+			expError:        errors.New(`"csi-test-1": failed to parse cert file: error decoding certificate PEM block`),
 		},
 
 		"if a single cert key pair exist then return pair to watch": {
