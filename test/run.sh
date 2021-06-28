@@ -70,7 +70,7 @@ else
   echo "Skipping cleanup due to SKIP_CLEANUP flag set - run 'kind delete cluster --name=$CLUSTER_NAME' to cleanup"
 fi
 echo "Creating kind cluster named '$CLUSTER_NAME'"
-kind create cluster --image=kindest/node@sha256:27e388752544890482a86b90d8ac50fcfa63a2e8656a96ec5337b902ec8e5157 --name="$CLUSTER_NAME"
+kind create cluster --image=kindest/node@sha256:bced4bc71380b59873ea3917afe9fb35b00e174d22f50c7cab9188eac2b0fb88 --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml"
