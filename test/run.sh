@@ -43,7 +43,7 @@ install_multiplatform() {
 
 if ! command -v kind; then
   echo "'kind' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-darwin-amd64"
+  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-darwin-amd64"
 fi
 
 if ! command -v kubectl; then
@@ -70,7 +70,7 @@ else
   echo "Skipping cleanup due to SKIP_CLEANUP flag set - run 'kind delete cluster --name=$CLUSTER_NAME' to cleanup"
 fi
 echo "Creating kind cluster named '$CLUSTER_NAME'"
-kind create cluster --image=kindest/node:v1.16.15 --name="$CLUSTER_NAME"
+kind create cluster --image=kindest/node@sha256:27e388752544890482a86b90d8ac50fcfa63a2e8656a96ec5337b902ec8e5157 --name="$CLUSTER_NAME"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml"
 echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_MANIFEST_URL'"
