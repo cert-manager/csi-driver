@@ -78,7 +78,7 @@ echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_
 kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
 
 echo "Building cert-manager-csi binary"
-GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi ./cmd
+CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi ./cmd
 
 CERT_MANAGER_CSI_DOCKER_IMAGE="gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1"
 echo "Building cert-manager-csi container"
