@@ -25,7 +25,7 @@ import (
 	"time"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 )
 
@@ -115,7 +115,7 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 	}
 
 	csr, err := pki.DecodeX509CertificateRequestBytes(
-		cr.Spec.CSRPEM)
+		cr.Spec.Request)
 	if err != nil {
 		errs = append(errs, fmt.Sprintf("failed to parse certificate request PEM: %s",
 			err))

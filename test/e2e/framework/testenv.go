@@ -17,11 +17,12 @@ limitations under the License.
 package framework
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	cm "github.com/jetstack/cert-manager/pkg/apis/certmanager"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -97,12 +98,12 @@ func (f *Framework) CreateKubeNamespace(baseName string) (*corev1.Namespace, err
 		},
 	}
 
-	return f.KubeClientSet.CoreV1().Namespaces().Create(ns)
+	return f.KubeClientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 }
 
 // CreateCAIssuer creates a CA issuer used for creating certificates
 func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectReference, error) {
-	sec, err := f.KubeClientSet.CoreV1().Secrets(namespace).Create(&corev1.Secret{
+	sec, err := f.KubeClientSet.CoreV1().Secrets(namespace).Create(context.TODO(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: baseName + "-",
 			Namespace:    namespace,
@@ -111,12 +112,12 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 			corev1.TLSCertKey:       []byte(rootCert),
 			corev1.TLSPrivateKeyKey: []byte(rootKey),
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return cmmeta.ObjectReference{}, err
 	}
 
-	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().Issuers(namespace).Create(&cmapi.Issuer{
+	issuer, err := f.CertManagerClientSet.CertmanagerV1().Issuers(namespace).Create(context.TODO(), &cmapi.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "ca-issuer-",
 			Namespace:    namespace,
@@ -128,7 +129,7 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 				},
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return cmmeta.ObjectReference{}, err
 	}
@@ -142,7 +143,7 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 
 // CreateCAClusterIssuer creates a CA cluster issuer used for creating certificates
 func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReference, error) {
-	sec, err := f.KubeClientSet.CoreV1().Secrets("cert-manager").Create(&corev1.Secret{
+	sec, err := f.KubeClientSet.CoreV1().Secrets("cert-manager").Create(context.TODO(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: baseName + "-",
 			Namespace:    "cert-manager",
@@ -151,12 +152,12 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 			corev1.TLSCertKey:       []byte(rootCert),
 			corev1.TLSPrivateKeyKey: []byte(rootKey),
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return cmmeta.ObjectReference{}, err
 	}
 
-	issuer, err := f.CertManagerClientSet.CertmanagerV1alpha2().ClusterIssuers().Create(&cmapi.ClusterIssuer{
+	issuer, err := f.CertManagerClientSet.CertmanagerV1().ClusterIssuers().Create(context.TODO(), &cmapi.ClusterIssuer{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "ca-clusterissuer-",
 		},
@@ -167,7 +168,7 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 				},
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return cmmeta.ObjectReference{}, err
 	}
@@ -181,7 +182,7 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 
 // DeleteKubeNamespace will delete a namespace resource
 func (f *Framework) DeleteKubeNamespace(namespace string) error {
-	return f.KubeClientSet.CoreV1().Namespaces().Delete(namespace, nil)
+	return f.KubeClientSet.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 }
 
 // WaitForKubeNamespaceNotExist will wait for the namespace with the given name
@@ -192,7 +193,7 @@ func (f *Framework) WaitForKubeNamespaceNotExist(namespace string) error {
 
 func namespaceNotExist(c kubernetes.Interface, namespace string) wait.ConditionFunc {
 	return func() (bool, error) {
-		_, err := c.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+		_, err := c.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			return true, nil
 		}

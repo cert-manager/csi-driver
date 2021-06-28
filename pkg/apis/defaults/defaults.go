@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/jetstack/cert-manager/pkg/apis/certmanager"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )

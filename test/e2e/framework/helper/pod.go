@@ -18,11 +18,12 @@ package helper
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 	"time"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -139,7 +140,7 @@ func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) 
 	log.Logf("Waiting for Pod to become ready %s/%s", namespace, name)
 
 	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
-		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -172,7 +173,7 @@ func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) 
 func (h *Helper) WaitForPodDeletion(namespace, name string, timeout time.Duration) error {
 	log.Logf("Waiting for Pod to be deleted %s/%s", namespace, name)
 	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
-		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if k8sErrors.IsNotFound(err) {
 			return true, nil
 		}
