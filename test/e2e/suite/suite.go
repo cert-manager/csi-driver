@@ -17,9 +17,8 @@ limitations under the License.
 package suite
 
 import (
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo"
+	"os"
 
 	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
@@ -32,13 +31,13 @@ var (
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	env, err = environment.Create(1, 3)
+	env, err = environment.Create(os.Getenv("REPO_ROOT"), os.Getenv("KUBECONFIG"), os.Getenv("CLUSTER_NAME"))
 	if err != nil {
-		framework.Failf("Error provisioning environment: %v", err)
+		framework.Failf("Error building environment: %v", err)
 	}
 
 	cfg.KubeConfigPath = env.KubeConfigPath()
-	cfg.Kubectl = filepath.Join(env.RootPath(), "bin", "kubectl")
+	cfg.Kubectl = os.Getenv("KUBECTL")
 	cfg.RepoRoot = env.RootPath()
 	cfg.Environment = env
 
@@ -51,13 +50,3 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 })
 
 var globalLogs map[string]string
-
-var _ = SynchronizedAfterSuite(func() {},
-	func() {
-		if env != nil {
-			if err := env.Destory(); err != nil {
-				framework.Failf("Failed to destory environment: %s", err)
-			}
-		}
-	},
-)
