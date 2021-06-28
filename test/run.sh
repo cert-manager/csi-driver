@@ -90,9 +90,10 @@ kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE"
 echo "Deploying cert-manager-csi into test cluster"
 kubectl create -f "./deploy/cert-manager-csi-driver.yaml"
 
-echo "Waiting 5s to allow Deployment controller to create pods"
-sleep 5
+echo "Waiting 30s to allow Deployment & DaemonSet controllers to create pods"
+sleep 30
 
+kubectl get pods -A
 echo "Waiting for all pods to be ready..."
 kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=5m
 
