@@ -73,7 +73,7 @@ echo "Creating kind cluster named '$CLUSTER_NAME'"
 kind create cluster --image=kindest/node@sha256:bced4bc71380b59873ea3917afe9fb35b00e174d22f50c7cab9188eac2b0fb88 --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
 
-CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml"
+CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v1.4.0/cert-manager.yaml"
 echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_MANIFEST_URL'"
 kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
 
