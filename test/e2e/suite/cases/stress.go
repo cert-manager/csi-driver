@@ -108,10 +108,6 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 
 		err = f.Helper().CertificateKeyMatch(cr, certData, keyData)
 		Expect(err).NotTo(HaveOccurred())
-
-		By("Ensure the certificate key pair and metadata file exists in the local data directory and matches that in the CertificateRequest")
-		err = f.Helper().MetaDataCertificateKeyExistInHostPath(cr, testPod, testVolume.CSI.VolumeAttributes, testVolume.Name, "/tmp/cert-manager-csi")
-		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("should create 30 pods with random containers, volumes, and attributes set", func() {
@@ -247,10 +243,7 @@ func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.Cert
 			}
 
 			// Find certificate request from list and ensure it is ready
-			cr, err := f.Helper().FindCertificateRequestReady(crs, pod, &vol)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = f.Helper().MetaDataCertificateKeyExistInHostPath(cr, pod, *attributesMap[vol.Name], vol.Name, "/tmp/cert-manager-csi")
+			_, err := f.Helper().FindCertificateRequestReady(crs, pod, &vol)
 			Expect(err).NotTo(HaveOccurred())
 		}
 	}

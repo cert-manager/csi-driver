@@ -309,7 +309,7 @@ func TestWatchCert(t *testing.T) {
 		},
 
 		"if unable to parse duration then should error": {
-			expError:    errors.New(`failed to watch certificate "test-id": failed to parse renew before: time: invalid duration foo`),
+			expError:    errors.New(`failed to watch certificate "test-id": failed to parse renew before: time: invalid duration "foo"`),
 			expectCall:  false,
 			renewBefore: "foo",
 		},

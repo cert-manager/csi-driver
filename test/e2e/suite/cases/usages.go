@@ -106,9 +106,5 @@ var _ = framework.CasesDescribe("Should set key usages correctly", func() {
 
 		err = f.Helper().CertificateKeyMatch(cr, certData, keyData)
 		Expect(err).NotTo(HaveOccurred())
-
-		By("Ensure the certificate key pair and metadata file exists in the local data directory and matches that in the CertificateRequest")
-		err = f.Helper().MetaDataCertificateKeyExistInHostPath(cr, testPod, testVolume.CSI.VolumeAttributes, testVolume.Name, "/tmp/cert-manager-csi")
-		Expect(err).NotTo(HaveOccurred())
 	})
 })

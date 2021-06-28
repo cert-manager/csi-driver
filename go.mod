@@ -9,15 +9,14 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
-	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+	golang.org/x/sys v0.0.0-20190621203818-d432491b9138 // indirect
 	google.golang.org/grpc v1.23.0
 	k8s.io/api v0.16.4
 	k8s.io/apimachinery v0.16.4
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kubectl v0.16.4
-	sigs.k8s.io/kind v0.5.1
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190718183610-8e956561bbf5
