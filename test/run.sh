@@ -37,6 +37,8 @@ install_multiplatform() {
      exit 1
      ;;
   esac
+
+  chmod +x "$1/$2"
 }
 
 if ! command -v kind; then
