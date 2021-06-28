@@ -14,22 +14,52 @@ set -o pipefail
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 cd "$REPO_ROOT"
 
+BIN_DIR="$REPO_ROOT/bin"
+mkdir -p "$BIN_DIR"
+# install_multiplatform will install a binary for either Linux of macOS
+# $1 = path to install to
+# $2 = filename to save as
+# $3 = linux-specific URL
+# $4 = mac-specific URL
+install_multiplatform() {
+  case "$(uname -s)" in
+
+   Darwin)
+     curl -Lo "$1/$2" "$4"
+     ;;
+
+   Linux)
+     curl -Lo "$1/$2" "$3"
+     ;;
+
+   *)
+     echo 'Unsupported OS!'
+     exit 1
+     ;;
+  esac
+}
+
 if ! command -v kind; then
-  echo "'kind' command not found - please install from https://kind.sigs.k8s.io"
-  exit 1
+  echo "'kind' command not found - installing..."
+  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-darwin-amd64"
 fi
 
 if ! command -v kubectl; then
-  echo "'kubectl' command not found - please install from https://k8s.io"
+  echo "'kubectl' command not found - installing..."
+  install_multiplatform "${BIN_DIR}" kubectl "https://dl.k8s.io/release/v1.16.15/bin/linux/amd64/kubectl" "https://dl.k8s.io/release/v1.16.15/bin/darwin/amd64/kubectl"
 fi
 
 if ! command -v go; then
   echo "'go' command not found - please install from https://golang.org"
+  exit 1
 fi
 
 if ! command -v docker; then
   echo "'docker' command not found - please install from https://docker.com"
+  exit 1
 fi
+
+export PATH="$BIN_DIR:$PATH"
 
 CLUSTER_NAME="cert-manager-csi-cluster"
 if [ -z "${SKIP_CLEANUP:-}" ]; then
@@ -45,7 +75,6 @@ echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_
 kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
 
 echo "Building cert-manager-csi binary"
-mkdir -p bin/
 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi ./cmd
 
 CERT_MANAGER_CSI_DOCKER_IMAGE="gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1"
@@ -71,4 +100,4 @@ export REPO_ROOT
 export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
 export CLUSTER_NAME
 export KUBECTL=$(command -v kubectl)
-go test -v "./test/e2e/suite"
+go test -v -timeout 30m "./test/e2e/suite"
