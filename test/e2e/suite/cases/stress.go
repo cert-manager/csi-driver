@@ -25,13 +25,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
-	"github.com/jetstack/cert-manager-csi/pkg/util"
 	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/jetstack/cert-manager-csi/test/e2e/util"
 )
 
 var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
@@ -95,8 +95,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-		crName := util.BuildVolumeID(string(testPod.GetUID()), "tls")
-		cr, err := f.Helper().WaitForCertificateRequestReady(f.Namespace.Name, crName, time.Second)
+		cr, err := f.Helper().WaitForCertificateRequestReady(testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = util.CertificateRequestMatchesSpec(cr, testVolume.CSI.VolumeAttributes)
@@ -222,7 +221,7 @@ func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.Cert
 			}
 
 			// Find certificate request from list and ensure it is ready
-			cr, err := f.Helper().FindCertificateRequestReady(crs, pod, &vol)
+			cr, err := f.Helper().FindCertificateRequestReady(crs, pod)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = util.CertificateRequestMatchesSpec(cr, *attributesMap[vol.Name])
@@ -244,7 +243,7 @@ func testPod(wg *sync.WaitGroup, f *framework.Framework, i int, crs []cmapi.Cert
 			}
 
 			// Find certificate request from list and ensure it is ready
-			_, err := f.Helper().FindCertificateRequestReady(crs, pod, &vol)
+			_, err := f.Helper().FindCertificateRequestReady(crs, pod)
 			Expect(err).NotTo(HaveOccurred())
 		}
 	}
