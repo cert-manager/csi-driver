@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Jetstack cert-manager contributors.
+Copyright 2021 The Jetstack cert-manager contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,32 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package framework
-
-import (
-	"fmt"
-	"time"
-
-	. "github.com/onsi/ginkgo"
-
-	. "github.com/jetstack/cert-manager-csi/test/e2e/framework/log"
-)
-
-func nowStamp() string {
-	return time.Now().Format(time.StampMilli)
-}
-
-func Failf(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	Logf(msg)
-	Fail(nowStamp()+": "+msg, 1)
-}
-
-func Skipf(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	Logf("INFO", msg)
-	Skip(nowStamp() + ": " + msg)
-}
+package cases
 
 func boolPtr(b bool) *bool {
 	return &b

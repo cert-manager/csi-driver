@@ -39,7 +39,8 @@ var _ = framework.CasesDescribe("Should set key usages correctly", func() {
 			Name: "tls",
 			VolumeSource: corev1.VolumeSource{
 				CSI: &corev1.CSIVolumeSource{
-					Driver: csi.GroupName,
+					Driver:   csi.GroupName,
+					ReadOnly: boolPtr(true),
 					VolumeAttributes: map[string]string{
 						"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
 						"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,

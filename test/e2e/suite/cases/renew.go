@@ -201,6 +201,7 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 		VolumeSource: corev1.VolumeSource{
 			CSI: &corev1.CSIVolumeSource{
 				Driver:           csi.GroupName,
+				ReadOnly:         boolPtr(true),
 				VolumeAttributes: attributes,
 			},
 		},
