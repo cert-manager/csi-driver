@@ -20,6 +20,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"github.com/cert-manager/csi-lib/driver"
@@ -102,5 +103,13 @@ var RootCmd = &cobra.Command{
 }
 
 func signRequest(_ metadata.Metadata, key crypto.PrivateKey, request *x509.CertificateRequest) ([]byte, error) {
-	return x509.CreateCertificateRequest(rand.Reader, request, key)
+	csrDer, err := x509.CreateCertificateRequest(rand.Reader, request, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE REQUEST",
+		Bytes: csrDer,
+	}), nil
 }
