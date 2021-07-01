@@ -43,7 +43,7 @@ install_multiplatform() {
 
 if ! command -v kind; then
   echo "'kind' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-darwin-amd64"
+  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-darwin-amd64"
 fi
 
 if ! command -v kubectl; then
@@ -74,9 +74,16 @@ exit_command() {
 }
 trap exit_command EXIT
 
+echo "Pre-creating 'kind' docker network to avoid networking issues in CI"
+# When running in our CI environment the Docker network's subnet choice will cause issues with routing
+# This works this around till we have a way to properly patch this.
+docker network create --driver=bridge --subnet=192.168.0.0/16 --gateway 192.168.0.1 kind || true
+# Sleep for 2s to avoid any races between docker's network subcommand and 'kind create'
+sleep 2
+
 echo "Creating kind cluster named '$CLUSTER_NAME'"
-# kind image @ kubernetes v1.16.4 (compatible with kind v0.7.0)
-kind create cluster --image=kindest/node@sha256:b91a2c2317a000f3a783489dfb755064177dbc3a0b2f4147d50f04825d016f55 --name="$CLUSTER_NAME"
+# Kind image at 1.16.15, compatible with kind v0.11.1
+kind create cluster --image=kindest/node@sha256:83067ed51bf2a3395b24687094e283a7c7c865ccc12a8b1d7aa673ba0c5e8861 --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v1.4.0/cert-manager.yaml"
