@@ -64,11 +64,16 @@ fi
 export PATH="$BIN_DIR:$PATH"
 
 CLUSTER_NAME="cert-manager-csi-cluster"
-if [ -z "${SKIP_CLEANUP:-}" ]; then
-  trap "kind delete cluster --name=$CLUSTER_NAME" EXIT
-else
-  echo "Skipping cleanup due to SKIP_CLEANUP flag set - run 'kind delete cluster --name=$CLUSTER_NAME' to cleanup"
-fi
+exit_command() {
+  kind export logs "${ARTIFACTS}" --name="$CLUSTER_NAME"
+  if [ -z "${SKIP_CLEANUP:-}" ]; then
+    kind delete cluster --name="$CLUSTER_NAME"
+  else
+    echo "Skipping cleanup due to SKIP_CLEANUP flag set - run 'kind delete cluster --name=$CLUSTER_NAME' to cleanup"
+  fi
+}
+trap exit_command EXIT
+
 echo "Creating kind cluster named '$CLUSTER_NAME'"
 kind create cluster --image=kindest/node@sha256:bced4bc71380b59873ea3917afe9fb35b00e174d22f50c7cab9188eac2b0fb88 --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
