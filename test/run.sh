@@ -43,7 +43,7 @@ install_multiplatform() {
 
 if ! command -v kind; then
   echo "'kind' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-darwin-amd64"
+  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.6.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.6.1/kind-darwin-amd64"
 fi
 
 if ! command -v kubectl; then
@@ -75,7 +75,8 @@ exit_command() {
 trap exit_command EXIT
 
 echo "Creating kind cluster named '$CLUSTER_NAME'"
-kind create cluster --image=kindest/node@sha256:bced4bc71380b59873ea3917afe9fb35b00e174d22f50c7cab9188eac2b0fb88 --name="$CLUSTER_NAME"
+# kind image @ kubernetes v1.16.3 (compatible with kind v0.6.1)
+kind create cluster --image=kindest/node@sha256:70ce6ce09bee5c34ab14aec2b84d6edb260473a60638b1b095470a3a0f95ebec --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v1.4.0/cert-manager.yaml"
