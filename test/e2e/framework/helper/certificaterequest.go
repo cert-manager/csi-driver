@@ -63,7 +63,7 @@ func (h *Helper) WaitForCertificateRequestReady(pod *corev1.Pod, timeout time.Du
 				return false, err
 			}
 
-			cr, err := h.findCertificateRequest(crs.Items, pod.UID)
+			cr, err = h.findCertificateRequest(crs.Items, pod.UID)
 			if err != nil {
 				log.Logf("Cannot find CertificateRequest for pod, waiting...")
 				return false, nil
