@@ -19,7 +19,6 @@ package cases
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -39,6 +38,7 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 
 	It("should renew certificates with the same private key if set", func() {
 		pod, attr := newRenewingTestPod(f, map[string]string{"csi.cert-manager.io/reuse-private-key": "true"})
+		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed twice but keep the same private key throughout")
 		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
@@ -46,35 +46,29 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
-
-			var j int
-			for {
-				if j == 20 {
-					Expect(errors.New("certificate did not renew in time")).NotTo(HaveOccurred())
-				}
-
-				time.Sleep(time.Second)
-
+			Eventually(func() bool {
 				By("Testing pod for new certificate file")
 				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
-				if !bytes.Equal(key, newKey) {
-					Expect(fmt.Errorf("expected renewed certificate to use same private key, exp=%s got=%s", key, newKey)).NotTo(HaveOccurred())
-				}
-
 				if !bytes.Equal(cert, newCert) {
 					cert = newCert
-					break
+				} else {
+					return false
 				}
 
-				j++
-			}
+				if bytes.Equal(key, newKey) {
+					return true
+				}
+
+				return false
+			}, "20s", "0.5s").Should(BeTrue(), "expected renewed certificate to use same private key")
 		}
 	})
 
 	It("should renew certificates with a new private key with no attribute set", func() {
 		pod, attr := newRenewingTestPod(f, map[string]string{})
+		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed and have a new private key")
 		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
@@ -82,37 +76,26 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
-
-			var j int
-			for {
-				if j == 20 {
-					Expect(errors.New("certificate did not renew in time")).NotTo(HaveOccurred())
-				}
-
-				time.Sleep(time.Second)
-
+			Eventually(func() bool {
 				By("Testing pod for new certificate file")
 				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
 				if !bytes.Equal(cert, newCert) {
-					if bytes.Equal(key, newKey) {
-						Expect(fmt.Errorf("expected renewed certificate to not use same private key, old=%s new=%s", key, newKey)).NotTo(HaveOccurred())
-					}
-
+					Expect(key).ShouldNot(Equal(newKey))
 					cert = newCert
 					key = newKey
-
-					break
+					return true
 				}
 
-				j++
-			}
+				return false
+			}, "20s", "0.5s").Should(BeTrue(), "expected renewed certificate to use different private key")
 		}
 	})
 
 	It("should renew certificates with a new private key with attribute set to false", func() {
 		pod, attr := newRenewingTestPod(f, map[string]string{"csi.cert-manager.io/reuse-private-key": "false"})
+		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed and have a new private key")
 		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
@@ -120,66 +103,39 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
-
-			var j int
-			for {
-				if j == 20 {
-					Expect(errors.New("certificate did not renew in time")).NotTo(HaveOccurred())
-				}
-
-				time.Sleep(time.Second)
-
+			Eventually(func() bool {
 				By("Testing pod for new certificate file")
 				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
 				if !bytes.Equal(cert, newCert) {
-					if bytes.Equal(key, newKey) {
-						Expect(fmt.Errorf("expected renewed certificate to not use same private key, old=%s new=%s", key, newKey)).NotTo(HaveOccurred())
-					}
-
+					Expect(key).ShouldNot(Equal(newKey))
 					cert = newCert
 					key = newKey
-
-					break
+					return true
 				}
 
-				j++
-			}
+				return false
+			}, "20s", "0.5s").Should(BeTrue(), "expected renewed certificate to use different private key")
 		}
 	})
 
 	It("should never renew certificates with disable-auto-renew attribute set to true", func() {
 		pod, attr := newRenewingTestPod(f, map[string]string{"csi.cert-manager.io/disable-auto-renew": "true"})
+		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed and have a new private key")
 		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Wait for certificate to never be renewed")
-
-		var j int
-		for {
-			if j == 20 {
-				return
-			}
-
-			time.Sleep(time.Second)
-
+		By("Wait for certificate to never be  renewed")
+		Consistently(func() bool {
 			By("Testing pod for new certificate file")
 			newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 			Expect(err).NotTo(HaveOccurred())
 
-			if !bytes.Equal(cert, newCert) {
-				Expect(fmt.Errorf("expected certificate to never be renewed, exp=%s got=%s", cert, newCert)).NotTo(HaveOccurred())
-			}
-
-			if !bytes.Equal(key, newKey) {
-				Expect(fmt.Errorf("expected key to never be renewed, exp=%s got=%s", key, newKey)).NotTo(HaveOccurred())
-			}
-
-			j++
-		}
+			return bytes.Equal(cert, newCert) && bytes.Equal(key, newKey)
+		}, "20s", "0.5s").Should(BeTrue(), "expected certificate to never be renewed")
 	})
 })
 
@@ -237,17 +193,18 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting for Pod to become ready")
-	err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Second*20)
+	err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
 	Expect(err).NotTo(HaveOccurred())
 
 	testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-	cr, err := f.Helper().WaitForCertificateRequestReady(testPod, time.Second)
+	crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
 	Expect(err).NotTo(HaveOccurred())
+	Expect(crs).To(HaveLen(1))
 
-	err = util.CertificateRequestMatchesSpec(cr, testVolume.CSI.VolumeAttributes)
+	err = util.CertificateRequestMatchesSpec(crs[0], testVolume.CSI.VolumeAttributes)
 	Expect(err).NotTo(HaveOccurred())
 
 	return testPod, attributes
