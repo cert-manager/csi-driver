@@ -92,7 +92,7 @@ func (t *TestData) RandomDirPath() string {
 		dirs[i] = t.RandomName()
 	}
 
-	return "/" + filepath.Join(dirs...)
+	return filepath.Join(dirs...)
 }
 
 func (t *TestData) RandomName() string {

@@ -51,55 +51,59 @@ import (
 	"github.com/jetstack/cert-manager-csi/test/e2e/util"
 )
 
-// WaitForCertificateRequestReady waits for the CertificateRequest resource to
+// WaitForCertificateRequestReady waits for the CertificateRequest resources to
 // enter a Ready state.
-func (h *Helper) WaitForCertificateRequestReady(pod *corev1.Pod, timeout time.Duration) (*cmapi.CertificateRequest, error) {
-	var cr *cmapi.CertificateRequest
+func (h *Helper) WaitForCertificateRequestsReady(pod *corev1.Pod, timeout time.Duration) ([]*cmapi.CertificateRequest, error) {
+	var crs []*cmapi.CertificateRequest
 
 	err := wait.PollImmediate(time.Second/4, timeout,
 		func() (bool, error) {
-			crs, err := h.CMClient.CertmanagerV1().CertificateRequests(pod.Namespace).List(context.TODO(), metav1.ListOptions{})
+			crList, err := h.CMClient.CertmanagerV1().CertificateRequests(pod.Namespace).List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				return false, err
 			}
 
-			cr, err = h.findCertificateRequest(crs.Items, pod.UID)
+			crs, err = h.findCertificateRequests(crList.Items, pod.UID)
 			if err != nil {
-				log.Logf("Cannot find CertificateRequest for pod, waiting...")
+				log.Logf("Cannot find CertificateRequests for pod, waiting...")
 				return false, nil
 			}
 
-			isReady := apiutil.CertificateRequestHasCondition(cr, cmapi.CertificateRequestCondition{
-				Type:   cmapi.CertificateRequestConditionReady,
-				Status: cmmeta.ConditionTrue,
-			})
-			if !isReady {
-				log.Logf("Expected CertificateRequest for Pod %s/%s to have Ready condition 'true' but it has: %v",
-					pod.Namespace, pod.Name, cr.Status.Conditions)
-				return false, nil
+			for _, cr := range crs {
+				isReady := apiutil.CertificateRequestHasCondition(cr, cmapi.CertificateRequestCondition{
+					Type:   cmapi.CertificateRequestConditionReady,
+					Status: cmmeta.ConditionTrue,
+				})
+				if !isReady {
+					log.Logf("Expected CertificateRequest for Pod %s/%s to have Ready condition 'true' but it has: %v",
+						pod.Namespace, pod.Name, cr.Status.Conditions)
+					return false, nil
+				}
 			}
+
 			return true, nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return cr, nil
+	return crs, nil
 }
 
-func (h *Helper) FindCertificateRequestReady(crs []cmapi.CertificateRequest, pod *corev1.Pod) (*cmapi.CertificateRequest, error) {
-	cr, err := h.findCertificateRequest(crs, pod.GetUID())
+func (h *Helper) FindCertificateRequestsReady(crs []cmapi.CertificateRequest, pod *corev1.Pod) ([]*cmapi.CertificateRequest, error) {
+	podCRs, err := h.findCertificateRequests(crs, pod.GetUID())
 	if err != nil {
 		return nil, err
 	}
 
-	if !util.CertificateRequestReady(cr) {
-		return nil, fmt.Errorf("CertificateRequest not ready: %+v", cr)
+	for _, cr := range podCRs {
+		if !util.CertificateRequestReady(cr) {
+			return nil, fmt.Errorf("CertificateRequest not ready: %+v", cr)
+		}
 	}
 
-	return cr, nil
+	return podCRs, nil
 }
 
 func (h *Helper) WaitForCertificateRequestDeletion(namespace, name string, timeout time.Duration) error {
@@ -127,15 +131,21 @@ func (h *Helper) WaitForCertificateRequestDeletion(namespace, name string, timeo
 	return nil
 }
 
-func (h *Helper) findCertificateRequest(crs []cmapi.CertificateRequest, podUID types.UID) (*cmapi.CertificateRequest, error) {
-	for _, cr := range crs {
+func (h *Helper) findCertificateRequests(crs []cmapi.CertificateRequest, podUID types.UID) ([]*cmapi.CertificateRequest, error) {
+	var podCRs []*cmapi.CertificateRequest
+
+	for i, cr := range crs {
 		if len(cr.OwnerReferences) == 0 {
 			continue
 		}
 		if cr.OwnerReferences[0].UID == podUID {
-			return &cr, nil
+			podCRs = append(podCRs, &crs[i])
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find CertificateRequest owned by pod with UID %q", podUID)
+	if len(podCRs) == 0 {
+		return nil, fmt.Errorf("failed to find CertificateRequest owned by pod with UID %q", podUID)
+	}
+
+	return podCRs, nil
 }
