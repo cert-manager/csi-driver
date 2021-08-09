@@ -3,7 +3,7 @@ module github.com/jetstack/cert-manager-csi
 go 1.12
 
 require (
-	github.com/cert-manager/csi-lib v0.0.0-20210625141042-9bbe96e957a3
+	github.com/cert-manager/csi-lib v0.0.0-20210809101349-dd8ae5d66f53
 	github.com/jetstack/cert-manager v1.4.0
 	github.com/onsi/ginkgo v1.16.1
 	github.com/onsi/gomega v1.11.0
