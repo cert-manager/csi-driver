@@ -37,12 +37,18 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		},
 	)
 
-	nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
-	if err != nil {
-		return fmt.Errorf("calculating next issuance time: %w", err)
+	var nextIssuanceTime time.Time
+	if attrs[v1alpha1.DisableAutoRenewKey] == "true" {
+		// We can assume the pod will not outlive the year 9999
+		nextIssuanceTime = time.Date(9999, time.January, 0, 0, 0, 0, 0, time.UTC)
+	} else {
+		nextIssuanceTime, err = calculateNextIssuanceTime(attrs, chain)
+		if err != nil {
+			return fmt.Errorf("calculating next issuance time: %w", err)
+		}
 	}
 
-	if err := w.Store.WriteFiles(meta.VolumeID, map[string][]byte{
+	if err := w.Store.WriteFiles(meta, map[string][]byte{
 		attrs[v1alpha1.KeyFileKey]:  keyPEM,
 		attrs[v1alpha1.CertFileKey]: chain,
 		attrs[v1alpha1.CAFileKey]:   ca,
