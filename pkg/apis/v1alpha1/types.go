@@ -32,6 +32,7 @@ const (
 	CAFileKey   = "csi.cert-manager.io/ca-file"
 	CertFileKey = "csi.cert-manager.io/certificate-file"
 	KeyFileKey  = "csi.cert-manager.io/privatekey-file"
+	FSGroupKey  = "csi.cert-manager.io/fs-group"
 
 	RenewBeforeKey  = "csi.cert-manager.io/renew-before"
 	ReusePrivateKey = "csi.cert-manager.io/reuse-private-key"
