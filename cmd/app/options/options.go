@@ -55,10 +55,10 @@ type Options struct {
 	// from.
 	DataRoot string
 
-	// UseRequestToken declares that the CSI driver will use the empty audience
+	// UseTokenRequest declares that the CSI driver will use the empty audience
 	// request token for creating CertificateRequests. Requires the request token
 	// to be defined on the CSIDriver manifest.
-	UseRequestToken bool
+	UseTokenRequest bool
 
 	// Logr is the shared base logger.
 	Logr logr.Logger
@@ -144,6 +144,6 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.DataRoot, "data-root", "/csi-data-dir",
 		"The directory that the driver will write and mount volumes from.")
 
-	fs.BoolVar(&o.UseRequestToken, "use-request-token", false,
-		"Use the empty audience request token for creating CertificateRequests. Requires the request token to be defined on the CSIDriver manifest.")
+	fs.BoolVar(&o.UseTokenRequest, "use-token-request", false,
+		"Use the empty audience token request for creating CertificateRequests. Requires the token request to be defined on the CSIDriver manifest.")
 }

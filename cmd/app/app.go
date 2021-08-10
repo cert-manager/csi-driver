@@ -26,6 +26,7 @@ import (
 
 	"github.com/cert-manager/csi-lib/driver"
 	"github.com/cert-manager/csi-lib/manager"
+	"github.com/cert-manager/csi-lib/manager/util"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
@@ -64,6 +65,11 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			keyGenerator := keygen.Generator{Store: store}
 			writer := filestore.Writer{Store: store}
 
+			var clientForMeta manager.ClientForMetadataFunc
+			if opts.UseTokenRequest {
+				clientForMeta = util.ClientForMetadataTokenRequestEmptyAud(opts.RestConfig)
+			}
+
 			d, err := driver.New(opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:    opts.DriverName,
 				DriverVersion: "v0.1.0",
@@ -71,7 +77,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				Store:         store,
 				Manager: manager.NewManagerOrDie(manager.Options{
 					Client:             opts.CMClient,
-					ClientForMetadata:  client.ClientForMetadataFunc(opts.RestConfig, opts.UseRequestToken),
+					ClientForMetadata:  clientForMeta,
 					MetadataReader:     store,
 					Clock:              clock.RealClock{},
 					Log:                opts.Logr.WithName("manager"),
