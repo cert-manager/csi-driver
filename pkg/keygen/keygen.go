@@ -11,7 +11,7 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 
 	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
 )
 
@@ -22,8 +22,8 @@ type Generator struct {
 	Store *storage.Filesystem
 }
 
-// KeyForMetadata generates a 2048-bit RSA private key, or returns an existing one
-// if the reuse private key attribute is present.
+// KeyForMetadata generates a 2048-bit RSA private key, or returns an existing
+// one if the reuse private key attribute is present.
 func (k *Generator) KeyForMetadata(meta metadata.Metadata) (crypto.PrivateKey, error) {
 	attrs, err := defaults.SetDefaultAttributes(meta.VolumeContext)
 	if err != nil {
@@ -34,11 +34,11 @@ func (k *Generator) KeyForMetadata(meta metadata.Metadata) (crypto.PrivateKey, e
 	}
 
 	// By default, generate a new private key each time.
-	if attrs[v1alpha1.ReusePrivateKey] != "true" {
+	if attrs[csiapi.ReusePrivateKey] != "true" {
 		return new2048BitRSAKey()
 	}
 
-	bytes, err := k.Store.ReadFile(meta.VolumeID, attrs[v1alpha1.KeyFileKey])
+	bytes, err := k.Store.ReadFile(meta.VolumeID, attrs[csiapi.KeyFileKey])
 	if errors.Is(err, storage.ErrNotFound) {
 		// Generate a new key if one is not found on disk
 		return new2048BitRSAKey()
