@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Jetstack cert-manager contributors.
+Copyright 2021 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,17 +17,20 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/jetstack/cert-manager-csi/cmd/app"
 )
 
 func main() {
-	if err := app.RootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+	ctx := signals.SetupSignalHandler()
+	cmd := app.NewCommand(ctx)
+
+	if err := cmd.Execute(); err != nil {
+		klog.ErrorS(err, "error running cert-manager-csi")
 		os.Exit(1)
 	}
-
-	os.Exit(0)
 }
