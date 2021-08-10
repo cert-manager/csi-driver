@@ -62,7 +62,9 @@ spec:
         - name: tls
           csi:
             driver: csi.cert-manager.io
+            readOnly: true
             volumeAttributes:
                   csi.cert-manager.io/issuer-name: ca-issuer
                   csi.cert-manager.io/dns-names: my-service.sandbox.svc.cluster.local
                   csi.cert-manager.io/uri-sans: spiffe://my-service.sandbox.cluster.local
+                  csi.cert-manager.io/disable-auto-renew: "true"
