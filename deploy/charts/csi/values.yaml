@@ -1,0 +1,25 @@
+image:
+  # -- Target image repository.
+  repository: quay.io/jetstack/cert-manager-csi
+  # -- Target image version tag.
+  tag: v0.1.0
+  # -- Kubernetes imagePullPolicy on DaemonSet.
+  pullPolicy: IfNotPresent
+
+app:
+  # -- Verbosity of cert-manager-csi logging.
+  logLevel: 1 # 1-5
+  # -- Options for CSI driver
+  driver:
+    # -- Name of the driver which will be registered with Kubernetes.
+    name: csi.cert-manager.io
+
+resources: {}
+  # -- Kubernetes pod resource limits for cert-manager-csi
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # -- Kubernetes pod memory resource requests for cert-manager-csi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
