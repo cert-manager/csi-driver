@@ -80,15 +80,16 @@ kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
 echo "Building cert-manager-csi binary"
 CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi ./cmd
 
-CERT_MANAGER_CSI_DOCKER_IMAGE="gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1"
+CERT_MANAGER_CSI_DOCKER_IMAGE="quay.io/jetstack/cert-manager-csi"
+CERT_MANAGER_CSI_DOCKER_TAG="canary"
 echo "Building cert-manager-csi container"
-docker build -t "$CERT_MANAGER_CSI_DOCKER_IMAGE" .
+docker build -t "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG" .
 
-echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE' image into kind cluster"
-kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE"
+echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG' image into kind cluster"
+kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
 
 echo "Deploying cert-manager-csi into test cluster"
-kubectl create -f "./deploy/cert-manager-csi-driver.yaml"
+./bin/helm upgrade --install -n cert-manager cert-manager-csi ./deploy/charts/csi --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
 
 echo "Waiting 30s to allow Deployment & DaemonSet controllers to create pods"
 sleep 30
