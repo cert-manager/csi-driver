@@ -17,10 +17,8 @@ limitations under the License.
 package util
 
 import (
-	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -40,4 +38,44 @@ func CertificateRequestReady(cr *cmapi.CertificateRequest) bool {
 	}
 
 	return false
+}
+
+func KeyUsagesFromAttributes(attr map[string]string) []cmapi.KeyUsage {
+	usageCSV := attr[csiapi.KeyUsagesKey]
+
+	if len(usageCSV) == 0 {
+		return nil
+	}
+
+	var keyUsages []cmapi.KeyUsage
+	for _, usage := range strings.Split(usageCSV, ",") {
+		keyUsages = append(keyUsages, cmapi.KeyUsage(strings.TrimSpace(usage)))
+	}
+
+	return keyUsages
+}
+
+func keyUsagesMatch(a, b []cmapi.KeyUsage) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	aa, bb := make([]cmapi.KeyUsage, len(a)), make([]cmapi.KeyUsage, len(b))
+	copy(aa, a)
+	copy(bb, b)
+
+	sort.SliceStable(aa, func(i, j int) bool {
+		return aa[i] < aa[j]
+	})
+	sort.SliceStable(bb, func(i, j int) bool {
+		return bb[i] < bb[j]
+	})
+
+	for i, s := range aa {
+		if s != bb[i] {
+			return false
+		}
+	}
+
+	return true
 }
