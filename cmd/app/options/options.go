@@ -55,6 +55,11 @@ type Options struct {
 	// from.
 	DataRoot string
 
+	// UseRequestToken declares that the CSI driver will use the empty audience
+	// request token for creating CertificateRequests. Requires the request token
+	// to be defined on the CSIDriver manifest.
+	UseRequestToken bool
+
 	// Logr is the shared base logger.
 	Logr logr.Logger
 
@@ -127,13 +132,18 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 		"log-level", "v", "1",
 		"Log level (1-5).")
 
-	fs.StringVar(&o.NodeID, "node-id", "", "The name of the node which is hosting this driver instance.")
+	fs.StringVar(&o.NodeID, "node-id", "",
+		"The name of the node which is hosting this driver instance.")
 
-	fs.StringVar(&o.Endpoint, "endpoint", "", "The endpoint that the driver will connect to the Kubelet.")
+	fs.StringVar(&o.Endpoint, "endpoint", "",
+		"The endpoint that the driver will connect to the Kubelet.")
 
-	fs.StringVar(&o.DriverName, "driver-name",
-		"csi.cert-manager.io", "The name of this CSI driver which will be shared with the Kubelet.")
+	fs.StringVar(&o.DriverName, "driver-name", "csi.cert-manager.io",
+		"The name of this CSI driver which will be shared with the Kubelet.")
 
-	fs.StringVar(&o.DataRoot, "data-root",
-		"/csi-data-dir", "The directory that the driver will write and mount volumes from.")
+	fs.StringVar(&o.DataRoot, "data-root", "/csi-data-dir",
+		"The directory that the driver will write and mount volumes from.")
+
+	fs.BoolVar(&o.UseRequestToken, "use-request-token", false,
+		"Use the empty audience request token for creating CertificateRequests. Requires the request token to be defined on the CSIDriver manifest.")
 }

@@ -32,6 +32,7 @@ import (
 	"k8s.io/utils/clock"
 
 	"github.com/jetstack/cert-manager-csi/cmd/app/options"
+	"github.com/jetstack/cert-manager-csi/pkg/client"
 	"github.com/jetstack/cert-manager-csi/pkg/filestore"
 	"github.com/jetstack/cert-manager-csi/pkg/keygen"
 	"github.com/jetstack/cert-manager-csi/pkg/requestgen"
@@ -71,6 +72,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				Store:         store,
 				Manager: manager.NewManagerOrDie(manager.Options{
 					Client:             opts.CMClient,
+					ClientForMetadata:  client.ClientForMetadataFunc(opts.RestConfig, opts.UseRequestToken),
 					MetadataReader:     store,
 					Clock:              clock.RealClock{},
 					Log:                opts.Logr.WithName("manager"),
