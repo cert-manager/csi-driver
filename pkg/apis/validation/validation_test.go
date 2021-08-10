@@ -17,47 +17,53 @@ limitations under the License.
 package validation
 
 import (
-	"errors"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func TestValidateCertManagerAttributes(t *testing.T) {
+func Test_ValidateAttributes(t *testing.T) {
 	type vaT struct {
 		attr     map[string]string
 		expError error
 	}
 
-	tests := map[string]vaT{
+	tests := map[string]struct {
+		attr   map[string]string
+		expErr field.ErrorList
+	}{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
 				csiapi.DNSNamesKey: "foo.bar.com,car.bar.com",
 			},
-			expError: errors.New(
-				"csi.cert-manager.io/issuer-name field required"),
+			expErr: field.ErrorList{
+				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
+			},
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
 				csiapi.CommonNameKey: "foo.bar",
 			},
-			expError: errors.New(
-				"csi.cert-manager.io/issuer-name field required"),
+			expErr: field.ErrorList{
+				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
+			},
 		},
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.CommonNameKey: "foo.bar",
 			},
-			expError: nil,
+			expErr: nil,
 		},
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey: "test-issuer",
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
 			},
-			expError: nil,
+			expErr: nil,
 		},
 		"valid attributes with one key usages should return no error": {
 			attr: map[string]string{
@@ -65,7 +71,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:  "client auth",
 			},
-			expError: nil,
+			expErr: nil,
 		},
 		"valid attributes with key usages extended key usages should return no error": {
 			attr: map[string]string{
@@ -73,7 +79,7 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:  "code signing  ,      email protection,    s/mime,ipsec end system",
 			},
-			expError: nil,
+			expErr: nil,
 		},
 		"attributes with wrong key usages should error": {
 			attr: map[string]string{
@@ -81,135 +87,120 @@ func TestValidateCertManagerAttributes(t *testing.T) {
 				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:  "foo,bar,hello world",
 			},
-			expError: errors.New(
-				`"foo" is not a valid key usage, "bar" is not a valid key usage, "hello world" is not a valid key usage`,
-			),
+			expErr: field.ErrorList{
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "foo", "not a valid key usage"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "bar", "not a valid key usage"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "hello world", "not a valid key usage"),
+			},
+		},
+		"bad duration and a bad bool value should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:       "test-issuer",
+				csiapi.DurationKey:         "bad-duration",
+				csiapi.DisableAutoRenewKey: "FOO",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/duration"), "bad-duration", `must be a valid duration string: time: invalid duration "bad-duration"`),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/disable-auto-renew"), "FOO", `may only accept values of "true" or "false"`),
+			},
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			err := ValidateAttributes(test.attr)
-			if test.expError == nil {
-				if err != nil {
-					t.Errorf("unexpected error, got=%s",
-						err)
-				}
-
-				return
-			}
-
-			if err == nil || err.Error() != test.expError.Error() {
-				t.Errorf("unexpected error, exp=%s got=%s",
-					test.expError, err)
-			}
+			assert.Equal(t, test.expErr, ValidateAttributes(test.attr))
 		})
 	}
 }
 
-func TestFilePathBreakOut(t *testing.T) {
+func Test_filepathBreakOut(t *testing.T) {
 	for name, test := range map[string]struct {
-		s       string
-		expErrs string
+		s      string
+		expErr field.ErrorList
 	}{
 		"normal filepath should not errors": {
-			"foo/bar",
-			"",
+			s:      "foo/bar",
+			expErr: nil,
 		},
 		"no filepath shouldn't error": {
-			"",
-			"",
+			s:      "",
+			expErr: nil,
 		},
 		"single dot should not error": {
-			"foo/./bar",
-			"",
+			s:      "foo/./bar",
+			expErr: nil,
 		},
 		"two dots should error in middle": {
-			"foo/../bar",
-			"T filepaths may not contain '..'",
+			s:      "foo/../bar",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-path"), "foo/../bar", `filepaths may not contain ".."`)},
 		},
 		"two dots should error": {
-			"..",
-			"T filepaths may not contain '..'",
+			s:      "..",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-path"), "..", `filepaths may not contain ".."`)},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			errs := filepathBreakout(test.s, "T", nil)
-
-			if test.expErrs != strings.Join(errs, "") {
-				t.Errorf("unexpected error returned, exp=%s got=%s",
-					test.expErrs, errs)
-			}
+			assert.Equal(t, test.expErr, filepathBreakout(field.NewPath("my-path"), test.s))
 		})
 	}
 }
 
-func TestDurationParse(t *testing.T) {
+func Test_durationParse(t *testing.T) {
 	for name, test := range map[string]struct {
-		s       string
-		expErrs string
+		s      string
+		expErr field.ErrorList
 	}{
 		"no duration should not error": {
-			"",
-			"",
+			s:      "",
+			expErr: nil,
 		},
 		"a good duation should parse": {
-			"30h",
-			"",
+			s:      "30h",
+			expErr: nil,
 		},
 		"a bad duration should error": {
-			"20days",
-			`T must be a valid duration string: time: unknown unit "days" in duration "20days"`,
+			s:      "20days",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-duration"), "20days", `must be a valid duration string: time: unknown unit "days" in duration "20days"`)},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			errs := durationParse(test.s, "T", nil)
-
-			if test.expErrs != strings.Join(errs, "") {
-				t.Errorf("unexpected error returned, exp=%s got=%s",
-					test.expErrs, errs)
-			}
+			assert.Equal(t, test.expErr, durationParse(field.NewPath("my-duration"), test.s))
 		})
 	}
 }
 
-func TestBoolValue(t *testing.T) {
+func Test_boolValue(t *testing.T) {
 	for name, test := range map[string]struct {
-		s       string
-		expErrs string
+		s      string
+		expErr field.ErrorList
 	}{
 		"no value should not error": {
-			"",
-			"",
+			s:      "",
+			expErr: nil,
 		},
 		"a 'true' value should not error": {
-			"true",
-			"",
+			s:      "true",
+			expErr: nil,
 		},
 		"a 'false' value should not error": {
-			"false",
-			"",
+			s:      "false",
+			expErr: nil,
 		},
 		"a camel case True should error": {
-			"True",
-			"T may only be set to 'true' for 'false'",
+			s:      "True",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-bool"), "True", `may only accept values of "true" or "false"`)},
 		},
 		"an uppercase FALSE should error": {
-			"FALSE",
-			"T may only be set to 'true' for 'false'",
+			s:      "FALSE",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-bool"), "FALSE", `may only accept values of "true" or "false"`)},
 		},
 		"a bad string should error": {
-			"foo",
-			"T may only be set to 'true' for 'false'",
+			s:      "foo",
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-bool"), "foo", `may only accept values of "true" or "false"`)},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			errs := boolValue(test.s, "T", nil)
-
-			if test.expErrs != strings.Join(errs, "") {
-				t.Errorf("unexpected error returned, exp=%s got=%s",
-					test.expErrs, errs)
-			}
+			assert.Equal(t, test.expErr, boolValue(field.NewPath("my-bool"), test.s))
 		})
 	}
 }

@@ -30,7 +30,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		return err
 	}
 	if err := validation.ValidateAttributes(attrs); err != nil {
-		return err
+		return err.ToAggregate()
 	}
 
 	keyPEM := pem.EncodeToMemory(

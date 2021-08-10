@@ -27,7 +27,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, err
 	}
 	if err := validation.ValidateAttributes(attrs); err != nil {
-		return nil, err
+		return nil, err.ToAggregate()
 	}
 
 	namespace := attrs["csi.storage.k8s.io/pod.namespace"]

@@ -30,7 +30,7 @@ func (k *Generator) KeyForMetadata(meta metadata.Metadata) (crypto.PrivateKey, e
 		return nil, err
 	}
 	if err := validation.ValidateAttributes(attrs); err != nil {
-		return nil, err
+		return nil, err.ToAggregate()
 	}
 
 	// By default, generate a new private key each time.

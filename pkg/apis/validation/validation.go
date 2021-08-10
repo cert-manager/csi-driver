@@ -17,94 +17,90 @@ limitations under the License.
 package validation
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	cmapiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
 
-func ValidateAttributes(attr map[string]string) error {
-	var errs []string
+// ValidateAttributes validates that the attributes provided
+func ValidateAttributes(attr map[string]string) field.ErrorList {
+	var el field.ErrorList
+
+	path := field.NewPath("volumeAttributes")
 
 	if len(attr[csiapi.IssuerNameKey]) == 0 {
-		errs = append(errs, fmt.Sprintf("%s field required", csiapi.IssuerNameKey))
+		el = append(el, field.Required(path.Child(csiapi.IssuerNameKey), "issuer-name is a required field"))
 	}
 
-	errs = boolValue(attr[csiapi.IsCAKey], csiapi.IsCAKey, errs)
+	el = append(el, boolValue(path.Child(csiapi.IsCAKey), attr[csiapi.IsCAKey])...)
 
-	errs = durationParse(attr[csiapi.DurationKey], csiapi.DurationKey, errs)
+	el = append(el, durationParse(path.Child(csiapi.DurationKey), attr[csiapi.DurationKey])...)
 
-	errs = keyUsages(attr[csiapi.KeyUsagesKey], errs)
+	el = append(el, keyUsages(path.Child(csiapi.KeyUsagesKey), attr[csiapi.KeyUsagesKey])...)
 
-	errs = filepathBreakout(attr[csiapi.CAFileKey], csiapi.CAFileKey, errs)
-	errs = filepathBreakout(attr[csiapi.CertFileKey], csiapi.CertFileKey, errs)
-	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
+	el = append(el, filepathBreakout(path.Child(csiapi.CAFileKey), attr[csiapi.CAFileKey])...)
+	el = append(el, filepathBreakout(path.Child(csiapi.CertFileKey), attr[csiapi.CertFileKey])...)
+	el = append(el, filepathBreakout(path.Child(csiapi.KeyFileKey), attr[csiapi.KeyFileKey])...)
 
-	errs = durationParse(attr[csiapi.RenewBeforeKey], csiapi.RenewBeforeKey, errs)
-	errs = boolValue(attr[csiapi.ReusePrivateKey], csiapi.ReusePrivateKey, errs)
+	el = append(el, durationParse(path.Child(csiapi.RenewBeforeKey), attr[csiapi.RenewBeforeKey])...)
+	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
 
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ", "))
+	// If there are errors, then return not approved and the aggregated errors.
+	if len(el) > 0 {
+		return el
 	}
 
 	return nil
 }
 
-func keyUsages(ss string, errs []string) []string {
+func keyUsages(path *field.Path, ss string) field.ErrorList {
 	if len(ss) == 0 {
-		return errs
+		return nil
 	}
 
 	usages := strings.Split(ss, ",")
 
+	var el field.ErrorList
 	for _, usage := range usages {
 		trimedUsage := strings.TrimSpace(usage)
 		if _, ok := cmapiutil.ExtKeyUsageType(cmapi.KeyUsage(trimedUsage)); !ok {
 			if _, ok := cmapiutil.KeyUsageType(cmapi.KeyUsage(trimedUsage)); !ok {
-				errs = append(errs, fmt.Sprintf("%q is not a valid key usage", trimedUsage))
+				el = append(el, field.Invalid(path, trimedUsage, "not a valid key usage"))
 			}
 		}
 	}
 
-	return errs
+	return el
 }
 
-func filepathBreakout(s, k string, errs []string) []string {
+func filepathBreakout(path *field.Path, s string) field.ErrorList {
 	if strings.Contains(s, "..") {
-		errs = append(errs, fmt.Sprintf("%s filepaths may not contain '..'",
-			k))
+		return field.ErrorList{field.Invalid(path, s, `filepaths may not contain ".."`)}
 	}
-
-	return errs
+	return nil
 }
 
-func durationParse(s, k string, errs []string) []string {
+func durationParse(path *field.Path, s string) field.ErrorList {
 	if len(s) == 0 {
-		return errs
+		return nil
 	}
-
 	if _, err := time.ParseDuration(s); err != nil {
-		errs = append(errs, fmt.Sprintf("%s must be a valid duration string: %s",
-			k, err))
+		return field.ErrorList{field.Invalid(path, s, "must be a valid duration string: "+err.Error())}
 	}
-
-	return errs
+	return nil
 }
 
-func boolValue(s, k string, errs []string) []string {
+func boolValue(path *field.Path, s string) field.ErrorList {
 	if len(s) == 0 {
-		return errs
+		return nil
 	}
-
 	if s != "false" && s != "true" {
-		errs = append(errs, fmt.Sprintf("%s may only be set to 'true' for 'false'",
-			k))
+		return field.ErrorList{field.Invalid(path, s, `may only accept values of "true" or "false"`)}
 	}
-
-	return errs
+	return nil
 }
