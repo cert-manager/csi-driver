@@ -20,8 +20,9 @@ A Helm chart for cert-manager-csi
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| app.driver | object | `{"name":"csi.cert-manager.io"}` | Options for CSI driver |
+| app.driver | object | `{"name":"csi.cert-manager.io","useRequestToken":false}` | Options for CSI driver |
 | app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
+| app.driver.useRequestToken | bool | `false` | Use the empty audience request token for creating CertificateRequests. Created CertificateRequests will have UserInfo fields of the mounting Pod's ServiceAccount. |
 | app.logLevel | int | `1` | Verbosity of cert-manager-csi logging. |
 | image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on DaemonSet. |
 | image.repository | string | `"quay.io/jetstack/cert-manager-csi"` | Target image repository. |

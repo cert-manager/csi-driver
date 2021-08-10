@@ -51,6 +51,7 @@ spec:
             - --node-id=$(NODE_ID)
             - --endpoint=$(CSI_ENDPOINT)
             - --data-root=csi-data-dir
+            - --use-request-token={{ .Values.app.driver.useRequestToken }}
           env:
             - name: NODE_ID
               valueFrom:

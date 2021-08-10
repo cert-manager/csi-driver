@@ -13,6 +13,10 @@ app:
   driver:
     # -- Name of the driver which will be registered with Kubernetes.
     name: csi.cert-manager.io
+    # -- Use the empty audience request token for creating CertificateRequests.
+    # Created CertificateRequests will have UserInfo fields of the mounting
+    # Pod's ServiceAccount.
+    useRequestToken: false
 
 resources: {}
   # -- Kubernetes pod resource limits for cert-manager-csi
