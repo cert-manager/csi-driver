@@ -71,6 +71,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				Store:         store,
 				Manager: manager.NewManagerOrDie(manager.Options{
 					Client:             opts.CMClient,
+					ClientForMetadata:  client.ClientForMetadataFunc(opts.RestConfig, opts.UseRequestToken),
 					MetadataReader:     store,
 					Clock:              clock.RealClock{},
 					Log:                opts.Logr.WithName("manager"),
