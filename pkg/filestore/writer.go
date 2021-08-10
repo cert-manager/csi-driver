@@ -12,15 +12,18 @@ import (
 	"github.com/cert-manager/csi-lib/storage"
 
 	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
 )
 
-// Writer wraps the storage backend to allow access for writing data
+// Writer wraps the storage backend to allow access for writing data.
 type Writer struct {
 	Store storage.Interface
 }
 
+// WriteKeypair writes the given certificate, CA, and private key data to their
+// respective file locations, according to the volume attributes. Also writes
+// or updates the metadata file, including a calculated NextIssuanceTime.
 func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, chain []byte, ca []byte) error {
 	attrs, err := defaults.SetDefaultAttributes(meta.VolumeContext)
 	if err != nil {
@@ -37,15 +40,18 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		},
 	)
 
+	// Calculate the next issuance time and check errors before writing files.
+	// This prevents cases where we write files but also have errors in the
+	// nextIssuanceTime, putting the volume into a bad state.
 	nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
 	if err != nil {
 		return fmt.Errorf("calculating next issuance time: %w", err)
 	}
 
 	if err := w.Store.WriteFiles(meta, map[string][]byte{
-		attrs[v1alpha1.KeyFileKey]:  keyPEM,
-		attrs[v1alpha1.CertFileKey]: chain,
-		attrs[v1alpha1.CAFileKey]:   ca,
+		attrs[csiapi.KeyFileKey]:  keyPEM,
+		attrs[csiapi.CertFileKey]: chain,
+		attrs[csiapi.CAFileKey]:   ca,
 	}); err != nil {
 		return fmt.Errorf("writing data: %w", err)
 	}
@@ -58,7 +64,28 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 	return nil
 }
 
+// calculateNextIssuanceTime will return the time at when the certificate
+// should be renewed by the driver. By default, this will return the time at
+// when the issued certificate is 2/3rds through its lifetime (NotAfter -
+// NotBefore).
+//
+// The volume attribute `csi.cert-manager.io/renew-before` can be used to
+// overwrite the default behaviour with a custom renew time. If this duration
+// results in a renew time before the NotBefore of the signed certificate
+// itself, it will fall back to returning 2/3rds the certificate lifetime.
+//
+// If the `csi.cert-manager.io/disable-auto-renew` volume attribute is present
+// and set to "true", returns a time in the year 9999 effectively meaning
+// never. Supersedes `csi.cert-manager.io/renew-before`.
 func calculateNextIssuanceTime(attrs map[string]string, chain []byte) (time.Time, error) {
+	// Check for disabling renewal which exits early.
+	if attrs[csiapi.DisableAutoRenewKey] == "true" {
+		// NextIssuanceTime in the metadata of signed certificates has to be
+		// non-nil so we must return a value. We can assume this driver will not
+		// outlive the year 9999..
+		return time.Date(9999, time.January, 1, 0, 0, 0, 0, time.UTC), nil
+	}
+
 	block, _ := pem.Decode(chain)
 	crt, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
@@ -66,16 +93,20 @@ func calculateNextIssuanceTime(attrs map[string]string, chain []byte) (time.Time
 	}
 
 	actualDuration := crt.NotAfter.Sub(crt.NotBefore)
-	// if not explicitly set, renew once a certificate is 2/3rds of the way through its lifetime
+
+	// if not explicitly set, renew once a certificate is 2/3rds of the way
+	// through its lifetime.
 	renewBeforeNotAfter := actualDuration / 3
-	if attrs[v1alpha1.RenewBeforeKey] != "" {
-		renewBeforeDuration, err := time.ParseDuration(attrs[v1alpha1.RenewBeforeKey])
+
+	if v, ok := attrs[csiapi.RenewBeforeKey]; ok {
+		renewBeforeDuration, err := time.ParseDuration(v)
 		if err != nil {
-			return time.Time{}, fmt.Errorf("parsing requested renew-before duration: %w", err)
+			return time.Time{}, fmt.Errorf("parsing requested renew-before duration %q: %w", csiapi.RenewBeforeKey, err)
 		}
 
-		// If the requested renewBefore would cause the certificate to be immediately re-issued,
-		// ignore the requested renew before and renew 2/3rds of the way through its lifetime.
+		// If the requested renewBefore would cause the certificate to be
+		// immediately re-issued, ignore the requested renew before and renew
+		// 2/3rds of the way through its lifetime.
 		if crt.NotBefore.Add(renewBeforeDuration).Before(crt.NotAfter) {
 			renewBeforeNotAfter = renewBeforeDuration
 		}

@@ -134,9 +134,9 @@ the following values;
 | `csi.cert-manager.io/duration`          | Requested duration the signed certificate will be valid for.                                          | `720h`                               | `1880h`                          |
 | `csi.cert-manager.io/is-ca`             | Mark the certificate as a certificate authority.                                                      | `false`                              | `true`                           |
 | `csi.cert-manager.io/key-usages`        | Set the key usages on the certificate request.                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
-| `csi.cert-manager.io/certificate-file`  | File name to store the certificate file at.                                                           | `crt.pem`                            | `bar/foo.crt`                    |
-| `csi.cert-manager.io/ca-file`           | File name to store the ca certificate file at.                                                        | `ca.pem`                             | `bar/foo.ca`                     |
-| `csi.cert-manager.io/privatekey-file`   | File name to store the key file at.                                                                   | `key.pem`                            | `bar/foo.key`                    |
+| `csi.cert-manager.io/certificate-file`  | File name to store the certificate file at.                                                           | `tls.crt`                            | `bar/foo.crt`                    |
+| `csi.cert-manager.io/ca-file`           | File name to store the ca certificate file at.                                                        | `ca.crt`                             | `bar/foo.ca`                     |
+| `csi.cert-manager.io/privatekey-file`   | File name to store the key file at.                                                                   | `tls.key`                            | `bar/foo.key`                    |
 | `csi.cert-manager.io/renew-before`      | The time to renew the certificate before expiry. Defaults to a third of the requested duration.       | `$CERT_DURATION/3`                   | `72h`                            |
 | `csi.cert-manager.io/reuse-private-key` | Re-use the same private when when renewing certificates.                                              | `false`                              | `true`                           |
 
