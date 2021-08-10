@@ -1,4 +1,4 @@
-module github.com/jetstack/cert-manager-csi
+module github.com/cert-manager/csi-driver
 
 go 1.16
 

@@ -21,7 +21,7 @@ import (
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
+	"github.com/cert-manager/csi-driver/test/e2e/environment"
 )
 
 type Config struct {

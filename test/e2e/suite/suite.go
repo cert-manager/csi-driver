@@ -20,8 +20,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	"os"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/environment"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
+	"github.com/cert-manager/csi-driver/test/e2e/environment"
+	"github.com/cert-manager/csi-driver/test/e2e/framework"
 )
 
 var (

@@ -32,7 +32,7 @@ import (
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	"github.com/jetstack/cert-manager/test/e2e/framework/log"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/util"
+	"github.com/cert-manager/csi-driver/test/e2e/util"
 )
 
 // WaitForCertificateRequestReady waits for the CertificateRequest resources to

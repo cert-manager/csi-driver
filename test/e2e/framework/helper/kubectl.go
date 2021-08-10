@@ -20,7 +20,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/log"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/log"
 )
 
 type Kubectl struct {

@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 )

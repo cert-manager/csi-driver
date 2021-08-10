@@ -30,11 +30,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kubectl/pkg/scheme"
 
-	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/config"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/helper"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/testdata"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/util"
+	csi "github.com/cert-manager/csi-driver/pkg/apis"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/config"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/helper"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/testdata"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/util"
 )
 
 // DefaultConfig contains the default shared config the is likely parsed from

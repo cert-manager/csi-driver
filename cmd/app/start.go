@@ -27,16 +27,16 @@ import (
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
-	"github.com/jetstack/cert-manager-csi/pkg/filestore"
-	"github.com/jetstack/cert-manager-csi/pkg/keygen"
-	"github.com/jetstack/cert-manager-csi/pkg/requestgen"
+	"github.com/cert-manager/csi-driver/pkg/filestore"
+	"github.com/cert-manager/csi-driver/pkg/keygen"
+	"github.com/cert-manager/csi-driver/pkg/requestgen"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/klogr"
 	"k8s.io/utils/clock"
 
-	"github.com/jetstack/cert-manager-csi/cmd/app/options"
+	"github.com/cert-manager/csi-driver/cmd/app/options"
 )
 
 var (

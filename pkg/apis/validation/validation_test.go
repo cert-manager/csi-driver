@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 func Test_ValidateAttributes(t *testing.T) {

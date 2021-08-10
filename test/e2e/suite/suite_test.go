@@ -28,8 +28,8 @@ import (
 	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
-	_ "github.com/jetstack/cert-manager-csi/test/e2e/suite/cases"
+	"github.com/cert-manager/csi-driver/test/e2e/framework"
+	_ "github.com/cert-manager/csi-driver/test/e2e/suite/cases"
 )
 
 func init() {
