@@ -41,13 +41,13 @@ func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, moun
 	attr map[string]string) ([]byte, []byte, error) {
 	certPath, ok := attr[csiapi.CertFileKey]
 	if !ok {
-		certPath = "crt.pem"
+		certPath = "tls.crt"
 	}
 	certPath = filepath.Join(mountPath, certPath)
 
 	keyPath, ok := attr[csiapi.KeyFileKey]
 	if !ok {
-		keyPath = "key.pem"
+		keyPath = "tls.key"
 	}
 	keyPath = filepath.Join(mountPath, keyPath)
 
