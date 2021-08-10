@@ -123,6 +123,10 @@ func (o *Options) addFlags(cmd *cobra.Command) {
 }
 
 func (o *Options) addAppFlags(fs *pflag.FlagSet) {
+	fs.StringVarP(&o.logLevel,
+		"log-level", "v", "1",
+		"Log level (1-5).")
+
 	fs.StringVar(&o.NodeID, "node-id", "", "The name of the node which is hosting this driver instance.")
 
 	fs.StringVar(&o.Endpoint, "endpoint", "", "The endpoint that the driver will connect to the Kubelet.")
