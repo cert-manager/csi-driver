@@ -55,11 +55,6 @@ type Options struct {
 	// from.
 	DataRoot string
 
-	// UseRequestToken declares that the CSI driver will use the empty audience
-	// request token for creating CertificateRequests. Requires the request token
-	// to be defined on the CSIDriver manifest.
-	UseRequestToken bool
-
 	// Logr is the shared base logger.
 	Logr logr.Logger
 
