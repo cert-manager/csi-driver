@@ -1,3 +1,8 @@
+<p align="center"><img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" /></p>
+</a>
+<a href="https://godoc.org/github.com/cert-manager/csi"><img src="https://godoc.org/github.com/cert-manager/csi?status.svg"></a>
+<a href="https://goreportcard.com/report/github.com/cert-manager/csi"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi" /></a></p>
+
 # cert-manager-csi
 
 cert-manager-csi is a Container Storage Interface (CSI) driver plugin for
@@ -6,8 +11,6 @@ for this plugin is to facilitate requesting and mounting certificate key
 pairs to pods seamlessly. This is useful for facilitating mTLS, or otherwise
 securing connections of pods with guaranteed present certificates whilst
 having all of the features that cert-manager provides.
-
-This project is experimental.
 
 ## Why a CSI Driver?
 
@@ -36,12 +39,19 @@ You must have a working installation of cert-manager present on the cluster.
 Instructions on how to install cert-manager can be found
 [here](https://docs.cert-manager.io/en/latest/getting-started/install/kubernetes.html).
 
-To install the cert-manager-csi driver, apply the deployment manifests to your
-cluster.
+To install the cert-manager-csi driver, use helm install:
 
+```terminal
+ $ helm repo add jetstack https://charts.jetstack.io --force-update
+ $ helm upgrade -i -n cert-manager cert-manager-csi jetstack/cert-manager-csi --wait
 ```
- $ kubectl apply -f deploy/cert-manager-csi-driver.yaml
+
+Or apply the static manifests to your cluster:
+
+```terminal
+ $ helm template ./deploy/charts/csi | kubectl apply -n cert-manager -f -
 ```
+
 
 You can verify the installation has completed correctly by checking the presence
 of the CSIDriver resource as well as a CSINode resource present for each node,
@@ -114,13 +124,13 @@ this process has been completed.
 
 For more information on how to set up issuers for your cluster, refer to the
 cert-manager documentation
-[here](https://docs.cert-manager.io/en/latest/tasks/issuers/index.html).
+[here](https://cert-manager.io/docs/configuration/).
 
 ## Supported Volume Attributes
 
 The cert-manager-csi driver aims to have complete feature parity with all
-possible values available through the cert-manager API however currently supports
-the following values;
+possible values available through the cert-manager API however currently
+supports the following values;
 
 | Attribute                               | Description                                                                                           | Default                              | Example                          |
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|
