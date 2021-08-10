@@ -15,10 +15,12 @@ import (
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
 	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
-	"github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
 )
 
+// RequestForMetadata returns a csi-lib CertificateRequestBundle built using
+// the volume attributed contained within the passed metadata.
 func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBundle, error) {
 	attrs, err := defaults.SetDefaultAttributes(meta.VolumeContext)
 	if err != nil {
@@ -30,31 +32,21 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 
 	namespace := attrs["csi.storage.k8s.io/pod.namespace"]
 
-	uris, err := parseURIs(attrs[v1alpha1.URISANsKey])
+	uris, err := parseURIs(attrs[csiapi.URISANsKey])
 	if err != nil {
-		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", v1alpha1.URISANsKey, err)
+		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
 	}
 
-	ips := parseIPAddresses(attrs[v1alpha1.IPSANsKey])
+	ips := parseIPAddresses(attrs[csiapi.IPSANsKey])
 
-	dnsNames := strings.Split(attrs[v1alpha1.DNSNamesKey], ",")
-	commonName := attrs[v1alpha1.CommonNameKey]
+	dnsNames := strings.Split(attrs[csiapi.DNSNamesKey], ",")
+	commonName := attrs[csiapi.CommonNameKey]
 
 	duration := cmapi.DefaultCertificateDuration
-	if durStr, ok := attrs[v1alpha1.DurationKey]; ok {
+	if durStr, ok := attrs[csiapi.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid %q attribute: %w", v1alpha1.DurationKey, err)
-		}
-	}
-
-	isCA := false
-	if isCAStr, ok := attrs[v1alpha1.IsCAKey]; ok {
-		switch strings.ToLower(isCAStr) {
-		case "true":
-			isCA = true
-		case "false":
-			isCA = false
+			return nil, fmt.Errorf("invalid %q attribute: %w", csiapi.DurationKey, err)
 		}
 	}
 
@@ -67,14 +59,14 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 			IPAddresses: ips,
 			URIs:        uris,
 		},
-		IsCA:      isCA,
+		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
 		Namespace: namespace,
 		Duration:  duration,
-		Usages:    keyUsagesFromAttributes(attrs[v1alpha1.KeyUsagesKey]),
+		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
 		IssuerRef: cmmeta.ObjectReference{
-			Name:  attrs[v1alpha1.IssuerNameKey],
-			Kind:  attrs[v1alpha1.IssuerKindKey],
-			Group: attrs[v1alpha1.IssuerGroupKey],
+			Name:  attrs[csiapi.IssuerNameKey],
+			Kind:  attrs[csiapi.IssuerKindKey],
+			Group: attrs[csiapi.IssuerGroupKey],
 		},
 		Annotations: nil,
 	}, nil
