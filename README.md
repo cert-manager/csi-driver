@@ -122,24 +122,23 @@ The cert-manager-csi driver aims to have complete feature parity with all
 possible values available through the cert-manager API however currently supports
 the following values;
 
-| Attribute                                | Description                                                                                           | Default                              | Example                          |
-|------------------------------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|
-| `csi.cert-manager.io/issuer-name`        | The Issuer name to sign the certificate request.                                                      |                                      | `ca-issuer`                      |
-| `csi.cert-manager.io/issuer-kind`        | The Issuer kind to sign the certificate request.                                                      | `Issuer`                             | `ClusterIssuer`                  |
-| `csi.cert-manager.io/issuer-group`       | The group name the Issuer belongs to.                                                                 | `cert-manager.io`                    | `out.of.tree.foo`                |
-| `csi.cert-manager.io/common-name`        | Certificate common name.                                                                              |                                      | `my-cert.foo`                    |
-| `csi.cert-manager.io/dns-names`          | DNS names the certificate will be requested for. At least a DNS Name, IP or URI name must be present. |                                      | `a.b.foo.com,c.d.foo.com`        |
-| `csi.cert-manager.io/ip-sans`            | IP addresses the certificate will be requested for.                                                   |                                      | `192.0.0.1,192.0.0.2`            |
-| `csi.cert-manager.io/uri-sans`           | URI names the certificate will be requested for.                                                      |                                      | `spiffe://foo.bar.cluster.local` |
-| `csi.cert-manager.io/duration`           | Requested duration the signed certificate will be valid for.                                          | `720h`                               | `1880h`                          |
-| `csi.cert-manager.io/is-ca`              | Mark the certificate as a certificate authority.                                                      | `false`                              | `true`                           |
-| `csi.cert-manager.io/key-usages`         | Set the key usages on the certificate request.                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
-| `csi.cert-manager.io/certificate-file`   | File name to store the certificate file at.                                                           | `crt.pem`                            | `bar/foo.crt`                    |
-| `csi.cert-manager.io/ca-file`            | File name to store the ca certificate file at.                                                        | `ca.pem`                             | `bar/foo.ca`                     |
-| `csi.cert-manager.io/privatekey-file`    | File name to store the key file at.                                                                   | `key.pem`                            | `bar/foo.key`                    |
-| `csi.cert-manager.io/renew-before`       | The time to renew the certificate before expiry. Defaults to a third of the requested duration.       | `$CERT_DURATION/3`                   | `72h`                            |
-| `csi.cert-manager.io/disable-auto-renew` | Disable the CSI driver from renewing certificates that are mounted into the pod.                      | `false`                              | `true`                           |
-| `csi.cert-manager.io/reuse-private-key`  | Re-use the same private when when renewing certificates.                                              | `false`                              | `true`                           |
+| Attribute                               | Description                                                                                           | Default                              | Example                          |
+|-----------------------------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|
+| `csi.cert-manager.io/issuer-name`       | The Issuer name to sign the certificate request.                                                      |                                      | `ca-issuer`                      |
+| `csi.cert-manager.io/issuer-kind`       | The Issuer kind to sign the certificate request.                                                      | `Issuer`                             | `ClusterIssuer`                  |
+| `csi.cert-manager.io/issuer-group`      | The group name the Issuer belongs to.                                                                 | `cert-manager.io`                    | `out.of.tree.foo`                |
+| `csi.cert-manager.io/common-name`       | Certificate common name.                                                                              |                                      | `my-cert.foo`                    |
+| `csi.cert-manager.io/dns-names`         | DNS names the certificate will be requested for. At least a DNS Name, IP or URI name must be present. |                                      | `a.b.foo.com,c.d.foo.com`        |
+| `csi.cert-manager.io/ip-sans`           | IP addresses the certificate will be requested for.                                                   |                                      | `192.0.0.1,192.0.0.2`            |
+| `csi.cert-manager.io/uri-sans`          | URI names the certificate will be requested for.                                                      |                                      | `spiffe://foo.bar.cluster.local` |
+| `csi.cert-manager.io/duration`          | Requested duration the signed certificate will be valid for.                                          | `720h`                               | `1880h`                          |
+| `csi.cert-manager.io/is-ca`             | Mark the certificate as a certificate authority.                                                      | `false`                              | `true`                           |
+| `csi.cert-manager.io/key-usages`        | Set the key usages on the certificate request.                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
+| `csi.cert-manager.io/certificate-file`  | File name to store the certificate file at.                                                           | `crt.pem`                            | `bar/foo.crt`                    |
+| `csi.cert-manager.io/ca-file`           | File name to store the ca certificate file at.                                                        | `ca.pem`                             | `bar/foo.ca`                     |
+| `csi.cert-manager.io/privatekey-file`   | File name to store the key file at.                                                                   | `key.pem`                            | `bar/foo.key`                    |
+| `csi.cert-manager.io/renew-before`      | The time to renew the certificate before expiry. Defaults to a third of the requested duration.       | `$CERT_DURATION/3`                   | `72h`                            |
+| `csi.cert-manager.io/reuse-private-key` | Re-use the same private when when renewing certificates.                                              | `false`                              | `true`                           |
 
 ## Design Documents
  - [Certificate Renewal](./docs/design/20190914.certificaterenewal.md)

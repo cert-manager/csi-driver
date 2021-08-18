@@ -44,9 +44,8 @@ const (
 	CertFileKey string = "csi.cert-manager.io/certificate-file"
 	KeyFileKey  string = "csi.cert-manager.io/privatekey-file"
 
-	RenewBeforeKey      string = "csi.cert-manager.io/renew-before"
-	DisableAutoRenewKey string = "csi.cert-manager.io/disable-auto-renew"
-	ReusePrivateKey     string = "csi.cert-manager.io/reuse-private-key"
+	RenewBeforeKey  string = "csi.cert-manager.io/renew-before"
+	ReusePrivateKey string = "csi.cert-manager.io/reuse-private-key"
 )
 
 type MetaData struct {

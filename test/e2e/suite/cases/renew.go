@@ -119,24 +119,6 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 			}, "20s", "0.5s").Should(BeTrue(), "expected renewed certificate to use different private key")
 		}
 	})
-
-	It("should never renew certificates with disable-auto-renew attribute set to true", func() {
-		pod, attr := newRenewingTestPod(f, map[string]string{"csi.cert-manager.io/disable-auto-renew": "true"})
-		defer deletePod(f, pod)
-
-		By("Wait for certificate to be renewed and have a new private key")
-		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Wait for certificate to never be  renewed")
-		Consistently(func() bool {
-			By("Testing pod for new certificate file")
-			newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
-			Expect(err).NotTo(HaveOccurred())
-
-			return bytes.Equal(cert, newCert) && bytes.Equal(key, newKey)
-		}, "20s", "0.5s").Should(BeTrue(), "expected certificate to never be renewed")
-	})
 })
 
 func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]string) (*corev1.Pod, map[string]string) {
