@@ -1,6 +1,6 @@
 module github.com/jetstack/cert-manager-csi
 
-go 1.12
+go 1.17
 
 require (
 	github.com/cert-manager/csi-lib v0.0.0-20210809101349-dd8ae5d66f53
