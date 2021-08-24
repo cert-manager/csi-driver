@@ -95,13 +95,13 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"bad duration and a bad bool value should error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:       "test-issuer",
-				csiapi.DurationKey:         "bad-duration",
-				csiapi.DisableAutoRenewKey: "FOO",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.DurationKey:     "bad-duration",
+				csiapi.ReusePrivateKey: "FOO",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/duration"), "bad-duration", `must be a valid duration string: time: invalid duration "bad-duration"`),
-				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/disable-auto-renew"), "FOO", `may only accept values of "true" or "false"`),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/reuse-private-key"), "FOO", `may only accept values of "true" or "false"`),
 			},
 		},
 	}
