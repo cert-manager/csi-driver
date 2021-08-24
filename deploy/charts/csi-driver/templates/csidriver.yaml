@@ -3,7 +3,7 @@ kind: CSIDriver
 metadata:
   name: {{ .Values.app.driver.name }}
   labels:
-{{ include "cert-manager-csi.labels" . | indent 4 }}
+{{ include "cert-manager-csi-driver.labels" . | indent 4 }}
 spec:
   podInfoOnMount: true
   volumeLifecycleModes:
