@@ -64,20 +64,6 @@ func Test_calculateNextIssuanceTime(t *testing.T) {
 			expTime: notBefore.AddDate(0, 0, 2),
 			expErr:  false,
 		},
-		"if disable auto renew present and `true`, return year 9999": {
-			attrs: map[string]string{
-				"csi.cert-manager.io/disable-auto-renew": "true",
-			},
-			expTime: time.Date(9999, time.January, 1, 0, 0, 0, 0, time.UTC),
-			expErr:  false,
-		},
-		"if disable auto renew present and `false`, return 2/3rds": {
-			attrs: map[string]string{
-				"csi.cert-manager.io/disable-auto-renew": "false",
-			},
-			expTime: notBefore.AddDate(0, 0, 2),
-			expErr:  false,
-		},
 		"if renew before present, return renew before time": {
 			attrs: map[string]string{
 				"csi.cert-manager.io/renew-before": "48h",
@@ -98,14 +84,6 @@ func Test_calculateNextIssuanceTime(t *testing.T) {
 			},
 			expTime: time.Time{},
 			expErr:  true,
-		},
-		"if renew before present but also disable auto-renew, return year 9999": {
-			attrs: map[string]string{
-				"csi.cert-manager.io/disable-auto-renew": "true",
-				"csi.cert-manager.io/renew-before":       "48h",
-			},
-			expTime: time.Date(9999, time.January, 1, 0, 0, 0, 0, time.UTC),
-			expErr:  false,
 		},
 	}
 
@@ -179,25 +157,6 @@ func Test_WriteKeypair(t *testing.T) {
 				),
 			},
 			expErr: true,
-		},
-		"if disable renew before, set NextIssuanceTime to year 9999": {
-			meta: metadata.Metadata{
-				VolumeID:   "vol-id",
-				TargetPath: "/target-path",
-				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name":        "ca-issuer",
-					"csi.cert-manager.io/disable-auto-renew": "true",
-				},
-			},
-			expFiles: map[string][]byte{
-				"ca.crt":  testBundle.caPEM,
-				"tls.crt": testBundle.certPEM,
-				"tls.key": testBundle.pkPEM,
-				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"9999-01-01T00:00:00Z","volumeContext":{"csi.cert-manager.io/disable-auto-renew":"true","csi.cert-manager.io/issuer-name":"ca-issuer"}}`,
-				),
-			},
-			expErr: false,
 		},
 		"if custom file paths, write to those file paths": {
 			meta: metadata.Metadata{

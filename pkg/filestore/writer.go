@@ -73,19 +73,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 // overwrite the default behaviour with a custom renew time. If this duration
 // results in a renew time before the NotBefore of the signed certificate
 // itself, it will fall back to returning 2/3rds the certificate lifetime.
-//
-// If the `csi.cert-manager.io/disable-auto-renew` volume attribute is present
-// and set to "true", returns a time in the year 9999 effectively meaning
-// never. Supersedes `csi.cert-manager.io/renew-before`.
 func calculateNextIssuanceTime(attrs map[string]string, chain []byte) (time.Time, error) {
-	// Check for disabling renewal which exits early.
-	if attrs[csiapi.DisableAutoRenewKey] == "true" {
-		// NextIssuanceTime in the metadata of signed certificates has to be
-		// non-nil so we must return a value. We can assume this driver will not
-		// outlive the year 9999..
-		return time.Date(9999, time.January, 1, 0, 0, 0, 0, time.UTC), nil
-	}
-
 	block, _ := pem.Decode(chain)
 	crt, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
