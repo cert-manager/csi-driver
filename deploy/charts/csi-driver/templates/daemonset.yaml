@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "cert-manager-csi.name" . }}
+  name: {{ include "cert-manager-csi-driver.name" . }}
   labels:
-{{ include "cert-manager-csi.labels" . | indent 4 }}
+{{ include "cert-manager-csi-driver.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:
-      app: {{ include "cert-manager-csi.name" . }}
+      app: {{ include "cert-manager-csi-driver.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "cert-manager-csi.name" . }}
+        app: {{ include "cert-manager-csi-driver.name" . }}
     spec:
-      serviceAccountName: {{ include "cert-manager-csi.name" . }}
+      serviceAccountName: {{ include "cert-manager-csi-driver.name" . }}
       containers:
 
         - name: node-driver-registrar
@@ -21,11 +21,11 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/cert-manager-csi /registration/cert-manager-csi-reg.sock"]
+                command: ["/bin/sh", "-c", "rm -rf /registration/cert-manager-csi-driver /registration/cert-manager-csi-driver-reg.sock"]
           args:
             - -v={{ .Values.app.logLevel }}
             - --csi-address=/plugin/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi-driver/csi.sock
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
@@ -37,7 +37,7 @@ spec:
             - name: registration-dir
               mountPath: /registration
 
-        - name: cert-manager-csi
+        - name: cert-manager-csi-driver
           securityContext:
             privileged: true
             capabilities:
@@ -72,7 +72,7 @@ spec:
       volumes:
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/cert-manager-csi
+            path: /var/lib/kubelet/plugins/cert-manager-csi-driver
             type: DirectoryOrCreate
         - name: pods-mount-dir
           hostPath:
@@ -83,6 +83,6 @@ spec:
             type: Directory
           name: registration-dir
         - hostPath:
-            path: /tmp/cert-manager-csi
+            path: /tmp/cert-manager-csi-driver
             type: DirectoryOrCreate
           name: csi-data-dir

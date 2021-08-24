@@ -94,7 +94,7 @@ tSK2ayFX1wQ3PuEmewAogy/20tWo80cr556AXA62Utl2PzLK30Db8w==
 func (f *Framework) CreateKubeNamespace(baseName string) (*corev1.Namespace, error) {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: fmt.Sprintf("e2e-cert-manager-csi-tests-%v-", baseName),
+			GenerateName: fmt.Sprintf("e2e-cert-manager-csi-driver-tests-%v-", baseName),
 		},
 	}
 
