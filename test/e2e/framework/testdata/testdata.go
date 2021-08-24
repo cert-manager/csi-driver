@@ -74,7 +74,7 @@ func (t *TestData) RandomVolumeAttributes() map[string]string {
 		{"dns-names", t.DNSNames()},
 		{"uri-sans", t.URISANs()},
 		{"ip-sans", t.IPSANs()},
-		{"ip-duration", t.Duration()},
+		{"duration", t.Duration()},
 		{"is-ca", t.IsCA()},
 		{"common-name", t.CommonName()},
 		{"certificate-file", filepath.Join(t.RandomDirPath(), t.RandomName()+".pem")},
@@ -92,7 +92,7 @@ func (t *TestData) RandomDirPath() string {
 		dirs[i] = t.RandomName()
 	}
 
-	return "/" + filepath.Join(dirs...)
+	return filepath.Join(dirs...)
 }
 
 func (t *TestData) RandomName() string {

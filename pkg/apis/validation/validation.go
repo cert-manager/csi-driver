@@ -46,7 +46,6 @@ func ValidateAttributes(attr map[string]string) error {
 	errs = filepathBreakout(attr[csiapi.KeyFileKey], csiapi.KeyFileKey, errs)
 
 	errs = durationParse(attr[csiapi.RenewBeforeKey], csiapi.RenewBeforeKey, errs)
-	errs = boolValue(attr[csiapi.DisableAutoRenewKey], csiapi.DisableAutoRenewKey, errs)
 	errs = boolValue(attr[csiapi.ReusePrivateKey], csiapi.ReusePrivateKey, errs)
 
 	if len(errs) > 0 {
