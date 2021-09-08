@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Jetstack cert-manager contributors.
+Copyright 2021 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,33 +17,14 @@ limitations under the License.
 package util
 
 import (
-	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
 	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
 )
-
-func RenewTimeFromNotAfter(notBefore time.Time, notAfter time.Time, renewBeforeString string) (time.Duration, error) {
-	renewBefore, err := time.ParseDuration(renewBeforeString)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse renew before: %s", err)
-	}
-
-	validity := notAfter.Sub(notBefore)
-	if renewBefore > validity {
-		return 0, fmt.Errorf("renewal duration is longer than certificate validity: %s %s",
-			renewBefore, validity)
-	}
-
-	dur := notAfter.Add(-renewBefore).Sub(time.Now())
-
-	return dur, nil
-}
 
 func CertificateRequestReady(cr *cmapi.CertificateRequest) bool {
 	readyType := cmapi.CertificateRequestConditionReady

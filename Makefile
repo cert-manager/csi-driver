@@ -1,4 +1,4 @@
-# Copyright 2019 The Jetstack cert-manager contributors.
+# Copyright 2021 The cert-manager Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ help:  ## display this help
 
 .PHONY: help build docker_build test depend verify all clean generate
 
-all: test build image ## runs test, build and image build
+all: verify build image ## runs test, build and image build
 
 clean: ## clean all bin data
 	rm -rf ./bin
@@ -31,7 +31,7 @@ test: ## offline test cert-manager-csi
 	go test -v ./pkg/...
 
 boilerplate: ## verify boilerplate headers
-	./hack/verify_boilerplate.py
+	./hack/verify-boilerplate.sh
 
 image: build ## build cert-manager-csi docker image
 	docker build -t gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1 .
