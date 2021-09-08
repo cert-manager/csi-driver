@@ -23,7 +23,7 @@ import (
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
-	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 func CertificateRequestReady(cr *cmapi.CertificateRequest) bool {

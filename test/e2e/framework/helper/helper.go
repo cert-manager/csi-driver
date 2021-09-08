@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework/config"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/config"
 )
 
 // Helper provides methods for common operations needed during tests.

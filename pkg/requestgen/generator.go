@@ -30,9 +30,9 @@ import (
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
-	"github.com/jetstack/cert-manager-csi/pkg/apis/defaults"
-	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
-	"github.com/jetstack/cert-manager-csi/pkg/apis/validation"
+	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
+	"github.com/cert-manager/csi-driver/pkg/apis/validation"
 )
 
 // RequestForMetadata returns a csi-lib CertificateRequestBundle built using

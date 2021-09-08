@@ -22,7 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	. "github.com/jetstack/cert-manager-csi/test/e2e/framework/log"
+	. "github.com/cert-manager/csi-driver/test/e2e/framework/log"
 )
 
 func nowStamp() string {

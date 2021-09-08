@@ -24,7 +24,7 @@ import (
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	csiapi "github.com/jetstack/cert-manager-csi/pkg/apis/v1alpha1"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 // ValidateAttributes validates that the attributes provided

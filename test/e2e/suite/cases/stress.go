@@ -28,9 +28,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	csi "github.com/jetstack/cert-manager-csi/pkg/apis"
-	"github.com/jetstack/cert-manager-csi/test/e2e/framework"
-	"github.com/jetstack/cert-manager-csi/test/e2e/util"
+	csi "github.com/cert-manager/csi-driver/pkg/apis"
+	"github.com/cert-manager/csi-driver/test/e2e/framework"
+	"github.com/cert-manager/csi-driver/test/e2e/util"
 )
 
 var _ = framework.CasesDescribe("Normal CSI behaviour", func() {

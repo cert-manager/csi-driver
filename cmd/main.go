@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jetstack/cert-manager-csi/cmd/app"
+	"github.com/cert-manager/csi-driver/cmd/app"
 )
 
 func main() {
