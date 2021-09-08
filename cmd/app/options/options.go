@@ -56,7 +56,7 @@ type Options struct {
 	DataRoot string
 
 	// UseTokenRequest declares that the CSI driver will use the empty audience
-	// request token for creating CertificateRequests. Requires the request token
+	// token request for creating CertificateRequests. Requires the token request
 	// to be defined on the CSIDriver manifest.
 	UseTokenRequest bool
 
