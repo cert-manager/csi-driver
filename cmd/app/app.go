@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Jetstack cert-manager contributors.
+Copyright 2021 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/utils/clock"
 
-	"github.com/jetstack/cert-manager-csi/cmd/app/options"
-	"github.com/jetstack/cert-manager-csi/pkg/filestore"
-	"github.com/jetstack/cert-manager-csi/pkg/keygen"
-	"github.com/jetstack/cert-manager-csi/pkg/requestgen"
+	"github.com/cert-manager/csi-driver/cmd/app/options"
+	"github.com/cert-manager/csi-driver/pkg/filestore"
+	"github.com/cert-manager/csi-driver/pkg/keygen"
+	"github.com/cert-manager/csi-driver/pkg/requestgen"
 )
 
 const (
