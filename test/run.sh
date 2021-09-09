@@ -28,7 +28,7 @@ set -o pipefail
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 cd "$REPO_ROOT"
 
-ARTIFACTS="$ARTIFACTS:$REPO_ROOT/_artifacts"
+ARTIFACTS="${ARTIFACTS:-$REPO_ROOT/_artifacts}"
 
 BIN_DIR="$REPO_ROOT/bin"
 mkdir -p "$BIN_DIR"
@@ -118,7 +118,7 @@ echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG' imag
 kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
 
 echo "Deploying cert-manager-csi into test cluster"
-./bin/helm upgrade --install -n cert-manager cert-manager-csi ./deploy/charts/csi --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
+./bin/helm upgrade --install -n cert-manager cert-manager-csi ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
 
 echo "Waiting 30s to allow Deployment & DaemonSet controllers to create pods"
 sleep 30
