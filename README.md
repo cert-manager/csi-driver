@@ -1,16 +1,16 @@
 <p align="center"><img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" /></p>
 </a>
-<a href="https://godoc.org/github.com/cert-manager/csi"><img src="https://godoc.org/github.com/cert-manager/csi?status.svg"></a>
-<a href="https://goreportcard.com/report/github.com/cert-manager/csi"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi" /></a></p>
+<a href="https://godoc.org/github.com/cert-manager/csi-driver"><img src="https://godoc.org/github.com/cert-manager/csi-driver?status.svg"></a>
+<a href="https://goreportcard.com/report/github.com/cert-manager/csi-driver"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi-driver" /></a></p>
 
-# cert-manager-csi
+# csi-driver
 
-cert-manager-csi is a Container Storage Interface (CSI) driver plugin for
-Kubernetes to work along [cert-manager](https://cert-manager.io/). The goal
-for this plugin is to facilitate requesting and mounting certificate key
-pairs to pods seamlessly. This is useful for facilitating mTLS, or otherwise
-securing connections of pods with guaranteed present certificates whilst
-having all of the features that cert-manager provides.
+csi-driver is a Container Storage Interface (CSI) driver plugin for Kubernetes
+to work along [cert-manager](https://cert-manager.io/). The goal for this plugin
+is to facilitate requesting and mounting certificate key pairs to pods
+seamlessly. This is useful for facilitating mTLS, or otherwise securing
+connections of pods with guaranteed present certificates whilst having all of
+the features that cert-manager provides.
 
 ## Why a CSI Driver?
 
@@ -39,17 +39,17 @@ You must have a working installation of cert-manager present on the cluster.
 Instructions on how to install cert-manager can be found
 [here](https://docs.cert-manager.io/en/latest/getting-started/install/kubernetes.html).
 
-To install the cert-manager-csi driver, use helm install:
+To install the csi-driver, use helm install:
 
 ```terminal
  $ helm repo add jetstack https://charts.jetstack.io --force-update
- $ helm upgrade -i -n cert-manager cert-manager-csi jetstack/cert-manager-csi --wait
+ $ helm upgrade -i -n cert-manager cert-manager-csi-driver jetstack/cert-manager-csi-driver --wait
 ```
 
 Or apply the static manifests to your cluster:
 
 ```terminal
- $ helm template ./deploy/charts/csi | kubectl apply -n cert-manager -f -
+ $ helm template ./deploy/charts/csi-driver | kubectl apply -n cert-manager -f -
 ```
 
 
@@ -89,8 +89,8 @@ The CSI driver is now installed and is ready to be used for pods in the cluster.
 To request certificates from cert-manager, simply define a volume mount where
 the key and certificate will be written to, along with a volume with attributes
 that define the cert-manager request. The following is a dummy app that mounts a
-key certificate pair to `/tls` and has been signed by the `ca-issuer` with a
-DNS name valid for `my-service.sandbox.svc.cluster.local`.
+key certificate pair to `/tls` and has been signed by the `ca-issuer` with a DNS
+name valid for `my-service.sandbox.svc.cluster.local`.
 
 ```
 apiVersion: v1
@@ -128,9 +128,9 @@ cert-manager documentation
 
 ## Supported Volume Attributes
 
-The cert-manager-csi driver aims to have complete feature parity with all
-possible values available through the cert-manager API however currently
-supports the following values;
+The csi-driver driver aims to have complete feature parity with all possible
+values available through the cert-manager API however currently supports the
+following values;
 
 | Attribute                               | Description                                                                                           | Default                              | Example                          |
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|

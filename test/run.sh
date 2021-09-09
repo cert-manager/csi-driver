@@ -28,6 +28,8 @@ set -o pipefail
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 cd "$REPO_ROOT"
 
+ARTIFACTS="$ARTIFACTS:$REPO_ROOT/_artifacts"
+
 BIN_DIR="$REPO_ROOT/bin"
 mkdir -p "$BIN_DIR"
 # install_multiplatform will install a binary for either Linux of macOS

@@ -1,10 +1,10 @@
-# cert-manager-csi
+# cert-manager-csi-driver
 
 ![Version: v0.1.0](https://img.shields.io/badge/Version-v0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
 
-A Helm chart for cert-manager-csi
+A Helm chart for cert-manager-csi-driver
 
-**Homepage:** <https://github.com/cert-manager/csi>
+**Homepage:** <https://github.com/cert-manager/csi-driver>
 
 ## Maintainers
 
@@ -14,7 +14,7 @@ A Helm chart for cert-manager-csi
 
 ## Source Code
 
-* <https://github.com/cert-manager/csi>
+* <https://github.com/cert-manager/csi-driver>
 
 ## Values
 
