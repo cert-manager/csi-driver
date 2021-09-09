@@ -1,13 +1,16 @@
-# cert-manager-csi
+<p align="center"><img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" /></p>
+</a>
+<a href="https://godoc.org/github.com/cert-manager/csi-driver"><img src="https://godoc.org/github.com/cert-manager/csi-driver?status.svg"></a>
+<a href="https://goreportcard.com/report/github.com/cert-manager/csi-driver"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi-driver" /></a></p>
 
-cert-manager-csi is a Container Storage Interface (CSI) driver plugin for
-Kubernetes to work along [cert-manager](https://cert-manager.io/). The goal
-for this plugin is to facilitate requesting and mounting certificate key
-pairs to pods seamlessly. This is useful for facilitating mTLS, or otherwise
-securing connections of pods with guaranteed present certificates whilst
-having all of the features that cert-manager provides.
+# csi-driver
 
-This project is experimental.
+csi-driver is a Container Storage Interface (CSI) driver plugin for Kubernetes
+to work along [cert-manager](https://cert-manager.io/). The goal for this plugin
+is to facilitate requesting and mounting certificate key pairs to pods
+seamlessly. This is useful for facilitating mTLS, or otherwise securing
+connections of pods with guaranteed present certificates whilst having all of
+the features that cert-manager provides.
 
 ## Why a CSI Driver?
 
@@ -36,12 +39,19 @@ You must have a working installation of cert-manager present on the cluster.
 Instructions on how to install cert-manager can be found
 [here](https://docs.cert-manager.io/en/latest/getting-started/install/kubernetes.html).
 
-To install the cert-manager-csi driver, apply the deployment manifests to your
-cluster.
+To install the csi-driver, use helm install:
 
+```terminal
+ $ helm repo add jetstack https://charts.jetstack.io --force-update
+ $ helm upgrade -i -n cert-manager cert-manager-csi-driver jetstack/cert-manager-csi-driver --wait
 ```
- $ kubectl apply -f deploy/cert-manager-csi-driver.yaml
+
+Or apply the static manifests to your cluster:
+
+```terminal
+ $ helm template ./deploy/charts/csi-driver | kubectl apply -n cert-manager -f -
 ```
+
 
 You can verify the installation has completed correctly by checking the presence
 of the CSIDriver resource as well as a CSINode resource present for each node,
@@ -79,8 +89,8 @@ The CSI driver is now installed and is ready to be used for pods in the cluster.
 To request certificates from cert-manager, simply define a volume mount where
 the key and certificate will be written to, along with a volume with attributes
 that define the cert-manager request. The following is a dummy app that mounts a
-key certificate pair to `/tls` and has been signed by the `ca-issuer` with a
-DNS name valid for `my-service.sandbox.svc.cluster.local`.
+key certificate pair to `/tls` and has been signed by the `ca-issuer` with a DNS
+name valid for `my-service.sandbox.svc.cluster.local`.
 
 ```
 apiVersion: v1
@@ -114,13 +124,13 @@ this process has been completed.
 
 For more information on how to set up issuers for your cluster, refer to the
 cert-manager documentation
-[here](https://docs.cert-manager.io/en/latest/tasks/issuers/index.html).
+[here](https://cert-manager.io/docs/configuration/).
 
 ## Supported Volume Attributes
 
-The cert-manager-csi driver aims to have complete feature parity with all
-possible values available through the cert-manager API however currently supports
-the following values;
+The csi-driver driver aims to have complete feature parity with all possible
+values available through the cert-manager API however currently supports the
+following values;
 
 | Attribute                               | Description                                                                                           | Default                              | Example                          |
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|

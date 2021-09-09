@@ -1,66 +1,29 @@
-apiVersion: storage.k8s.io/v1beta1
-kind: CSIDriver
-metadata:
-  name: csi.cert-manager.io
-spec:
-  podInfoOnMount: true
-  volumeLifecycleModes:
-  - Ephemeral
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cert-manager-csi
-  namespace: cert-manager
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: cert-manager-csi
-rules:
-- apiGroups: ["cert-manager.io"]
-  resources: ["certificaterequests"]
-  verbs: ["watch", "create", "delete", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: cert-manager-csi
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cert-manager-csi
-subjects:
-- apiGroup:
-  kind: ServiceAccount
-  name: cert-manager-csi
-  namespace: cert-manager
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: cert-manager-csi
-  namespace: cert-manager
+  name: {{ include "cert-manager-csi.name" . }}
+  labels:
+{{ include "cert-manager-csi.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:
-      app: cert-manager-csi
+      app: {{ include "cert-manager-csi.name" . }}
   template:
     metadata:
       labels:
-        app: cert-manager-csi
+        app: {{ include "cert-manager-csi.name" . }}
     spec:
-      serviceAccount: cert-manager-csi
+      serviceAccountName: {{ include "cert-manager-csi.name" . }}
       containers:
 
         - name: node-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          image: quay.io/k8scsi/csi-node-driver-registrar:v2.1.0
           lifecycle:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "rm -rf /registration/cert-manager-csi /registration/cert-manager-csi-reg.sock"]
           args:
-            - --v=5
+            - -v={{ .Values.app.logLevel }}
             - --csi-address=/plugin/csi.sock
             - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi/csi.sock
           env:
@@ -80,9 +43,11 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: gcr.io/jetstack-josh/cert-manager-csi:v0.1.0-alpha.1
-          imagePullPolicy: "IfNotPresent"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
+            - --log-level={{ .Values.app.logLevel }}
+            - --driver-name={{ .Values.app.driver.name }}
             - --node-id=$(NODE_ID)
             - --endpoint=$(CSI_ENDPOINT)
             - --data-root=csi-data-dir
@@ -101,6 +66,9 @@ spec:
               mountPropagation: "Bidirectional"
             - name: csi-data-dir
               mountPath: /csi-data-dir
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
       volumes:
         - name: plugin-dir
           hostPath:
