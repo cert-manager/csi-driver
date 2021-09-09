@@ -85,6 +85,12 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to setup driver: " + err.Error())
 			}
 
+			go func() {
+				<-ctx.Done()
+				log.Info("shutting down driver", "context", ctx.Err())
+				d.Stop()
+			}()
+
 			log.Info("running driver")
 			if err := d.Run(); err != nil {
 				return fmt.Errorf("failed running driver: " + err.Error())
