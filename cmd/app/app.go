@@ -48,7 +48,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	opts := options.New()
 
 	cmd := &cobra.Command{
-		Use:   "cert-manager-csi",
+		Use:   "cert-manager-csi-driver",
 		Short: helpOutput,
 		Long:  helpOutput,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

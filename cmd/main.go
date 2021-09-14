@@ -30,7 +30,7 @@ func main() {
 	cmd := app.NewCommand(ctx)
 
 	if err := cmd.Execute(); err != nil {
-		klog.ErrorS(err, "error running cert-manager-csi")
+		klog.ErrorS(err, "error running cert-manager-csi-driver")
 		os.Exit(1)
 	}
 }

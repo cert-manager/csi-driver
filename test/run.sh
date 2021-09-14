@@ -21,7 +21,7 @@ set -o pipefail
 # Sets up the end-to-end test environment by:
 # - creating a kind cluster
 # - deploying cert-manager
-# - deploying cert-manager-csi
+# - deploying cert-manager-csi-driver
 # The end-to-end test suite will then be run against this environment.
 # The cluster will be deleted after tests have run.
 
@@ -79,7 +79,7 @@ fi
 
 export PATH="$BIN_DIR:$PATH"
 
-CLUSTER_NAME="cert-manager-csi-cluster"
+CLUSTER_NAME="cert-manager-csi-driver-cluster"
 exit_command() {
   kind export logs "${ARTIFACTS}" --name="$CLUSTER_NAME"
   if [ -z "${SKIP_CLEANUP:-}" ]; then
@@ -106,19 +106,19 @@ CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/dow
 echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_MANIFEST_URL'"
 kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
 
-echo "Building cert-manager-csi binary"
-CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi ./cmd
+echo "Building cert-manager-csi-driver binary"
+CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi-driver ./cmd
 
-CERT_MANAGER_CSI_DOCKER_IMAGE="quay.io/jetstack/cert-manager-csi"
+CERT_MANAGER_CSI_DOCKER_IMAGE="quay.io/jetstack/cert-manager-csi-driver"
 CERT_MANAGER_CSI_DOCKER_TAG="canary"
-echo "Building cert-manager-csi container"
+echo "Building cert-manager-csi-driver container"
 docker build -t "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG" .
 
 echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG' image into kind cluster"
 kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
 
-echo "Deploying cert-manager-csi into test cluster"
-./bin/helm upgrade --install -n cert-manager cert-manager-csi ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
+echo "Deploying cert-manager-csi-driver into test cluster"
+./bin/helm upgrade --install -n cert-manager cert-manager-csi-driver ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
 
 echo "Waiting 30s to allow Deployment & DaemonSet controllers to create pods"
 sleep 30

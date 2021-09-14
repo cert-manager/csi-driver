@@ -54,5 +54,5 @@ func TestE2E(t *testing.T) {
 				ginkgoconfig.GinkgoConfig.ParallelNode))))
 	}
 
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "cert-manager-csi e2e suite", r)
+	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "cert-manager-csi-driver e2e suite", r)
 }
