@@ -58,7 +58,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 
 			store, err := storage.NewFilesystem(opts.Logr.WithName("storage"), opts.DataRoot)
 			if err != nil {
-				return fmt.Errorf("failed to setup filesystem: %w")
+				return fmt.Errorf("failed to setup filesystem: %w", err)
 			}
 
 			keyGenerator := keygen.Generator{Store: store}
@@ -105,7 +105,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-// signRequest will sign a X.509 certificate signing request with the provided
+// signRequest will sign an X.509 certificate signing request with the provided
 // private key.
 func signRequest(_ metadata.Metadata, key crypto.PrivateKey, request *x509.CertificateRequest) ([]byte, error) {
 	csrDer, err := x509.CreateCertificateRequest(rand.Reader, request, key)
