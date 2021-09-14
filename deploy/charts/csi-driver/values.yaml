@@ -13,6 +13,10 @@ app:
   driver:
     # -- Name of the driver which will be registered with Kubernetes.
     name: csi.cert-manager.io
+    # -- If enabled, will use CSI token request for creating
+    # CertificateRequests. CertificateRequests will be created via mounting
+    # pod's service accounts.
+    useTokenRequest: false
 
 resources: {}
   # -- Kubernetes pod resource limits for cert-manager-csi-driver

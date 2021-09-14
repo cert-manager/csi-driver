@@ -8,3 +8,9 @@ spec:
   podInfoOnMount: true
   volumeLifecycleModes:
   - Ephemeral
+{{- if .Values.app.driver.useTokenRequest }}
+  tokenRequests:
+    - audience: ""
+      expirationSeconds: 3600
+  requiresRepublish: true
+{{- end }}

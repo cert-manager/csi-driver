@@ -3,7 +3,7 @@ module github.com/cert-manager/csi-driver
 go 1.16
 
 require (
-	github.com/cert-manager/csi-lib v0.0.0-20210809101349-dd8ae5d66f53
+	github.com/cert-manager/csi-lib v0.0.0-20210816103043-fe9b5eff41b7
 	github.com/go-logr/logr v0.4.0
 	github.com/jetstack/cert-manager v1.4.0
 	github.com/onsi/ginkgo v1.16.4
