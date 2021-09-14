@@ -32,6 +32,7 @@ import (
 	"k8s.io/utils/clock"
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
 	"github.com/cert-manager/csi-driver/pkg/keygen"
 	"github.com/cert-manager/csi-driver/pkg/requestgen"
@@ -60,6 +61,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to setup filesystem: %w")
 			}
+			store.FSGroupVolumeAttributeKey = csiapi.FSGroupKey
 
 			keyGenerator := keygen.Generator{Store: store}
 			writer := filestore.Writer{Store: store}

@@ -22,9 +22,9 @@ A Helm chart for cert-manager-csi-driver
 |-----|------|---------|-------------|
 | app.driver | object | `{"name":"csi.cert-manager.io"}` | Options for CSI driver |
 | app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
-| app.logLevel | int | `1` | Verbosity of cert-manager-csi logging. |
+| app.logLevel | int | `1` | Verbosity of cert-manager-csi-driver logging. |
 | image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on DaemonSet. |
-| image.repository | string | `"quay.io/jetstack/cert-manager-csi"` | Target image repository. |
+| image.repository | string | `"quay.io/jetstack/cert-manager-csi-driver"` | Target image repository. |
 | image.tag | string | `"v0.1.0"` | Target image version tag. |
 | resources | object | `{}` |  |
 

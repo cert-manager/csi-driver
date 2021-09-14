@@ -34,20 +34,20 @@ all: verify build image ## runs test, build and image build
 clean: ## clean all bin data
 	rm -rf ./bin
 
-build: ## build cert-manager-csi
+build: ## build cert-manager-csi-driver
 	mkdir -p $(BINDIR)
-	GO111MODULE=on CGO_ENABLED=0 go build -v -o ./bin/cert-manager-csi ./cmd/.
+	GO111MODULE=on CGO_ENABLED=0 go build -v -o ./bin/cert-manager-csi-driver ./cmd/.
 
 verify: test boilerplate ## verify codebase
 
-test: ## offline test cert-manager-csi
+test: ## offline test cert-manager-csi-driver
 	go test -v ./pkg/...
 
 boilerplate: ## verify boilerplate headers
 	./hack/verify-boilerplate.sh
 
-image: build ## build cert-manager-csi docker image
-	docker build -t quay.io/jetstack/cert-manager-csi:v0.1.0 .
+image: build ## build cert-manager-csi-driver docker image
+	docker build -t quay.io/jetstack/cert-manager-csi-driver:v0.1.0 .
 
 e2e: depend ## run end to end tests
 	./test/run.sh
