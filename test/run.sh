@@ -102,12 +102,9 @@ echo "Creating kind cluster named '$CLUSTER_NAME'"
 kind create cluster --image=kindest/node@sha256:83067ed51bf2a3395b24687094e283a7c7c865ccc12a8b1d7aa673ba0c5e8861 --name="$CLUSTER_NAME"
 export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
 
-CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v1.4.0/cert-manager.yaml"
+CERT_MANAGER_MANIFEST_URL="https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml"
 echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_MANIFEST_URL'"
 kubectl create -f "$CERT_MANAGER_MANIFEST_URL"
-
-echo "Building cert-manager-csi-driver binary"
-CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./bin/cert-manager-csi-driver ./cmd
 
 CERT_MANAGER_CSI_DOCKER_IMAGE="quay.io/jetstack/cert-manager-csi-driver"
 CERT_MANAGER_CSI_DOCKER_TAG="canary"
