@@ -12,11 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:3.11
-LABEL maintainers="joshvanl"
+# Build the cert-manager-csi-driver binary
+FROM docker.io/library/golang:1.17 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# Copy the go source files
+COPY Makefile Makefile
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+
+# Build
+RUN make build
+
+FROM alpine:3.14
 LABEL description="cert-manager CSI Driver"
+
+WORKDIR /
+
+COPY --from=builder /workspace/bin/cert-manager-csi-driver /usr/bin/cert-manager-csi-driver
 
 # Add util-linux to get a new version of losetup.
 RUN apk add util-linux
-COPY ./bin/cert-manager-csi-driver /cert-manager-csi-driver
-ENTRYPOINT ["/cert-manager-csi-driver"]
+
+ENTRYPOINT ["/usr/bin/cert-manager-csi-driver"]

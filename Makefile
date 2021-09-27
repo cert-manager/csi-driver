@@ -15,6 +15,7 @@
 BINDIR ?= $(CURDIR)/bin
 ARCH   ?= $(shell go env GOARCH)
 HELM_VERSION ?= 3.4.1
+IMAGE_PLATFORMS ?= linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -46,8 +47,12 @@ test: ## offline test cert-manager-csi-driver
 boilerplate: ## verify boilerplate headers
 	./hack/verify-boilerplate.sh
 
-image: build ## build cert-manager-csi-driver docker image
-	docker build -t quay.io/jetstack/cert-manager-csi-driver:v0.1.0 .
+# image will only build and store the image locally, targeted in OCI format.
+# To actually push an image to the public repo, replace the `--output` flag and
+# arguments to `--push`.
+.PHONY: image
+image: ## build cert-manager-csi-driver docker image targeting all supported platforms
+	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:v0.1.1 --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
 
 e2e: depend ## run end to end tests
 	./test/run.sh
