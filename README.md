@@ -124,7 +124,12 @@ this process has been completed.
 
 For more information on how to set up issuers for your cluster, refer to the
 cert-manager documentation
-[here](https://cert-manager.io/docs/configuration/).
+[here](https://cert-manager.io/docs/configuration/). **Note** it is not
+possible to use `SelfSigned` Issuers with the CSI Driver. In order for
+cert-manager to self sign a certificate, it needs access to the secret
+containing the private key that signed the certificate request to sign the end
+certificate. This secret is not used and so not available in the CSI driver use
+case.
 
 ## Supported Volume Attributes
 
