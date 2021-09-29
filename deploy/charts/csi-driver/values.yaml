@@ -6,6 +6,14 @@ image:
   # -- Kubernetes imagePullPolicy on DaemonSet.
   pullPolicy: IfNotPresent
 
+nodeDriverRegistrarImage:
+  # -- Target image repository.
+  repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
+  # -- Target image version tag.
+  tag: v2.3.0
+  # -- Kubernetes imagePullPolicy on DaemonSet.
+  pullPolicy: IfNotPresent
+
 app:
   # -- Verbosity of cert-manager-csi-driver logging.
   logLevel: 1 # 1-5

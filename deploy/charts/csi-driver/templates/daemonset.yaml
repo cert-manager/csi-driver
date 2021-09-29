@@ -17,7 +17,8 @@ spec:
       containers:
 
         - name: node-driver-registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.3.0
+          image: "{{ .Values.nodeDriverRegistrarImage.repository }}:{{ .Values.nodeDriverRegistrarImage.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           lifecycle:
             preStop:
               exec:
