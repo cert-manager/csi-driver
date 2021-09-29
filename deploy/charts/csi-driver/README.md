@@ -1,6 +1,6 @@
 # cert-manager-csi-driver
 
-![Version: v0.1.1](https://img.shields.io/badge/Version-v0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.1](https://img.shields.io/badge/AppVersion-v0.1.1-informational?style=flat-square)
+![Version: v0.1.2](https://img.shields.io/badge/Version-v0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.1](https://img.shields.io/badge/AppVersion-v0.1.1-informational?style=flat-square)
 
 A Helm chart for cert-manager-csi-driver
 
@@ -31,3 +31,4 @@ A Helm chart for cert-manager-csi-driver
 | nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
 | nodeDriverRegistrarImage.tag | string | `"v2.3.0"` | Target image version tag. |
 | resources | object | `{}` |  |
+
