@@ -27,5 +27,7 @@ A Helm chart for cert-manager-csi-driver
 | image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on DaemonSet. |
 | image.repository | string | `"quay.io/jetstack/cert-manager-csi-driver"` | Target image repository. |
 | image.tag | string | `"v0.1.1"` | Target image version tag. |
+| nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on DaemonSet. |
+| nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
+| nodeDriverRegistrarImage.tag | string | `"v2.3.0"` | Target image version tag. |
 | resources | object | `{}` |  |
-
