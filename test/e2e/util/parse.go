@@ -23,6 +23,9 @@ import (
 )
 
 func ParseDNSNames(dnsNames string) []string {
+	if len(dnsNames) == 0 {
+		return nil
+	}
 	return strings.Split(dnsNames, ",")
 }
 
