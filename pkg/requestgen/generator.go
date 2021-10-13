@@ -46,17 +46,10 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, err.ToAggregate()
 	}
 
-	namespace := attrs["csi.storage.k8s.io/pod.namespace"]
-
 	uris, err := parseURIs(attrs[csiapi.URISANsKey])
 	if err != nil {
 		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
 	}
-
-	ips := parseIPAddresses(attrs[csiapi.IPSANsKey])
-
-	dnsNames := strings.Split(attrs[csiapi.DNSNamesKey], ",")
-	commonName := attrs[csiapi.CommonNameKey]
 
 	duration := cmapi.DefaultCertificateDuration
 	if durStr, ok := attrs[csiapi.DurationKey]; ok {
@@ -69,14 +62,14 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	return &manager.CertificateRequestBundle{
 		Request: &x509.CertificateRequest{
 			Subject: pkix.Name{
-				CommonName: commonName,
+				CommonName: attrs[csiapi.CommonNameKey],
 			},
-			DNSNames:    dnsNames,
-			IPAddresses: ips,
+			DNSNames:    parseDNSNames(attrs[csiapi.DNSNamesKey]),
+			IPAddresses: parseIPAddresses(attrs[csiapi.IPSANsKey]),
 			URIs:        uris,
 		},
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
-		Namespace: namespace,
+		Namespace: attrs["csi.storage.k8s.io/pod.namespace"],
 		Duration:  duration,
 		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
 		IssuerRef: cmmeta.ObjectReference{
@@ -86,6 +79,13 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		},
 		Annotations: nil,
 	}, nil
+}
+
+func parseDNSNames(dnsNames string) []string {
+	if len(dnsNames) == 0 {
+		return nil
+	}
+	return strings.Split(dnsNames, ",")
 }
 
 func parseIPAddresses(ips string) []net.IP {
