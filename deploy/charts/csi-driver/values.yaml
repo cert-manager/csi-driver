@@ -35,3 +35,8 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+tolerations: []
+  # -- Kubernetes pod tolerations for cert-manager-csi-driver
+  # Allow scheduling of DaemonSet on all nodes
+  # - operator: "Exists" 

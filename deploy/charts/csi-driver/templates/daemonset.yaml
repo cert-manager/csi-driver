@@ -71,6 +71,9 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+
       volumes:
         - name: plugin-dir
           hostPath:
