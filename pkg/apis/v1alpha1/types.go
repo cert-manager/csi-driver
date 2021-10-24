@@ -28,6 +28,7 @@ const (
 	DurationKey   = "csi.cert-manager.io/duration"
 	IsCAKey       = "csi.cert-manager.io/is-ca"
 	KeyUsagesKey  = "csi.cert-manager.io/key-usages"
+	KeyFormatKey  = "csi.cert-manager.io/key-format"
 
 	CAFileKey   = "csi.cert-manager.io/ca-file"
 	CertFileKey = "csi.cert-manager.io/certificate-file"

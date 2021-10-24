@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cert-manager/csi-lib/metadata"
@@ -49,12 +50,25 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		return err.ToAggregate()
 	}
 
-	keyPEM := pem.EncodeToMemory(
-		&pem.Block{
+	var pemBlock *pem.Block
+	if strings.EqualFold(meta.VolumeContext[csiapi.KeyFormatKey], "PKCS8") {
+		bytes, err := x509.MarshalPKCS8PrivateKey(key.(*rsa.PrivateKey))
+		if err != nil {
+			return fmt.Errorf("marshalling pkcs8 private key: %w", err)
+		}
+
+		pemBlock = &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: bytes,
+		}
+	} else {
+		pemBlock = &pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key.(*rsa.PrivateKey)),
-		},
-	)
+		}
+	}
+
+	keyPEM := pem.EncodeToMemory(pemBlock)
 
 	// Calculate the next issuance time and check errors before writing files.
 	// This prevents cases where we write files but also have errors in the
