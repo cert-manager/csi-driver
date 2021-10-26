@@ -227,7 +227,7 @@ func Test_WriteKeypair(t *testing.T) {
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
 					"csi.cert-manager.io/issuer-name": "ca-issuer",
-					"csi.cert-manager.io/key-format": "PKCS8",
+					"csi.cert-manager.io/key-encoding": "PKCS8",
 				},
 			},
 			expFiles: map[string][]byte{
@@ -235,7 +235,66 @@ func Test_WriteKeypair(t *testing.T) {
 				"tls.crt": pkcs8Bundle.certPEM,
 				"tls.key": pkcs8Bundle.pkPEM,
 				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-format":"PKCS8"}}`,
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8"}}`,
+				),
+			},
+			expErr: false,
+		},
+
+		"if encoder is unknown, return an error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/key-encoding": "UNKNOWN_ENCODER",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"UNKNOWN_ENCODER"}}`,
+				),
+			},
+			expErr: true,
+		},
+
+		"if encoder is empty, use default encoder PKCS1": {
+			testBundle: pkcs1Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer"}}`,
+				),
+			},
+			expErr: false,
+		},
+
+		"if encoder is empty string, use default encoder PKCS1": {
+			testBundle: pkcs1Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/key-encoding": "",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":""}}`,
 				),
 			},
 			expErr: false,

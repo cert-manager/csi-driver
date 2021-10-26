@@ -43,6 +43,8 @@ func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, er
 	setDefaultIfEmpty(attr, csiapi.CertFileKey, "tls.crt")
 	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "tls.key")
 
+	setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS1")
+
 	setDefaultIfEmpty(attr, csiapi.KeyUsagesKey, strings.Join([]string{string(cmapi.UsageDigitalSignature), string(cmapi.UsageKeyEncipherment)}, ","))
 
 	return attr, nil
