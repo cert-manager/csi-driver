@@ -50,6 +50,8 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 	el = append(el, durationParse(path.Child(csiapi.RenewBeforeKey), attr[csiapi.RenewBeforeKey])...)
 	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
 
+	el = append(el, keyEncodingValue(path.Child(csiapi.KeyEncodingKey), attr[csiapi.KeyEncodingKey])...)
+
 	// If there are errors, then return not approved and the aggregated errors.
 	if len(el) > 0 {
 		return el
@@ -101,6 +103,13 @@ func boolValue(path *field.Path, s string) field.ErrorList {
 	}
 	if s != "false" && s != "true" {
 		return field.ErrorList{field.Invalid(path, s, `may only accept values of "true" or "false"`)}
+	}
+	return nil
+}
+
+func keyEncodingValue(path *field.Path, s string) field.ErrorList {
+	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) {
+		return field.ErrorList{field.NotSupported(path, s, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
 	}
 	return nil
 }

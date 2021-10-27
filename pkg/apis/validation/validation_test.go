@@ -19,6 +19,7 @@ package validation
 import (
 	"testing"
 
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -37,7 +38,8 @@ func Test_ValidateAttributes(t *testing.T) {
 	}{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
-				csiapi.DNSNamesKey: "foo.bar.com,car.bar.com",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -45,7 +47,8 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
-				csiapi.CommonNameKey: "foo.bar",
+				csiapi.CommonNameKey:  "foo.bar",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -53,39 +56,44 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey: "test-issuer",
-				csiapi.CommonNameKey: "foo.bar",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CommonNameKey:  "foo.bar",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey: "test-issuer",
-				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with one key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey: "test-issuer",
-				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:  "client auth",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "client auth",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with key usages extended key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey: "test-issuer",
-				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:  "code signing  ,      email protection,    s/mime,ipsec end system",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "code signing  ,      email protection,    s/mime,ipsec end system",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"attributes with wrong key usages should error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey: "test-issuer",
-				csiapi.DNSNamesKey:   "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:  "foo,bar,hello world",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "foo,bar,hello world",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "foo", "not a valid key usage"),
@@ -98,6 +106,7 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.IssuerNameKey:   "test-issuer",
 				csiapi.DurationKey:     "bad-duration",
 				csiapi.ReusePrivateKey: "FOO",
+				csiapi.KeyEncodingKey:  "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/duration"), "bad-duration", `must be a valid duration string: time: invalid duration "bad-duration"`),
@@ -201,6 +210,30 @@ func Test_boolValue(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expErr, boolValue(field.NewPath("my-bool"), test.s))
+		})
+	}
+}
+
+func Test_keyEncodingValue(t *testing.T) {
+	for name, test := range map[string]struct {
+		s      string
+		expErr field.ErrorList
+	}{
+		"PKCS1 should not error": {
+			s:      "PKCS1",
+			expErr: nil,
+		},
+		"PKCS8 should not error": {
+			s:      "PKCS8",
+			expErr: nil,
+		},
+		"an unknown value should error": {
+			s:      "foo",
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs"), "foo", []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expErr, keyEncodingValue(field.NewPath("my-pkcs"), test.s))
 		})
 	}
 }

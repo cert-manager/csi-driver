@@ -42,14 +42,32 @@ type testBundle struct {
 	pkPEM   []byte
 }
 
-func newTestBundle(t *testing.T) testBundle {
+type keyEncoder func(key *rsa.PrivateKey) (*pem.Block, error)
+var (
+	pkcs1Encoder keyEncoder = func(key *rsa.PrivateKey) (*pem.Block, error) {
+		pkBytes := x509.MarshalPKCS1PrivateKey(key)
+		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: pkBytes}, nil
+	}
+	pkcs8Encoder keyEncoder = func(key *rsa.PrivateKey) (*pem.Block, error) {
+		pkBytes, err := x509.MarshalPKCS8PrivateKey(key)
+		if err != nil {
+			return nil, err
+		}
+		return &pem.Block{Type: "PRIVATE KEY", Bytes: pkBytes}, nil
+	}
+)
+
+func newTestBundle(t *testing.T, encoder keyEncoder) testBundle {
 	pk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	pkBytes := x509.MarshalPKCS1PrivateKey(pk)
-	pkPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: pkBytes})
+	pemBlock, err := encoder(pk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkPEM := pem.EncodeToMemory(pemBlock)
 
 	template := x509.Certificate{
 		SerialNumber:          new(big.Int).Lsh(big.NewInt(1), 128),
@@ -68,7 +86,7 @@ func newTestBundle(t *testing.T) testBundle {
 }
 
 func Test_calculateNextIssuanceTime(t *testing.T) {
-	testBundle := newTestBundle(t)
+	testBundle := newTestBundle(t, pkcs1Encoder)
 
 	tests := map[string]struct {
 		attrs   map[string]string
@@ -113,15 +131,18 @@ func Test_calculateNextIssuanceTime(t *testing.T) {
 }
 
 func Test_WriteKeypair(t *testing.T) {
-	testBundle := newTestBundle(t)
+	pkcs1Bundle := newTestBundle(t, pkcs1Encoder)
+	pkcs8Bundle := newTestBundle(t, pkcs8Encoder)
 
 	tests := map[string]struct {
 		meta metadata.Metadata
 
-		expFiles map[string][]byte
-		expErr   bool
+		testBundle	testBundle
+		expFiles  	map[string][]byte
+		expErr    	bool
 	}{
 		"if no additional attributes given, expect files to be written with NextIssuanceTime 2/3rds": {
+			testBundle: pkcs1Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
@@ -130,9 +151,9 @@ func Test_WriteKeypair(t *testing.T) {
 				},
 			},
 			expFiles: map[string][]byte{
-				"ca.crt":  testBundle.caPEM,
-				"tls.crt": testBundle.certPEM,
-				"tls.key": testBundle.pkPEM,
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
 				"metadata.json": []byte(
 					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer"}}`,
 				),
@@ -140,6 +161,7 @@ func Test_WriteKeypair(t *testing.T) {
 			expErr: false,
 		},
 		"if renew before present, use that renew before": {
+			testBundle: pkcs1Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
@@ -149,9 +171,9 @@ func Test_WriteKeypair(t *testing.T) {
 				},
 			},
 			expFiles: map[string][]byte{
-				"ca.crt":  testBundle.caPEM,
-				"tls.crt": testBundle.certPEM,
-				"tls.key": testBundle.pkPEM,
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
 				"metadata.json": []byte(
 					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-02T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/renew-before":"48h"}}`,
 				),
@@ -159,6 +181,7 @@ func Test_WriteKeypair(t *testing.T) {
 			expErr: false,
 		},
 		"if renew before present in metadata but given a bad string, return error": {
+			testBundle: pkcs1Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
@@ -175,6 +198,7 @@ func Test_WriteKeypair(t *testing.T) {
 			expErr: true,
 		},
 		"if custom file paths, write to those file paths": {
+			testBundle: pkcs1Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
@@ -186,11 +210,91 @@ func Test_WriteKeypair(t *testing.T) {
 				},
 			},
 			expFiles: map[string][]byte{
-				"foo/bar":         testBundle.caPEM,
-				"my-crt":          testBundle.certPEM,
-				"hello/world/key": testBundle.pkPEM,
+				"foo/bar":         pkcs1Bundle.caPEM,
+				"my-crt":          pkcs1Bundle.certPEM,
+				"hello/world/key": pkcs1Bundle.pkPEM,
 				"metadata.json": []byte(
 					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/ca-file":"foo/bar","csi.cert-manager.io/certificate-file":"my-crt","csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/privatekey-file":"hello/world/key"}}`,
+				),
+			},
+			expErr: false,
+		},
+
+		"if encoder is PKCS8, use the correct encoder": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/key-encoding": "PKCS8",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs8Bundle.caPEM,
+				"tls.crt": pkcs8Bundle.certPEM,
+				"tls.key": pkcs8Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8"}}`,
+				),
+			},
+			expErr: false,
+		},
+
+		"if encoder is unknown, return an error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/key-encoding": "UNKNOWN_ENCODER",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"UNKNOWN_ENCODER"}}`,
+				),
+			},
+			expErr: true,
+		},
+
+		"if encoder is empty, use default encoder PKCS1": {
+			testBundle: pkcs1Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer"}}`,
+				),
+			},
+			expErr: false,
+		},
+
+		"if encoder is empty string, use default encoder PKCS1": {
+			testBundle: pkcs1Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/key-encoding": "",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs1Bundle.caPEM,
+				"tls.crt": pkcs1Bundle.certPEM,
+				"tls.key": pkcs1Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":""}}`,
 				),
 			},
 			expErr: false,
@@ -205,6 +309,7 @@ func Test_WriteKeypair(t *testing.T) {
 			_, err := w.Store.RegisterMetadata(test.meta)
 			assert.NoError(t, err)
 
+			testBundle := test.testBundle
 			err = w.WriteKeypair(test.meta, testBundle.pk, testBundle.certPEM, testBundle.caPEM)
 			assert.Equal(t, test.expErr, err != nil, "%v", err)
 

@@ -26,6 +26,7 @@ import (
 
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
@@ -49,12 +50,29 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		return err.ToAggregate()
 	}
 
-	keyPEM := pem.EncodeToMemory(
-		&pem.Block{
+	var pemBlock *pem.Block
+
+	switch keyEncodingFormat := attrs[csiapi.KeyEncodingKey]; keyEncodingFormat {
+	case string(cmapi.PKCS1):
+		pemBlock = &pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key.(*rsa.PrivateKey)),
-		},
-	)
+		}
+	case string(cmapi.PKCS8):
+		bytes, err := x509.MarshalPKCS8PrivateKey(key.(*rsa.PrivateKey))
+		if err != nil {
+			return fmt.Errorf("marshalling pkcs8 private key: %w", err)
+		}
+
+		pemBlock = &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: bytes,
+		}
+	default:
+		return fmt.Errorf("invalid key encoding format: %s", keyEncodingFormat)
+	}
+
+	keyPEM := pem.EncodeToMemory(pemBlock)
 
 	// Calculate the next issuance time and check errors before writing files.
 	// This prevents cases where we write files but also have errors in the
