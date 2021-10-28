@@ -43,28 +43,12 @@ spec:
           args:
             - --csi-address=/plugin/csi.sock
             - --probe-timeout=3s
-            - --health-port=9809
+            - --health-port={{.Values.app.livenessProbe.port}}
             - -v={{ .Values.app.logLevel }}
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           volumeMounts:
             - name: plugin-dir
               mountPath: /plugin
-          ports:
-            - containerPort: 9809
-              name: healthz
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: healthz
-            initialDelaySeconds: 5
-            timeoutSeconds: 5
-          resources:
-            limits:
-              cpu: 100m
-              memory: 100Mi
-            requests:
-              cpu: 10m
-              memory: 20Mi
 
         - name: cert-manager-csi-driver
           securityContext:
@@ -96,6 +80,15 @@ spec:
               mountPropagation: "Bidirectional"
             - name: csi-data-dir
               mountPath: /csi-data-dir
+          ports:
+            - containerPort: {{.Values.app.livenessProbe.port}}
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
