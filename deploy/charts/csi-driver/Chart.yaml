@@ -13,4 +13,4 @@ sources:
 - https://github.com/cert-manager/csi-driver
 
 appVersion: v0.1.1
-version: v0.1.2
+version: v0.1.3
