@@ -38,6 +38,18 @@ spec:
             - name: registration-dir
               mountPath: /registration
 
+        - name: liveness-probe
+          image: "{{ .Values.livenessProbeImage.repository }}:{{ .Values.livenessProbeImage.tag }}"
+          args:
+            - --csi-address=/plugin/csi.sock
+            - --probe-timeout=3s
+            - --health-port={{.Values.app.livenessProbe.port}}
+            - -v={{ .Values.app.logLevel }}
+          imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+
         - name: cert-manager-csi-driver
           securityContext:
             privileged: true
@@ -68,6 +80,15 @@ spec:
               mountPropagation: "Bidirectional"
             - name: csi-data-dir
               mountPath: /csi-data-dir
+          ports:
+            - containerPort: {{.Values.app.livenessProbe.port}}
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
