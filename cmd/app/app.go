@@ -74,7 +74,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 
 			d, err := driver.New(opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:    opts.DriverName,
-				DriverVersion: "v0.1.1",
+				DriverVersion: "v0.2.0",
 				NodeID:        opts.NodeID,
 				Store:         store,
 				Manager: manager.NewManagerOrDie(manager.Options{
