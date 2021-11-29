@@ -1,6 +1,6 @@
 # cert-manager-csi-driver
 
-![Version: v0.2.0](https://img.shields.io/badge/Version-v0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.2.0](https://img.shields.io/badge/AppVersion-v0.2.0-informational?style=flat-square)
+![Version: v0.2.1](https://img.shields.io/badge/Version-v0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.2.0](https://img.shields.io/badge/AppVersion-v0.2.0-informational?style=flat-square)
 
 A Helm chart for cert-manager-csi-driver
 
@@ -20,7 +20,8 @@ A Helm chart for cert-manager-csi-driver
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| app.driver | object | `{"name":"csi.cert-manager.io","useTokenRequest":false}` | Options for CSI driver |
+| app.driver | object | `{"csiDataDir":"/tmp/cert-manager-csi-driver","name":"csi.cert-manager.io","useTokenRequest":false}` | Options for CSI driver |
+| app.driver.csiDataDir | string | `"/tmp/cert-manager-csi-driver"` | Configures the hostPath directory that the driver will write and mount volumes from. |
 | app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
 | app.driver.useTokenRequest | bool | `false` | If enabled, will use CSI token request for creating CertificateRequests. CertificateRequests will be created via mounting pod's service accounts. |
 | app.livenessProbe | object | `{"port":9809}` | Options for the liveness container. |

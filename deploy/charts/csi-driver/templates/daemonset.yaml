@@ -109,6 +109,6 @@ spec:
             type: Directory
           name: registration-dir
         - hostPath:
-            path: /tmp/cert-manager-csi-driver
+            path: {{ .Values.app.driver.csiDataDir }}
             type: DirectoryOrCreate
           name: csi-data-dir

@@ -33,11 +33,12 @@ app:
     # CertificateRequests. CertificateRequests will be created via mounting
     # pod's service accounts.
     useTokenRequest: false
+    # -- Configures the hostPath directory that the driver will write and mount volumes from.
+    csiDataDir: /tmp/cert-manager-csi-driver
   # -- Options for the liveness container.
   livenessProbe:
     # -- The port that will expose the livness of the csi-driver
     port: 9809
-
 
 resources: {}
   # -- Kubernetes pod resource limits for cert-manager-csi-driver
