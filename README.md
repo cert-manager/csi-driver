@@ -1,7 +1,11 @@
-<p align="center"><img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" /></p>
-</a>
-<a href="https://godoc.org/github.com/cert-manager/csi-driver"><img src="https://godoc.org/github.com/cert-manager/csi-driver?status.svg"></a>
-<a href="https://goreportcard.com/report/github.com/cert-manager/csi-driver"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi-driver" /></a></p>
+<p align="center">
+  <img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" alt="cert-manager project logo" />
+</p>
+<p align="center">
+  <a href="https://godoc.org/github.com/cert-manager/csi-driver"><img src="https://godoc.org/github.com/cert-manager/csi-driver?status.svg" alt="csi-driver godoc"></a>
+  <a href="https://goreportcard.com/report/github.com/cert-manager/csi-driver"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/cert-manager/csi-driver" /></a>
+  <a href="https://artifacthub.io/packages/search?repo=cert-manager"><img alt="Artifact Hub" src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/cert-manager" /></a>
+</p>
 
 # csi-driver
 
