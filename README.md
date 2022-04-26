@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/jetstack/cert-manager/blob/master/logo/logo.png" width="250x" alt="cert-manager project logo" />
+  <img src="https://github.com/cert-manager/cert-manager/blob/master/logo/logo.png" height="241" width="250" alt="cert-manager project logo" />
 </p>
 <p align="center">
   <a href="https://godoc.org/github.com/cert-manager/csi-driver"><img src="https://godoc.org/github.com/cert-manager/csi-driver?status.svg" alt="csi-driver godoc"></a>
@@ -41,7 +41,7 @@ no extra configuration however `v1.15` requires the following feature gate set:
 
 You must have a working installation of cert-manager present on the cluster.
 Instructions on how to install cert-manager can be found
-[here](https://docs.cert-manager.io/en/latest/getting-started/install/kubernetes.html).
+[on cert-manager.io](https://cert-manager.io/docs/installation/).
 
 To install the csi-driver, use helm install:
 
