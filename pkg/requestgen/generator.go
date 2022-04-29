@@ -17,12 +17,15 @@ limitations under the License.
 package requestgen
 
 import (
+	"bytes"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/cert-manager/csi-lib/manager"
@@ -46,11 +49,6 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, err.ToAggregate()
 	}
 
-	uris, err := parseURIs(attrs[csiapi.URISANsKey])
-	if err != nil {
-		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
-	}
-
 	duration := cmapi.DefaultCertificateDuration
 	if durStr, ok := attrs[csiapi.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
@@ -59,13 +57,30 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		}
 	}
 
+	commonName, err := executeTemplate(meta, attrs[csiapi.CommonNameKey])
+	if err != nil {
+		return nil, err
+	}
+	dns, err := parseDNSNames(meta, attrs[csiapi.DNSNamesKey])
+	if err != nil {
+		return nil, err
+	}
+	uris, err := parseURIs(meta, attrs[csiapi.URISANsKey])
+	if err != nil {
+		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
+	}
+	ips, err := parseIPAddresses(attrs[csiapi.IPSANsKey])
+	if err != nil {
+		return nil, err
+	}
+
 	return &manager.CertificateRequestBundle{
 		Request: &x509.CertificateRequest{
 			Subject: pkix.Name{
-				CommonName: attrs[csiapi.CommonNameKey],
+				CommonName: commonName,
 			},
-			DNSNames:    parseDNSNames(attrs[csiapi.DNSNamesKey]),
-			IPAddresses: parseIPAddresses(attrs[csiapi.IPSANsKey]),
+			DNSNames:    dns,
+			IPAddresses: ips,
 			URIs:        uris,
 		},
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
@@ -81,53 +96,77 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	}, nil
 }
 
-func parseDNSNames(dnsNames string) []string {
+// parseDNSNames parses a csi.cert-manager.io/dns-names value, and returns the
+// set of DNS names to be requested. Executes metadata template on string.
+func parseDNSNames(meta metadata.Metadata, dnsNames string) ([]string, error) {
 	if len(dnsNames) == 0 {
-		return nil
-	}
-	return strings.Split(dnsNames, ",")
-}
-
-func parseIPAddresses(ips string) []net.IP {
-	if len(ips) == 0 {
-		return nil
-	}
-
-	ipsS := strings.Split(ips, ",")
-
-	var ipAddresses []net.IP
-
-	for _, ipName := range ipsS {
-		ip := net.ParseIP(ipName)
-		if ip != nil {
-			ipAddresses = append(ipAddresses, ip)
-		}
-	}
-
-	return ipAddresses
-}
-
-func parseURIs(uris string) ([]*url.URL, error) {
-	if len(uris) == 0 {
 		return nil, nil
 	}
 
-	urisS := strings.Split(uris, ",")
-
-	var urisURL []*url.URL
-
-	for _, uriS := range urisS {
-		uri, err := url.Parse(uriS)
-		if err != nil {
-			return nil, err
-		}
-
-		urisURL = append(urisURL, uri)
+	csv, err := executeTemplate(meta, dnsNames)
+	if err != nil {
+		return nil, err
 	}
 
-	return urisURL, nil
+	return strings.Split(csv, ","), nil
 }
 
+// parseIPAddresses parses a csi.cert-manager.io/ip-sans value, and returns the
+// set IP addresses to be requested for.
+func parseIPAddresses(ipCSV string) ([]net.IP, error) {
+	if len(ipCSV) == 0 {
+		return nil, nil
+	}
+
+	var ips []net.IP
+	var errs []string
+	for _, ipStr := range strings.Split(ipCSV, ",") {
+		ip := net.ParseIP(ipStr)
+		if ip == nil {
+			errs = append(errs, ipStr)
+			continue
+		}
+		ips = append(ips, ip)
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf(`failed to parse IP address: ["%s"]`, strings.Join(errs, `","`))
+	}
+
+	return ips, nil
+}
+
+// parseIPAddresses parses a csi.cert-manager.io/uri-sans value, and returns
+// the set of URI SANs to be requested. Executes metadata template on string.
+func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
+	if len(uriCSV) == 0 {
+		return nil, nil
+	}
+
+	csv, err := executeTemplate(meta, uriCSV)
+	if err != nil {
+		return nil, err
+	}
+
+	var uris []*url.URL
+	var errs []string
+	for _, uriS := range strings.Split(csv, ",") {
+		uri, err := url.Parse(uriS)
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+		uris = append(uris, uri)
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.New(strings.Join(errs, ", "))
+	}
+
+	return uris, nil
+}
+
+// keyUsagesFromAttributes returns the set of key usages from the given CSV.
 func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	if len(usagesCSV) == 0 {
 		return nil
@@ -139,4 +178,28 @@ func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	}
 
 	return keyUsages
+}
+
+// executeTemplate executes the template on the given csv with volume context
+// provided by the metadata.
+func executeTemplate(meta metadata.Metadata, csv string) (string, error) {
+	ptmpl, err := template.New("").Parse(csv)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse dnsNames for templating: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := ptmpl.Execute(&buf, struct {
+		PodName      string
+		PodNamespace string
+		PodUID       string
+	}{
+		PodName:      meta.VolumeContext["csi.storage.k8s.io/pod.name"],
+		PodNamespace: meta.VolumeContext["csi.storage.k8s.io/pod.namespace"],
+		PodUID:       meta.VolumeContext["csi.storage.k8s.io/pod.uid"],
+	}); err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return buf.String(), nil
 }
