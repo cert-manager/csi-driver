@@ -18,10 +18,12 @@ package cases
 
 import (
 	"context"
-	"crypto/x509"
-	"encoding/pem"
+	"fmt"
+	"net/url"
 	"time"
 
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/jetstack/cert-manager/pkg/util/pki"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -30,11 +32,10 @@ import (
 
 	csi "github.com/cert-manager/csi-driver/pkg/apis"
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
-	"github.com/cert-manager/csi-driver/test/e2e/util"
 )
 
-var _ = framework.CasesDescribe("Should set the key encoding correctly", func() {
-	setupPodAndReturnKeyData := func(f *framework.Framework, annotations map[string]string) *pem.Block {
+var _ = framework.CasesDescribe("Should correctly substitute out SANs with templates", func() {
+	setupPod := func(f *framework.Framework, annotations map[string]string) (*corev1.Pod, *cmapi.CertificateRequest) {
 		testVolume := corev1.Volume{
 			Name: "tls",
 			VolumeSource: corev1.VolumeSource{
@@ -85,58 +86,42 @@ var _ = framework.CasesDescribe("Should set the key encoding correctly", func() 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
 		crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
-
-		err = util.CertificateRequestMatchesSpec(crs[0], testVolume.CSI.VolumeAttributes)
-		Expect(err).NotTo(HaveOccurred())
 		Expect(crs).To(HaveLen(1))
-
-		By("Extracting private key data from Pod VolumeMount")
-		_, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
-			testVolume.CSI.VolumeAttributes)
-		Expect(err).NotTo(HaveOccurred())
-
-		block, rest := pem.Decode(keyData)
-
-		Expect(block).ToNot(BeNil())
-		Expect(rest).Should(HaveLen(0))
-
-		return block
+		return testPod, crs[0]
 	}
 
-	f := framework.NewDefaultFramework("key-coding")
+	mustParseURI := func(uri string) *url.URL {
+		puri, err := url.Parse(uri)
+		Expect(err).NotTo(HaveOccurred())
+		return puri
+	}
 
-	It("should create a pod with the default key encoding PKCS1", func() {
-		block := setupPodAndReturnKeyData(f, map[string]string{
+	f := framework.NewDefaultFramework("san-templates")
+	It("should create a pod with templates on SAN values", func() {
+		pod, cr := setupPod(f, map[string]string{
 			"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
 			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
+			"csi.cert-manager.io/common-name":  "{{.PodName}}.{{.PodNamespace}}",
+			"csi.cert-manager.io/dns-names":    "{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}},{{.PodName}},{{.PodName}}.{{.PodNamespace}},{{.PodName}}.{{.PodNamespace}}.svc,{{.PodUID}}",
+			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/{{.PodNamespace}}/{{.PodName}}/{{.PodUID}},file://foo-bar,{{.PodUID}}",
 		})
 
-		_, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		request, err := pki.DecodeX509CertificateRequestBytes(cr.Spec.Request)
 		Expect(err).NotTo(HaveOccurred())
-	})
 
-	It("should create a pod with key encoding PKCS1", func() {
-		block := setupPodAndReturnKeyData(f, map[string]string{
-			"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
-			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
-			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
-			"csi.cert-manager.io/key-encoding": "PKCS1",
-		})
-
-		_, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	It("should create a pod with key encoding PKCS8", func() {
-		block := setupPodAndReturnKeyData(f, map[string]string{
-			"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
-			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
-			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
-			"csi.cert-manager.io/key-encoding": "PKCS8",
-		})
-
-		_, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		Expect(err).NotTo(HaveOccurred())
+		Expect(request.Subject.CommonName).To(Equal(fmt.Sprintf("%s.%s", pod.Name, pod.Namespace)))
+		Expect(request.DNSNames).To(ConsistOf([]string{
+			fmt.Sprintf("%s-my-dns-%s-%s", pod.Name, pod.Namespace, pod.UID),
+			pod.Name,
+			fmt.Sprintf("%s.%s", pod.Name, pod.Namespace),
+			fmt.Sprintf("%s.%s.svc", pod.Name, pod.Namespace),
+			string(pod.UID),
+		}))
+		Expect(request.URIs).To(ConsistOf([]*url.URL{
+			mustParseURI(fmt.Sprintf("spiffe://foo.bar/%s/%s/%s", pod.Namespace, pod.Name, pod.UID)),
+			mustParseURI("file://foo-bar"),
+			mustParseURI(string(pod.UID)),
+		}))
 	})
 })
