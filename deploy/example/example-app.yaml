@@ -65,5 +65,5 @@ spec:
             readOnly: true
             volumeAttributes:
                   csi.cert-manager.io/issuer-name: ca-issuer
-                  csi.cert-manager.io/dns-names: my-service.sandbox.svc.cluster.local
-                  csi.cert-manager.io/uri-sans: spiffe://my-service.sandbox.cluster.local
+                  csi.cert-manager.io/dns-names: "{{.PodName}}.{{.PodNamespace}}.svc.cluster.local"
+                  csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/{{.PodNamespace}}/pod/{{.PodName}}/{{.PodUID}}"
