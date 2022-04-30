@@ -22,8 +22,8 @@ import (
 	"time"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/jetstack/cert-manager/pkg/util/pki"
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/cert-manager/cert-manager/pkg/util/pki"
 )
 
 func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string]string) error {

@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	cmapiutil "github.com/jetstack/cert-manager/pkg/api/util"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	cmapiutil "github.com/cert-manager/cert-manager/pkg/api/util"
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
