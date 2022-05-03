@@ -84,7 +84,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 			URIs:        uris,
 		},
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
-		Namespace: attrs["csi.storage.k8s.io/pod.namespace"],
+		Namespace: attrs[csiapi.K8sVolumeContextKeyPodNamespace],
 		Duration:  duration,
 		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
 		IssuerRef: cmmeta.ObjectReference{
@@ -194,9 +194,9 @@ func executeTemplate(meta metadata.Metadata, csv string) (string, error) {
 		PodNamespace string
 		PodUID       string
 	}{
-		PodName:      meta.VolumeContext["csi.storage.k8s.io/pod.name"],
-		PodNamespace: meta.VolumeContext["csi.storage.k8s.io/pod.namespace"],
-		PodUID:       meta.VolumeContext["csi.storage.k8s.io/pod.uid"],
+		PodName:      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
+		PodNamespace: meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
+		PodUID:       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
 	}); err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
