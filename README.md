@@ -188,7 +188,15 @@ volumeAttributes:
   csi.cert-manager.io/issuer-name: ca-issuer
   csi.cert-manager.io/dns-names: "{{.PodName}}.{{.PodNamespace}}.svc.cluster.local"
   csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/{{.PodNamespace}}/pod/{{.PodName}}/{{.PodUID}}"
-  csi.cert-manager.io/disable-auto-renew: "true"
+  csi.cert-manager.io/common-name: "{{.PodName}}.{{.PodNamespace}}"
+```
+
+When using with Helm which uses the same templating format, you will need to
+escape the curly braces, like the following:
+
+```yaml
+volumeAttributes:
+  csi.cert-manager.io/dns-names: {{ printf "{{.PodName}}.{{.PodNamespace}}" | quote }}
 ```
 
 ## Design Documents
