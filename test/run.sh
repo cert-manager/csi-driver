@@ -59,12 +59,12 @@ install_multiplatform() {
 
 if ! command -v kind; then
   echo "'kind' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-darwin-amd64"
+  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.12.0/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.12.0/kind-darwin-amd64"
 fi
 
 if ! command -v kubectl; then
   echo "'kubectl' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kubectl "https://dl.k8s.io/release/v1.16.15/bin/linux/amd64/kubectl" "https://dl.k8s.io/release/v1.16.15/bin/darwin/amd64/kubectl"
+  install_multiplatform "${BIN_DIR}" kubectl "https://dl.k8s.io/release/v1.23.6/bin/linux/amd64/kubectl" "https://dl.k8s.io/release/v1.23.6/bin/darwin/amd64/kubectl"
 fi
 
 if ! command -v go; then
