@@ -32,10 +32,10 @@ A Helm chart for cert-manager-csi-driver
 | image.tag | string | `"v0.2.0"` | Target image version tag. |
 | livenessProbeImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on liveness probe. |
 | livenessProbeImage.repository | string | `"k8s.gcr.io/sig-storage/livenessprobe"` | Target image repository. |
-| livenessProbeImage.tag | string | `"v2.4.0"` | Target image version tag. |
+| livenessProbeImage.tag | string | `"v2.6.0"` | Target image version tag. |
 | nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on node-driver. |
 | nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
-| nodeDriverRegistrarImage.tag | string | `"v2.3.0"` | Target image version tag. |
+| nodeDriverRegistrarImage.tag | string | `"v2.5.0"` | Target image version tag. |
 | resources | object | `{}` |  |
 | tolerations | list | `[]` |  |
 
