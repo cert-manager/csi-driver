@@ -34,7 +34,7 @@ import (
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 )
 
-var _ = framework.CasesDescribe("Should correctly substitute out SANs with templates", func() {
+var _ = framework.CasesDescribe("Should correctly substitute out SANs with variables", func() {
 	setupPod := func(f *framework.Framework, annotations map[string]string) (*corev1.Pod, *cmapi.CertificateRequest) {
 		testVolume := corev1.Volume{
 			Name: "tls",
@@ -96,15 +96,15 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with templ
 		return puri
 	}
 
-	f := framework.NewDefaultFramework("san-templates")
-	It("should create a pod with templates on SAN values", func() {
+	f := framework.NewDefaultFramework("san-variables")
+	It("should create a pod with variables on SAN values", func() {
 		pod, cr := setupPod(f, map[string]string{
 			"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
 			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
-			"csi.cert-manager.io/common-name":  "{{.PodName}}.{{.PodNamespace}}",
-			"csi.cert-manager.io/dns-names":    "{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}},{{.PodName}},{{.PodName}}.{{.PodNamespace}},{{.PodName}}.{{.PodNamespace}}.svc,{{.PodUID}}",
-			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/{{.PodNamespace}}/{{.PodName}}/{{.PodUID}},file://foo-bar,{{.PodUID}}",
+			"csi.cert-manager.io/common-name":  "$PodName.${PodNamespace}",
+			"csi.cert-manager.io/dns-names":    "$PodName-my-dns-$PodNamespace-${PodUID},${PodName},${PodName}.${PodNamespace},$PodName.${PodNamespace}.svc,${PodUID}",
+			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${PodNamespace}/$PodName/$PodUID,file://foo-bar,${PodUID}",
 		})
 
 		request, err := pki.DecodeX509CertificateRequestBytes(cr.Spec.Request)

@@ -19,6 +19,7 @@ package requestgen
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"net"
 	"net/url"
 	"testing"
@@ -92,7 +93,7 @@ func Test_RequestForMetadata(t *testing.T) {
 		"a metadata with a bad common name template variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
-				"csi.cert-manager.io/common-name": "{{.Foo}}",
+				"csi.cert-manager.io/common-name": "$Foo",
 			}}),
 			expRequest: nil,
 			expErr:     true,
@@ -100,7 +101,7 @@ func Test_RequestForMetadata(t *testing.T) {
 		"a metadata with a bad dnsName template variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
-				"csi.cert-manager.io/dns-names":   "foo,{{.Foo}}",
+				"csi.cert-manager.io/dns-names":   "foo,$Foo",
 			}}),
 			expRequest: nil,
 			expErr:     true,
@@ -108,7 +109,7 @@ func Test_RequestForMetadata(t *testing.T) {
 		"a metadata with a bad uriNames template variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
-				"csi.cert-manager.io/uri-sans":    "foo,{{.Foo}}",
+				"csi.cert-manager.io/uri-sans":    "foo,$Foo",
 			}}),
 			expRequest: nil,
 			expErr:     true,
@@ -135,9 +136,9 @@ func Test_RequestForMetadata(t *testing.T) {
 				"csi.cert-manager.io/issuer-kind":  "FooBar",
 				"csi.cert-manager.io/issuer-group": "joshvanl.com",
 				"csi.cert-manager.io/duration":     "1h",
-				"csi.cert-manager.io/common-name":  "{{.PodName}}.{{.PodNamespace}}",
-				"csi.cert-manager.io/dns-names":    "{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}},{{.PodName}},{{.PodName}}.{{.PodNamespace}},{{.PodName}}.{{.PodNamespace}}.svc,{{.PodUID}}",
-				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/{{.PodNamespace}}/{{.PodName}}/{{.PodUID}},file://foo-bar,{{.PodUID}}",
+				"csi.cert-manager.io/common-name":  "${PodName}.$PodNamespace",
+				"csi.cert-manager.io/dns-names":    "${PodName}-my-dns-$PodNamespace-$PodUID,$PodName,${PodName}.${PodNamespace},$PodName.$PodNamespace.svc,$PodUID",
+				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${PodNamespace}/${PodName}/$PodUID,file://foo-bar,${PodUID}",
 				"csi.cert-manager.io/ip-sans":      "1.2.3.4,5.6.7.8",
 				"csi.cert-manager.io/is-ca":        "true",
 				"csi.cert-manager.io/key-usages":   "server auth,client auth",
@@ -189,44 +190,44 @@ func Test_parseDNSNames(t *testing.T) {
 	tests := map[string]struct {
 		csv         string
 		expDNSNames []string
-		expErr      bool
+		expErr      error
 	}{
 		"an empty csv should return an empty list": {
 			csv:         "",
 			expDNSNames: nil,
-			expErr:      false,
+			expErr:      nil,
 		},
 		"a csv with single entry should expect that entry returned": {
 			csv:         "my-dns",
 			expDNSNames: []string{"my-dns"},
-			expErr:      false,
+			expErr:      nil,
 		},
 		"a csv with multiple entries should expect those entries returned": {
 			csv:         "my-dns,my-second-dns,my-third-dns",
 			expDNSNames: []string{"my-dns", "my-second-dns", "my-third-dns"},
-			expErr:      false,
+			expErr:      nil,
 		},
 		"a single csv which uses templates should be substituted correctly": {
-			csv:         `{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}}`,
+			csv:         `$PodName-my-dns-$PodNamespace-${PodUID}`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid"},
-			expErr:      false,
+			expErr:      nil,
 		},
 		"if template references a variable that doesn't exist, error": {
-			csv:         `{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}}-{{.Foo}}`,
+			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID-$Foo`,
 			expDNSNames: nil,
-			expErr:      true,
+			expErr:      errors.New(`undefined variable "Foo", known variables: [PodName PodNamespace PodUID]`),
 		},
 		"a csv containing multiple entries which uses templates should be substituted correctly": {
-			csv:         `{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}},{{.PodName}},{{.PodName}}.{{.PodNamespace}},{{.PodName}}.{{.PodNamespace}}.svc,{{.PodUID}}`,
+			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID,$PodName,$PodName.$PodNamespace,$PodName.$PodNamespace.svc,$PodUID`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid", "my-pod-name", "my-pod-name.my-namespace", "my-pod-name.my-namespace.svc", "my-pod-uuid"},
-			expErr:      false,
+			expErr:      nil,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			got, err := parseDNSNames(baseMetadata(), test.csv)
-			assert.Equalf(t, test.expErr, err != nil, "%v", err)
+			assert.Equal(t, test.expErr, err)
 			assert.ElementsMatch(t, test.expDNSNames, got)
 		})
 	}
@@ -244,12 +245,12 @@ func Test_URIs(t *testing.T) {
 	tests := map[string]struct {
 		csv     string
 		expURIs func(t *testing.T) []*url.URL
-		expErr  bool
+		expErr  error
 	}{
 		"an empty csv should return an empty list": {
 			csv:     "",
 			expURIs: nil,
-			expErr:  false,
+			expErr:  nil,
 		},
 		"a csv with single entry should expect that entry returned": {
 			csv: "spiffe://foo.bar",
@@ -258,7 +259,7 @@ func Test_URIs(t *testing.T) {
 					mustParse(t, "spiffe://foo.bar"),
 				}
 			},
-			expErr: false,
+			expErr: nil,
 		},
 		"a csv with multiple entries should expect those entries returned": {
 			csv: "spiffe://foo.bar,file://hello-world/1234,1234",
@@ -269,29 +270,29 @@ func Test_URIs(t *testing.T) {
 					mustParse(t, "1234"),
 				}
 			},
-			expErr: false,
+			expErr: nil,
 		},
 		"a csv with a bad URI should return an error": {
 			csv:     "spiffe://foo.bar,\n,file://hello-world/1234,1234",
 			expURIs: nil,
-			expErr:  true,
+			expErr:  errors.New(`parse "\n": net/url: invalid control character in URL`),
 		},
-		"a single csv which uses templates should be substituted correctly": {
-			csv: `{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}}`,
+		"a single csv which uses variables should be substituted correctly": {
+			csv: `$PodName-my-dns-${PodNamespace}-${PodUID}`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "my-pod-name-my-dns-my-namespace-my-pod-uuid"),
 				}
 			},
-			expErr: false,
+			expErr: nil,
 		},
-		"if template references a variable that doesn't exist, error": {
-			csv:     `{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}}-{{.Foo}}`,
+		"if variables references a variable that doesn't exist, error": {
+			csv:     `$PodName-my-dns-${PodNamespace}-$PodUID-${Foo}`,
 			expURIs: nil,
-			expErr:  true,
+			expErr:  errors.New(`undefined variable "Foo", known variables: [PodName PodNamespace PodUID]`),
 		},
-		"a csv containing multiple entries which uses templates should be substituted correctly": {
-			csv: `spiffe://{{.PodName}}-my-dns-{{.PodNamespace}}-{{.PodUID}},spiffe://{{.PodName}},file://{{.PodName}}.{{.PodNamespace}},{{.PodName}}.{{.PodNamespace}}.svc,spiffe://{{.PodUID}}`,
+		"a csv containing multiple entries which uses variables should be substituted correctly": {
+			csv: `spiffe://$PodName-my-dns-${PodNamespace}-$PodUID,spiffe://$PodName,file://${PodName}.$PodNamespace,$PodName.$PodNamespace.svc,spiffe://$PodUID`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "spiffe://my-pod-name-my-dns-my-namespace-my-pod-uuid"),
@@ -301,14 +302,14 @@ func Test_URIs(t *testing.T) {
 					mustParse(t, "spiffe://my-pod-uuid"),
 				}
 			},
-			expErr: false,
+			expErr: nil,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			got, err := parseURIs(baseMetadata(), test.csv)
-			assert.Equalf(t, test.expErr, err != nil, "%v", err)
+			assert.Equal(t, test.expErr, err)
 			var expURIs []*url.URL
 			if test.expURIs != nil {
 				expURIs = test.expURIs(t)
@@ -318,35 +319,35 @@ func Test_URIs(t *testing.T) {
 	}
 }
 
-func Test_executeTemplate(t *testing.T) {
+func Test_expand(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
 		input     string
 		expOutput string
-		expErr    bool
+		expErr    error
 	}{
 		"if no input given, expect empty output": {
 			input:     "",
 			expOutput: "",
-			expErr:    false,
+			expErr:    nil,
 		},
-		"if using templates, expect to be substituted": {
-			input:     "foo-{{.PodName}}-,,{{.PodNamespace}},{{.PodUID}}",
+		"if using variables, expect to be substituted": {
+			input:     "foo-$PodName-,,${PodNamespace},$PodUID",
 			expOutput: "foo-my-pod-name-,,my-namespace,my-pod-uuid",
-			expErr:    false,
+			expErr:    nil,
 		},
-		"if reference a template variable that does not exist, expect error": {
-			input:     "foo-{{.PodName}}-,,{{.PodNamespace}},{{.PodUID}}.{{.Foo}}",
+		"if reference a variable that does not exist, expect error": {
+			input:     "foo-${PodName}-,,$PodNamespace,${PodUID}.$Foo${Bar}",
 			expOutput: "",
-			expErr:    true,
+			expErr:    errors.New(`undefined variable "Foo", undefined variable "Bar", known variables: [PodName PodNamespace PodUID]`),
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			output, err := executeTemplate(baseMetadata(), test.input)
-			assert.Equalf(t, test.expErr, err != nil, "%v", err)
+			output, err := expand(baseMetadata(), test.input)
+			assert.Equal(t, test.expErr, err)
 			assert.Equal(t, test.expOutput, output)
 		})
 	}

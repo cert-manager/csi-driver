@@ -17,15 +17,14 @@ limitations under the License.
 package requestgen
 
 import (
-	"bytes"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/cert-manager/csi-lib/manager"
@@ -53,25 +52,25 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	if durStr, ok := attrs[csiapi.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid %q attribute: %w", csiapi.DurationKey, err)
+			return nil, fmt.Errorf("%q: %w", csiapi.DurationKey, err)
 		}
 	}
 
-	commonName, err := executeTemplate(meta, attrs[csiapi.CommonNameKey])
+	commonName, err := expand(meta, attrs[csiapi.CommonNameKey])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%q: %w", csiapi.CommonNameKey, err)
 	}
 	dns, err := parseDNSNames(meta, attrs[csiapi.DNSNamesKey])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%q: %w", csiapi.DNSNamesKey, err)
 	}
 	uris, err := parseURIs(meta, attrs[csiapi.URISANsKey])
 	if err != nil {
-		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
+		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
 	}
 	ips, err := parseIPAddresses(attrs[csiapi.IPSANsKey])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
 	}
 
 	return &manager.CertificateRequestBundle{
@@ -97,18 +96,16 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 }
 
 // parseDNSNames parses a csi.cert-manager.io/dns-names value, and returns the
-// set of DNS names to be requested. Executes metadata template on string.
+// set of DNS names to be requested. Executes metadata expand on string.
 func parseDNSNames(meta metadata.Metadata, dnsNames string) ([]string, error) {
 	if len(dnsNames) == 0 {
 		return nil, nil
 	}
-
-	csv, err := executeTemplate(meta, dnsNames)
+	dns, err := expand(meta, dnsNames)
 	if err != nil {
 		return nil, err
 	}
-
-	return strings.Split(csv, ","), nil
+	return strings.Split(dns, ","), nil
 }
 
 // parseIPAddresses parses a csi.cert-manager.io/ip-sans value, and returns the
@@ -137,13 +134,13 @@ func parseIPAddresses(ipCSV string) ([]net.IP, error) {
 }
 
 // parseIPAddresses parses a csi.cert-manager.io/uri-sans value, and returns
-// the set of URI SANs to be requested. Executes metadata template on string.
+// the set of URI SANs to be requested. Executes metadata expand on string.
 func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
 	if len(uriCSV) == 0 {
 		return nil, nil
 	}
 
-	csv, err := executeTemplate(meta, uriCSV)
+	csv, err := expand(meta, uriCSV)
 	if err != nil {
 		return nil, err
 	}
@@ -180,26 +177,30 @@ func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	return keyUsages
 }
 
-// executeTemplate executes the template on the given csv with volume context
+// expand executes os.Expand on the given csv with volume context variables
 // provided by the metadata.
-func executeTemplate(meta metadata.Metadata, csv string) (string, error) {
-	ptmpl, err := template.New("").Parse(csv)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse dnsNames for templating: %w", err)
+func expand(meta metadata.Metadata, csv string) (string, error) {
+	vars := map[string]string{
+		"PodName":      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
+		"PodNamespace": meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
+		"PodUID":       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
 	}
 
-	var buf bytes.Buffer
-	if err := ptmpl.Execute(&buf, struct {
-		PodName      string
-		PodNamespace string
-		PodUID       string
-	}{
-		PodName:      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
-		PodNamespace: meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
-		PodUID:       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
-	}); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
+	var errs []string
+	exp := os.Expand(csv, func(s string) string {
+		v, ok := vars[s]
+		if !ok {
+			errs = append(errs, fmt.Sprintf("undefined variable %q", s))
+		}
+		return v
+	})
+
+	if len(errs) > 0 {
+		return "", fmt.Errorf("%v, known variables: %v",
+			strings.Join(errs, ", "),
+			[]string{"PodName", "PodNamespace", "PodUID"},
+		)
 	}
 
-	return buf.String(), nil
+	return exp, nil
 }
