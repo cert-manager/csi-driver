@@ -90,7 +90,7 @@ func Test_RequestForMetadata(t *testing.T) {
 			expRequest: nil,
 			expErr:     true,
 		},
-		"a metadata with a bad common name template variable should error": {
+		"a metadata with a bad common name variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
 				"csi.cert-manager.io/common-name": "$Foo",
@@ -98,7 +98,7 @@ func Test_RequestForMetadata(t *testing.T) {
 			expRequest: nil,
 			expErr:     true,
 		},
-		"a metadata with a bad dnsName template variable should error": {
+		"a metadata with a bad dnsName variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
 				"csi.cert-manager.io/dns-names":   "foo,$Foo",
@@ -106,7 +106,7 @@ func Test_RequestForMetadata(t *testing.T) {
 			expRequest: nil,
 			expErr:     true,
 		},
-		"a metadata with a bad uriNames template variable should error": {
+		"a metadata with a bad uriNames variable should error": {
 			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
 				"csi.cert-manager.io/issuer-name": "my-issuer",
 				"csi.cert-manager.io/uri-sans":    "foo,$Foo",
@@ -207,17 +207,17 @@ func Test_parseDNSNames(t *testing.T) {
 			expDNSNames: []string{"my-dns", "my-second-dns", "my-third-dns"},
 			expErr:      nil,
 		},
-		"a single csv which uses templates should be substituted correctly": {
+		"a single csv which uses should be substituted correctly": {
 			csv:         `$PodName-my-dns-$PodNamespace-${PodUID}`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid"},
 			expErr:      nil,
 		},
-		"if template references a variable that doesn't exist, error": {
+		"if references a variable that doesn't exist, error": {
 			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID-$Foo`,
 			expDNSNames: nil,
 			expErr:      errors.New(`undefined variable "Foo", known variables: [PodName PodNamespace PodUID]`),
 		},
-		"a csv containing multiple entries which uses templates should be substituted correctly": {
+		"a csv containing multiple entries which uses should be substituted correctly": {
 			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID,$PodName,$PodName.$PodNamespace,$PodName.$PodNamespace.svc,$PodUID`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid", "my-pod-name", "my-pod-name.my-namespace", "my-pod-name.my-namespace.svc", "my-pod-uuid"},
 			expErr:      nil,
