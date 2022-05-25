@@ -118,7 +118,7 @@ spec:
         driver: csi.cert-manager.io
         volumeAttributes:
               csi.cert-manager.io/issuer-name: ca-issuer
-              csi.cert-manager.io/dns-names: {{.PodName}}.{{.PodNamespace}}.svc.cluster.local
+              csi.cert-manager.io/dns-names: {{.POD_NAME}}.{{.POD_NAMESPACE}}.svc.cluster.local
 ```
 
 Once created, the CSI driver will generate a private key locally, request a
@@ -178,9 +178,9 @@ which is generally what you would expect on a UNIX shell. The CSI driver has
 access to the following variables:
 
 ```
-${PodName}
-${PodNamespace}
-${PodUID}
+${POD_NAME}
+${POD_NAMESPACE}
+${POD_UID}
 ```
 
 #### Example Usage
@@ -188,9 +188,9 @@ ${PodUID}
 ```yaml
 volumeAttributes:
   csi.cert-manager.io/issuer-name: ca-issuer
-  csi.cert-manager.io/dns-names: "${PodName}.${PodNamespace}.svc.cluster.local"
-  csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/${PodNamespace}/pod/${PodName}/${PodUID}"
-  csi.cert-manager.io/common-name: "${PodName}.${PodNamespace}"
+  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+  csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/${POD_NAMESPACE}/pod/${POD_NAME}/${POD_UID}"
+  csi.cert-manager.io/common-name: "${POD_NAME}.${POD_NAMESPACE}"
 ```
 
 ## Design Documents

@@ -102,9 +102,9 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			"csi.cert-manager.io/issuer-name":  f.Issuer.Name,
 			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
-			"csi.cert-manager.io/common-name":  "$PodName.${PodNamespace}",
-			"csi.cert-manager.io/dns-names":    "$PodName-my-dns-$PodNamespace-${PodUID},${PodName},${PodName}.${PodNamespace},$PodName.${PodNamespace}.svc,${PodUID}",
-			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${PodNamespace}/$PodName/$PodUID,file://foo-bar,${PodUID}",
+			"csi.cert-manager.io/common-name":  "$POD_NAME.${POD_NAMESPACE}",
+			"csi.cert-manager.io/dns-names":    "$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID},${POD_NAME},${POD_NAME}.${POD_NAMESPACE},$POD_NAME.${POD_NAMESPACE}.svc,${POD_UID}",
+			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/$POD_NAME/$POD_UID,file://foo-bar,${POD_UID}",
 		})
 
 		request, err := pki.DecodeX509CertificateRequestBytes(cr.Spec.Request)

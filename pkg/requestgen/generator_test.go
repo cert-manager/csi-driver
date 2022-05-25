@@ -136,9 +136,9 @@ func Test_RequestForMetadata(t *testing.T) {
 				"csi.cert-manager.io/issuer-kind":  "FooBar",
 				"csi.cert-manager.io/issuer-group": "joshvanl.com",
 				"csi.cert-manager.io/duration":     "1h",
-				"csi.cert-manager.io/common-name":  "${PodName}.$PodNamespace",
-				"csi.cert-manager.io/dns-names":    "${PodName}-my-dns-$PodNamespace-$PodUID,$PodName,${PodName}.${PodNamespace},$PodName.$PodNamespace.svc,$PodUID",
-				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${PodNamespace}/${PodName}/$PodUID,file://foo-bar,${PodUID}",
+				"csi.cert-manager.io/common-name":  "${POD_NAME}.$POD_NAMESPACE",
+				"csi.cert-manager.io/dns-names":    "${POD_NAME}-my-dns-$POD_NAMESPACE-$POD_UID,$POD_NAME,${POD_NAME}.${POD_NAMESPACE},$POD_NAME.$POD_NAMESPACE.svc,$POD_UID",
+				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/${POD_NAME}/$POD_UID,file://foo-bar,${POD_UID}",
 				"csi.cert-manager.io/ip-sans":      "1.2.3.4,5.6.7.8",
 				"csi.cert-manager.io/is-ca":        "true",
 				"csi.cert-manager.io/key-usages":   "server auth,client auth",
@@ -208,17 +208,17 @@ func Test_parseDNSNames(t *testing.T) {
 			expErr:      nil,
 		},
 		"a single csv which uses should be substituted correctly": {
-			csv:         `$PodName-my-dns-$PodNamespace-${PodUID}`,
+			csv:         `$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID}`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid"},
 			expErr:      nil,
 		},
 		"if references a variable that doesn't exist, error": {
-			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID-$Foo`,
+			csv:         `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID-$Foo`,
 			expDNSNames: nil,
-			expErr:      errors.New(`undefined variable "Foo", known variables: [PodName PodNamespace PodUID]`),
+			expErr:      errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
 		},
 		"a csv containing multiple entries which uses should be substituted correctly": {
-			csv:         `$PodName-my-dns-${PodNamespace}-$PodUID,$PodName,$PodName.$PodNamespace,$PodName.$PodNamespace.svc,$PodUID`,
+			csv:         `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,$POD_NAME,$POD_NAME.$POD_NAMESPACE,$POD_NAME.$POD_NAMESPACE.svc,$POD_UID`,
 			expDNSNames: []string{"my-pod-name-my-dns-my-namespace-my-pod-uuid", "my-pod-name", "my-pod-name.my-namespace", "my-pod-name.my-namespace.svc", "my-pod-uuid"},
 			expErr:      nil,
 		},
@@ -278,7 +278,7 @@ func Test_URIs(t *testing.T) {
 			expErr:  errors.New(`parse "\n": net/url: invalid control character in URL`),
 		},
 		"a single csv which uses variables should be substituted correctly": {
-			csv: `$PodName-my-dns-${PodNamespace}-${PodUID}`,
+			csv: `$POD_NAME-my-dns-${POD_NAMESPACE}-${POD_UID}`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "my-pod-name-my-dns-my-namespace-my-pod-uuid"),
@@ -287,12 +287,12 @@ func Test_URIs(t *testing.T) {
 			expErr: nil,
 		},
 		"if variables references a variable that doesn't exist, error": {
-			csv:     `$PodName-my-dns-${PodNamespace}-$PodUID-${Foo}`,
+			csv:     `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID-${Foo}`,
 			expURIs: nil,
-			expErr:  errors.New(`undefined variable "Foo", known variables: [PodName PodNamespace PodUID]`),
+			expErr:  errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
 		},
 		"a csv containing multiple entries which uses variables should be substituted correctly": {
-			csv: `spiffe://$PodName-my-dns-${PodNamespace}-$PodUID,spiffe://$PodName,file://${PodName}.$PodNamespace,$PodName.$PodNamespace.svc,spiffe://$PodUID`,
+			csv: `spiffe://$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,spiffe://$POD_NAME,file://${POD_NAME}.$POD_NAMESPACE,$POD_NAME.$POD_NAMESPACE.svc,spiffe://$POD_UID`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "spiffe://my-pod-name-my-dns-my-namespace-my-pod-uuid"),
@@ -333,14 +333,14 @@ func Test_expand(t *testing.T) {
 			expErr:    nil,
 		},
 		"if using variables, expect to be substituted": {
-			input:     "foo-$PodName-,,${PodNamespace},$PodUID",
+			input:     "foo-$POD_NAME-,,${POD_NAMESPACE},$POD_UID",
 			expOutput: "foo-my-pod-name-,,my-namespace,my-pod-uuid",
 			expErr:    nil,
 		},
 		"if reference a variable that does not exist, expect error": {
-			input:     "foo-${PodName}-,,$PodNamespace,${PodUID}.$Foo${Bar}",
+			input:     "foo-${POD_NAME}-,,$POD_NAMESPACE,${POD_UID}.$Foo${Bar}",
 			expOutput: "",
-			expErr:    errors.New(`undefined variable "Foo", undefined variable "Bar", known variables: [PodName PodNamespace PodUID]`),
+			expErr:    errors.New(`undefined variable "Foo", undefined variable "Bar", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
 		},
 	}
 

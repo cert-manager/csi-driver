@@ -181,9 +181,9 @@ func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 // provided by the metadata.
 func expand(meta metadata.Metadata, csv string) (string, error) {
 	vars := map[string]string{
-		"PodName":      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
-		"PodNamespace": meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
-		"PodUID":       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
+		"POD_NAME":      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
+		"POD_NAMESPACE": meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
+		"POD_UID":       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
 	}
 
 	var errs []string
@@ -198,7 +198,7 @@ func expand(meta metadata.Metadata, csv string) (string, error) {
 	if len(errs) > 0 {
 		return "", fmt.Errorf("%v, known variables: %v",
 			strings.Join(errs, ", "),
-			[]string{"PodName", "PodNamespace", "PodUID"},
+			[]string{"POD_NAME", "POD_NAMESPACE", "POD_UID"},
 		)
 	}
 
