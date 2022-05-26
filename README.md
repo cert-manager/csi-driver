@@ -118,7 +118,7 @@ spec:
         driver: csi.cert-manager.io
         volumeAttributes:
               csi.cert-manager.io/issuer-name: ca-issuer
-              csi.cert-manager.io/dns-names: my-service.sandbox.svc.cluster.local
+              csi.cert-manager.io/dns-names: ${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local
 ```
 
 Once created, the CSI driver will generate a private key locally, request a
@@ -141,25 +141,57 @@ The csi-driver driver aims to have complete feature parity with all possible
 values available through the cert-manager API however currently supports the
 following values;
 
-| Attribute                               | Description                                                                                                           | Default                              | Example                          |
-|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|
-| `csi.cert-manager.io/issuer-name`       | The Issuer name to sign the certificate request.                                                                      |                                      | `ca-issuer`                      |
-| `csi.cert-manager.io/issuer-kind`       | The Issuer kind to sign the certificate request.                                                                      | `Issuer`                             | `ClusterIssuer`                  |
-| `csi.cert-manager.io/issuer-group`      | The group name the Issuer belongs to.                                                                                 | `cert-manager.io`                    | `out.of.tree.foo`                |
-| `csi.cert-manager.io/common-name`       | Certificate common name.                                                                                              |                                      | `my-cert.foo`                    |
-| `csi.cert-manager.io/dns-names`         | DNS names the certificate will be requested for. At least a DNS Name, IP or URI name must be present.                 |                                      | `a.b.foo.com,c.d.foo.com`        |
-| `csi.cert-manager.io/ip-sans`           | IP addresses the certificate will be requested for.                                                                   |                                      | `192.0.0.1,192.0.0.2`            |
-| `csi.cert-manager.io/uri-sans`          | URI names the certificate will be requested for.                                                                      |                                      | `spiffe://foo.bar.cluster.local` |
-| `csi.cert-manager.io/duration`          | Requested duration the signed certificate will be valid for.                                                          | `720h`                               | `1880h`                          |
-| `csi.cert-manager.io/is-ca`             | Mark the certificate as a certificate authority.                                                                      | `false`                              | `true`                           |
-| `csi.cert-manager.io/key-usages`        | Set the key usages on the certificate request.                                                                        | `digital signature,key encipherment` | `server auth,client auth`        |
-| `csi.cert-manager.io/key-encoding`      | Set the key encoding format (PKCS1 or PKCS8).                                                                         | `PKCS1`                              | `PKCS8`                          |
-| `csi.cert-manager.io/certificate-file`  | File name to store the certificate file at.                                                                           | `tls.crt`                            | `bar/foo.crt`                    |
-| `csi.cert-manager.io/ca-file`           | File name to store the ca certificate file at.                                                                        | `ca.crt`                             | `bar/foo.ca`                     |
-| `csi.cert-manager.io/privatekey-file`   | File name to store the key file at.                                                                                   | `tls.key`                            | `bar/foo.key`                    |
-| `csi.cert-manager.io/fs-group`          | Set the FS Group of written files. Should be paired with and match the value of the consuming container `runAsGroup`. |                                      | `2000`                           |
-| `csi.cert-manager.io/renew-before`      | The time to renew the certificate before expiry. Defaults to a third of the requested duration.                       | `$CERT_DURATION/3`                   | `72h`                            |
-| `csi.cert-manager.io/reuse-private-key` | Re-use the same private when when renewing certificates.                                                              | `false`                              | `true`                           |
+| Attribute                               | Description                                                                                                                | Default                              | Example                          |
+|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------------------|
+| `csi.cert-manager.io/issuer-name`       | The Issuer name to sign the certificate request.                                                                           |                                      | `ca-issuer`                      |
+| `csi.cert-manager.io/issuer-kind`       | The Issuer kind to sign the certificate request.                                                                           | `Issuer`                             | `ClusterIssuer`                  |
+| `csi.cert-manager.io/issuer-group`      | The group name the Issuer belongs to.                                                                                      | `cert-manager.io`                    | `out.of.tree.foo`                |
+| `csi.cert-manager.io/common-name`       | Certificate common name (supports variables).                                                                              |                                      | `my-cert.foo`                    |
+| `csi.cert-manager.io/dns-names`         | DNS names the certificate will be requested for. At least a DNS Name, IP or URI name must be present (supports variables). |                                      | `a.b.foo.com,c.d.foo.com`        |
+| `csi.cert-manager.io/ip-sans`           | IP addresses the certificate will be requested for.                                                                        |                                      | `192.0.0.1,192.0.0.2`            |
+| `csi.cert-manager.io/uri-sans`          | URI names the certificate will be requested for (supports variables).                                                      |                                      | `spiffe://foo.bar.cluster.local` |
+| `csi.cert-manager.io/duration`          | Requested duration the signed certificate will be valid for.                                                               | `720h`                               | `1880h`                          |
+| `csi.cert-manager.io/is-ca`             | Mark the certificate as a certificate authority.                                                                           | `false`                              | `true`                           |
+| `csi.cert-manager.io/key-usages`        | Set the key usages on the certificate request.                                                                             | `digital signature,key encipherment` | `server auth,client auth`        |
+| `csi.cert-manager.io/key-encoding`      | Set the key encoding format (PKCS1 or PKCS8).                                                                              | `PKCS1`                              | `PKCS8`                          |
+| `csi.cert-manager.io/certificate-file`  | File name to store the certificate file at.                                                                                | `tls.crt`                            | `bar/foo.crt`                    |
+| `csi.cert-manager.io/ca-file`           | File name to store the ca certificate file at.                                                                             | `ca.crt`                             | `bar/foo.ca`                     |
+| `csi.cert-manager.io/privatekey-file`   | File name to store the key file at.                                                                                        | `tls.key`                            | `bar/foo.key`                    |
+| `csi.cert-manager.io/fs-group`          | Set the FS Group of written files. Should be paired with and match the value of the consuming container `runAsGroup`.      |                                      | `2000`                           |
+| `csi.cert-manager.io/renew-before`      | The time to renew the certificate before expiry. Defaults to a third of the requested duration.                            | `$CERT_DURATION/3`                   | `72h`                            |
+| `csi.cert-manager.io/reuse-private-key` | Re-use the same private when when renewing certificates.                                                                   | `false`                              | `true`                           |
+
+### Variables
+
+The following attributes support variables that are evaluated when a request is
+made for the mounting Pod. These variables are useful for constructing requests
+with SANs that contain values from the mounting Pod.
+
+```
+`csi.cert-manager.io/common-name`
+`csi.cert-manager.io/dns-names`
+`csi.cert-manager.io/uri-sans`
+```
+
+Variables follow the [go os.Expand](https://pkg.go.dev/os#Expand) structure,
+which is generally what you would expect on a UNIX shell. The CSI driver has
+access to the following variables:
+
+```
+${POD_NAME}
+${POD_NAMESPACE}
+${POD_UID}
+```
+
+#### Example Usage
+
+```yaml
+volumeAttributes:
+  csi.cert-manager.io/issuer-name: ca-issuer
+  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+  csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/${POD_NAMESPACE}/pod/${POD_NAME}/${POD_UID}"
+  csi.cert-manager.io/common-name: "${POD_NAME}.${POD_NAMESPACE}"
+```
 
 ## Design Documents
  - [Certificate Renewal](./docs/design/20190914.certificaterenewal.md)

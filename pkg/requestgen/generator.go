@@ -19,9 +19,11 @@ package requestgen
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -46,30 +48,42 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, err.ToAggregate()
 	}
 
-	uris, err := parseURIs(attrs[csiapi.URISANsKey])
-	if err != nil {
-		return nil, fmt.Errorf("invalid URI provided in %q attribute: %w", csiapi.URISANsKey, err)
-	}
-
 	duration := cmapi.DefaultCertificateDuration
 	if durStr, ok := attrs[csiapi.DurationKey]; ok {
 		duration, err = time.ParseDuration(durStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid %q attribute: %w", csiapi.DurationKey, err)
+			return nil, fmt.Errorf("%q: %w", csiapi.DurationKey, err)
 		}
+	}
+
+	commonName, err := expand(meta, attrs[csiapi.CommonNameKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.CommonNameKey, err)
+	}
+	dns, err := parseDNSNames(meta, attrs[csiapi.DNSNamesKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.DNSNamesKey, err)
+	}
+	uris, err := parseURIs(meta, attrs[csiapi.URISANsKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
+	}
+	ips, err := parseIPAddresses(attrs[csiapi.IPSANsKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
 	}
 
 	return &manager.CertificateRequestBundle{
 		Request: &x509.CertificateRequest{
 			Subject: pkix.Name{
-				CommonName: attrs[csiapi.CommonNameKey],
+				CommonName: commonName,
 			},
-			DNSNames:    parseDNSNames(attrs[csiapi.DNSNamesKey]),
-			IPAddresses: parseIPAddresses(attrs[csiapi.IPSANsKey]),
+			DNSNames:    dns,
+			IPAddresses: ips,
 			URIs:        uris,
 		},
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
-		Namespace: attrs["csi.storage.k8s.io/pod.namespace"],
+		Namespace: attrs[csiapi.K8sVolumeContextKeyPodNamespace],
 		Duration:  duration,
 		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
 		IssuerRef: cmmeta.ObjectReference{
@@ -81,53 +95,75 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	}, nil
 }
 
-func parseDNSNames(dnsNames string) []string {
+// parseDNSNames parses a csi.cert-manager.io/dns-names value, and returns the
+// set of DNS names to be requested. Executes metadata expand on string.
+func parseDNSNames(meta metadata.Metadata, dnsNames string) ([]string, error) {
 	if len(dnsNames) == 0 {
-		return nil
+		return nil, nil
 	}
-	return strings.Split(dnsNames, ",")
+	dns, err := expand(meta, dnsNames)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(dns, ","), nil
 }
 
-func parseIPAddresses(ips string) []net.IP {
-	if len(ips) == 0 {
-		return nil
-	}
-
-	ipsS := strings.Split(ips, ",")
-
-	var ipAddresses []net.IP
-
-	for _, ipName := range ipsS {
-		ip := net.ParseIP(ipName)
-		if ip != nil {
-			ipAddresses = append(ipAddresses, ip)
-		}
-	}
-
-	return ipAddresses
-}
-
-func parseURIs(uris string) ([]*url.URL, error) {
-	if len(uris) == 0 {
+// parseIPAddresses parses a csi.cert-manager.io/ip-sans value, and returns the
+// set IP addresses to be requested for.
+func parseIPAddresses(ipCSV string) ([]net.IP, error) {
+	if len(ipCSV) == 0 {
 		return nil, nil
 	}
 
-	urisS := strings.Split(uris, ",")
-
-	var urisURL []*url.URL
-
-	for _, uriS := range urisS {
-		uri, err := url.Parse(uriS)
-		if err != nil {
-			return nil, err
+	var ips []net.IP
+	var errs []string
+	for _, ipStr := range strings.Split(ipCSV, ",") {
+		ip := net.ParseIP(ipStr)
+		if ip == nil {
+			errs = append(errs, ipStr)
+			continue
 		}
-
-		urisURL = append(urisURL, uri)
+		ips = append(ips, ip)
 	}
 
-	return urisURL, nil
+	if len(errs) > 0 {
+		return nil, fmt.Errorf(`failed to parse IP address: ["%s"]`, strings.Join(errs, `","`))
+	}
+
+	return ips, nil
 }
 
+// parseIPAddresses parses a csi.cert-manager.io/uri-sans value, and returns
+// the set of URI SANs to be requested. Executes metadata expand on string.
+func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
+	if len(uriCSV) == 0 {
+		return nil, nil
+	}
+
+	csv, err := expand(meta, uriCSV)
+	if err != nil {
+		return nil, err
+	}
+
+	var uris []*url.URL
+	var errs []string
+	for _, uriS := range strings.Split(csv, ",") {
+		uri, err := url.Parse(uriS)
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+		uris = append(uris, uri)
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.New(strings.Join(errs, ", "))
+	}
+
+	return uris, nil
+}
+
+// keyUsagesFromAttributes returns the set of key usages from the given CSV.
 func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	if len(usagesCSV) == 0 {
 		return nil
@@ -139,4 +175,32 @@ func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	}
 
 	return keyUsages
+}
+
+// expand executes os.Expand on the given csv with volume context variables
+// provided by the metadata.
+func expand(meta metadata.Metadata, csv string) (string, error) {
+	vars := map[string]string{
+		"POD_NAME":      meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName],
+		"POD_NAMESPACE": meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace],
+		"POD_UID":       meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID],
+	}
+
+	var errs []string
+	exp := os.Expand(csv, func(s string) string {
+		v, ok := vars[s]
+		if !ok {
+			errs = append(errs, fmt.Sprintf("undefined variable %q", s))
+		}
+		return v
+	})
+
+	if len(errs) > 0 {
+		return "", fmt.Errorf("%v, known variables: %v",
+			strings.Join(errs, ", "),
+			[]string{"POD_NAME", "POD_NAMESPACE", "POD_UID"},
+		)
+	}
+
+	return exp, nil
 }
