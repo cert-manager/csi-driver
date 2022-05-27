@@ -22,8 +22,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	crclientset "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
+	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	crclientset "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

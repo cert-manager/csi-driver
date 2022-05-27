@@ -19,8 +19,8 @@ package defaults
 import (
 	"strings"
 
-	"github.com/jetstack/cert-manager/pkg/apis/certmanager"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/cert-manager/cert-manager/pkg/apis/certmanager"
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )

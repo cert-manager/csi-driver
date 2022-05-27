@@ -72,6 +72,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				clientForMeta = util.ClientForMetadataTokenRequestEmptyAud(opts.RestConfig)
 			}
 
+			mngrlog := opts.Logr.WithName("manager")
 			d, err := driver.New(opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:    opts.DriverName,
 				DriverVersion: "v0.2.0",
@@ -82,7 +83,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 					ClientForMetadata:  clientForMeta,
 					MetadataReader:     store,
 					Clock:              clock.RealClock{},
-					Log:                opts.Logr.WithName("manager"),
+					Log:                &mngrlog,
 					NodeID:             opts.NodeID,
 					GeneratePrivateKey: keyGenerator.KeyForMetadata,
 					GenerateRequest:    requestgen.RequestForMetadata,

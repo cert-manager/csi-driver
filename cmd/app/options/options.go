@@ -20,8 +20,8 @@ import (
 	"flag"
 	"fmt"
 
+	cmclient "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	"github.com/go-logr/logr"
-	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
