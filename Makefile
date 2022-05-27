@@ -52,7 +52,7 @@ boilerplate: ## verify boilerplate headers
 # arguments to `--push`.
 .PHONY: image
 image: ## build cert-manager-csi-driver docker image targeting all supported platforms
-	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:v0.2.0 --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
+	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:v0.3.0 --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
 
 e2e: depend ## run end to end tests
 	./test/run.sh
