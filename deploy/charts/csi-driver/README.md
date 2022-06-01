@@ -10,7 +10,7 @@ A Helm chart for cert-manager-csi-driver
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| joshvanl | joshua.vanleeuwen@jetstack.io | https://cert-manager.io |
+| cert-manager-maintainers | <cert-manager-maintainers@googlegroups.com> | <https://cert-manager.io> |
 
 ## Source Code
 
