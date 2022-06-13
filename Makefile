@@ -43,7 +43,7 @@ build:  | $(BINDIR) ## build cert-manager-csi-driver
 	GO111MODULE=on CGO_ENABLED=0 go build -v -o $(BINDIR)/cert-manager-csi-driver ./cmd/.
 
 .PHONY: verify
-verify: test boilerplate ## verify codebase
+verify: test helm-docs boilerplate ## verify codebase
 
 .PHONY: test
 test: ## offline test cert-manager-csi-driver
@@ -52,6 +52,10 @@ test: ## offline test cert-manager-csi-driver
 .PHONY: boilerplate
 boilerplate: ## verify boilerplate headers
 	./hack/verify-boilerplate.sh
+
+.PHONY: helm-docs
+helm-docs: $(BINDIR)/helm-docs # verify helm-docs
+	./hack/verify-helm-docs.sh
 
 # image will only build and store the image locally, targeted in OCI format.
 # To actually push an image to the public repo, replace the `--output` flag and
@@ -83,8 +87,8 @@ $(BINDIR)/helm: | $(BINDIR)
 
 HELM_DOCS_VERSION=1.10.0
 
-$(BINDIR)/helm-docs: | $(BINDIR)
-	GOBIN=$(BINDIR) go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.10.0
+$(BINDIR)/helm-docs: $(BINDIR)
+		cd hack/tools && go build -o $(BINDIR)/helm-docs github.com/norwoodj/helm-docs/cmd/helm-docs
 
 $(BINDIR):
 	mkdir -p $@
