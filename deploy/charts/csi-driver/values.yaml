@@ -50,6 +50,11 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+nodeSelector: {}
+  # -- Kubernetes node selector: node labels for pod assignment
+  # Allow scheduling of DaemonSet on linux nodes only
+  # kubernetes.io/os: linux
+
 tolerations: []
   # -- Kubernetes pod tolerations for cert-manager-csi-driver
   # Allow scheduling of DaemonSet on all nodes
