@@ -1,6 +1,6 @@
 # cert-manager-csi-driver
 
-![Version: v0.3.0](https://img.shields.io/badge/Version-v0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.3.0](https://img.shields.io/badge/AppVersion-v0.3.0-informational?style=flat-square)
+![Version: v0.3.1](https://img.shields.io/badge/Version-v0.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.3.0](https://img.shields.io/badge/AppVersion-v0.3.0-informational?style=flat-square)
 
 A Helm chart for cert-manager-csi-driver
 
@@ -36,6 +36,7 @@ A Helm chart for cert-manager-csi-driver
 | nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on node-driver. |
 | nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
 | nodeDriverRegistrarImage.tag | string | `"v2.5.0"` | Target image version tag. |
+| nodeSelector | object | `{}` |  |
 | resources | object | `{}` |  |
 | tolerations | list | `[]` |  |
 
