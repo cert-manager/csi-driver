@@ -80,6 +80,7 @@ spec:
               mountPropagation: "Bidirectional"
             - name: csi-data-dir
               mountPath: /csi-data-dir
+              mountPropagation: "Bidirectional"
           ports:
             - containerPort: {{.Values.app.livenessProbe.port}}
               name: healthz
