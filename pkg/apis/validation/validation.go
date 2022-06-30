@@ -108,7 +108,7 @@ func boolValue(path *field.Path, s string) field.ErrorList {
 }
 
 func keyEncodingValue(path *field.Path, s string) field.ErrorList {
-	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) {
+	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) && s != "PKCS12" {
 		return field.ErrorList{field.NotSupported(path, s, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
 	}
 	return nil

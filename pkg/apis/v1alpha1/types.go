@@ -37,6 +37,9 @@ const (
 
 	RenewBeforeKey  = "csi.cert-manager.io/renew-before"
 	ReusePrivateKey = "csi.cert-manager.io/reuse-private-key"
+
+	KeystoreType = "csi.cert-manager.io/keystore-type"
+	KeystoreFile = "csi.cert-manager.io/keystore-file"
 )
 
 const (

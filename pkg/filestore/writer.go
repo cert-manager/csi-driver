@@ -24,10 +24,11 @@ import (
 	"fmt"
 	"time"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
-	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 
+	"github.com/cert-manager/csi-driver/internal/pkg/keystore/pkcs12"
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/apis/validation"
@@ -37,6 +38,44 @@ import (
 type Writer struct {
 	Store storage.Interface
 }
+
+//
+//// WriteKeystore combines the inputs into a single file of a provided keystore format.
+//func (w *Writer) WriteKeystore(meta metadata.Metadata, key crypto.PrivateKey, chain []byte, ca []byte) error {
+//	certs, err := pki.DecodeX509CertificateChainBytes(chain)
+//	if err != nil {
+//		return fmt.Errorf("pki.DecodeX509CertificateChainBytes(chain): %w", err)
+//	}
+//
+//	var cas []*x509.Certificate
+//	if len(ca) > 0 {
+//		cas, err = pki.DecodeX509CertificateChainBytes(ca)
+//		if err != nil {
+//			return fmt.Errorf("pki.DecodeX509CertificateChainBytes(ca): %w", err)
+//		}
+//	}
+//
+//	// prepend the certificate chain to the list of certificates as the PKCS12
+//	// library only allows setting a single certificate.
+//	if len(certs) > 1 {
+//		cas = append(certs[1:], cas...)
+//	}
+//
+//	pfx, err := pkcs12.Encode(rand.Reader, key, certs[0], cas, pkcs12.DefaultPassword)
+//	if err != nil {
+//		return fmt.Errorf("pkcs12.Encode: %w", err)
+//	}
+//
+//	err = w.Store.WriteFiles(meta, map[string][]byte{
+//		"myp12file": pfx,
+//	})
+//
+//	if err != nil {
+//		return fmt.Errorf("w.Store.WriteFiles: %w", err)
+//	}
+//
+//	return nil
+//}
 
 // WriteKeypair writes the given certificate, CA, and private key data to their
 // respective file locations, according to the volume attributes. Also writes
@@ -68,6 +107,29 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			Type:  "PRIVATE KEY",
 			Bytes: bytes,
 		}
+	case "PKCS12":
+		if attrs[csiapi.KeystoreFile] == "" {
+			return fmt.Errorf("%s must be set", csiapi.KeystoreFile)
+		}
+		pfx, err := pkcs12.Create(key, chain, ca)
+		err = w.Store.WriteFiles(meta, map[string][]byte{
+			attrs[csiapi.KeystoreFile]: pfx,
+		})
+		if err != nil {
+			return fmt.Errorf("w.Store.WriteFiles: %v", err)
+		}
+
+		nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
+		if err != nil {
+			return fmt.Errorf("calculating next issuance time: %w", err)
+		}
+
+		meta.NextIssuanceTime = &nextIssuanceTime
+		if err := w.Store.WriteMetadata(meta.VolumeID, meta); err != nil {
+			return fmt.Errorf("writing metadata: %w", err)
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("invalid key encoding format: %s", keyEncodingFormat)
 	}
