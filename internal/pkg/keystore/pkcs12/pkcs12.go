@@ -26,6 +26,8 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
+// TODO: other parts of this codebase reasons about the chain as cert + intermediate, and root separately
+//		 do we also want to do that in this signature? doesn't make sense for pkcs12
 // Create combines the inputs to a single pfx/p12 file
 func Create(key crypto.PrivateKey, leaf []byte, chain []byte) ([]byte, error) {
 	cert, err := pki.DecodeX509CertificateBytes(leaf)
