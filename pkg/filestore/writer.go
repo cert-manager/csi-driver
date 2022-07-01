@@ -39,44 +39,6 @@ type Writer struct {
 	Store storage.Interface
 }
 
-//
-//// WriteKeystore combines the inputs into a single file of a provided keystore format.
-//func (w *Writer) WriteKeystore(meta metadata.Metadata, key crypto.PrivateKey, chain []byte, ca []byte) error {
-//	certs, err := pki.DecodeX509CertificateChainBytes(chain)
-//	if err != nil {
-//		return fmt.Errorf("pki.DecodeX509CertificateChainBytes(chain): %w", err)
-//	}
-//
-//	var cas []*x509.Certificate
-//	if len(ca) > 0 {
-//		cas, err = pki.DecodeX509CertificateChainBytes(ca)
-//		if err != nil {
-//			return fmt.Errorf("pki.DecodeX509CertificateChainBytes(ca): %w", err)
-//		}
-//	}
-//
-//	// prepend the certificate chain to the list of certificates as the PKCS12
-//	// library only allows setting a single certificate.
-//	if len(certs) > 1 {
-//		cas = append(certs[1:], cas...)
-//	}
-//
-//	pfx, err := pkcs12.Encode(rand.Reader, key, certs[0], cas, pkcs12.DefaultPassword)
-//	if err != nil {
-//		return fmt.Errorf("pkcs12.Encode: %w", err)
-//	}
-//
-//	err = w.Store.WriteFiles(meta, map[string][]byte{
-//		"myp12file": pfx,
-//	})
-//
-//	if err != nil {
-//		return fmt.Errorf("w.Store.WriteFiles: %w", err)
-//	}
-//
-//	return nil
-//}
-
 // WriteKeypair writes the given certificate, CA, and private key data to their
 // respective file locations, according to the volume attributes. Also writes
 // or updates the metadata file, including a calculated NextIssuanceTime.
@@ -107,7 +69,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			Type:  "PRIVATE KEY",
 			Bytes: bytes,
 		}
-	case "PKCS12":
+	case "PKCS12": // TODO: use constant from cmapi
 		if attrs[csiapi.KeystoreFile] == "" {
 			return fmt.Errorf("%s must be set", csiapi.KeystoreFile)
 		}
@@ -119,6 +81,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			return fmt.Errorf("w.Store.WriteFiles: %v", err)
 		}
 
+		//TODO: de-duplicate issuance code
 		nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
 		if err != nil {
 			return fmt.Errorf("calculating next issuance time: %w", err)
