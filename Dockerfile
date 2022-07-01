@@ -24,6 +24,7 @@ COPY go.sum go.sum
 COPY Makefile Makefile
 COPY cmd/ cmd/
 COPY pkg/ pkg/
+COPY internal/ internal/
 
 # Build
 RUN make build
