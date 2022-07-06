@@ -314,20 +314,23 @@ func Test_WriteKeypair(t *testing.T) {
 			},
 			expErr: false,
 		},
-		"if key-encoding is PKCS12, correct metadata should be written": {
+		"if keystore-file is set, correct metadata should be written": {
 			testBundle: pkcs8Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
 					"csi.cert-manager.io/issuer-name":   "ca-issuer",
-					"csi.cert-manager.io/key-encoding":  "PKCS12",
+					"csi.cert-manager.io/key-encoding":  "PKCS8",
 					"csi.cert-manager.io/keystore-file": "my-file.pfx",
 				},
 			},
 			expFiles: map[string][]byte{
+				"ca.crt":  pkcs8Bundle.caPEM,
+				"tls.crt": pkcs8Bundle.certPEM,
+				"tls.key": pkcs8Bundle.pkPEM,
 				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS12","csi.cert-manager.io/keystore-file":"my-file.pfx"}}`,
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-file":"my-file.pfx","csi.cert-manager.io/keystore-type":"PKCS12"}}`,
 				),
 			},
 			expErr:   false,
