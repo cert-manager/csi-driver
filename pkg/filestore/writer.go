@@ -98,31 +98,6 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		files = map[string][]byte{
 			attrs[csiapi.KeystoreFile]: pfx,
 		}
-
-		//err = w.Store.WriteFiles(meta, map[string][]byte{
-		//	attrs[csiapi.KeystoreFile]: pfx,
-		//})
-		//if err != nil {
-		//	return fmt.Errorf("w.Store.WriteFiles: %v", err)
-		//}
-
-		//TODO: de-duplicate issuance code
-		//nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
-		//if err != nil {
-		//	return fmt.Errorf("calculating next issuance time: %w", err)
-		//}
-		//
-		//meta.NextIssuanceTime = &nextIssuanceTime
-		//if err := w.Store.WriteMetadata(meta.VolumeID, meta); err != nil {
-		//	klog.Errorf("w.Store.WriteMetadata: %v", err)
-		//	return fmt.Errorf("writing metadata: %w", err)
-		//}
-		//
-		//md, err := w.Store.ReadMetadata(meta.VolumeID)
-		//klog.InfoS("metadata: ", "next issuance", md.NextIssuanceTime)
-		//klog.Info("completed without error for PKCS12", err)
-		//
-		//return nil
 	default:
 		return fmt.Errorf("invalid key encoding format: %s", keyEncodingFormat)
 	}
