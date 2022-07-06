@@ -52,21 +52,12 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 	}
 
 	var pemBlock *pem.Block
-	var files map[string][]byte
 
 	switch keyEncodingFormat := attrs[csiapi.KeyEncodingKey]; keyEncodingFormat {
 	case string(cmapi.PKCS1):
 		pemBlock = &pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key.(*rsa.PrivateKey)),
-		}
-
-		keyPEM := pem.EncodeToMemory(pemBlock)
-
-		files = map[string][]byte{
-			attrs[csiapi.KeyFileKey]:  keyPEM,
-			attrs[csiapi.CertFileKey]: chain,
-			attrs[csiapi.CAFileKey]:   ca,
 		}
 	case string(cmapi.PKCS8):
 		bytes, err := x509.MarshalPKCS8PrivateKey(key.(*rsa.PrivateKey))
@@ -78,28 +69,32 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			Type:  "PRIVATE KEY",
 			Bytes: bytes,
 		}
-
-		keyPEM := pem.EncodeToMemory(pemBlock)
-
-		files = map[string][]byte{
-			attrs[csiapi.KeyFileKey]:  keyPEM,
-			attrs[csiapi.CertFileKey]: chain,
-			attrs[csiapi.CAFileKey]:   ca,
-		}
-	case "PKCS12":
-		if attrs[csiapi.KeystoreFile] == "" {
-			return fmt.Errorf("%s must be set", csiapi.KeystoreFile)
-		}
-		pfx, err := pkcs12.Create(key, chain, ca)
-		if err != nil {
-			return fmt.Errorf("pkcs12.Create: %v", err)
-		}
-
-		files = map[string][]byte{
-			attrs[csiapi.KeystoreFile]: pfx,
-		}
 	default:
 		return fmt.Errorf("invalid key encoding format: %s", keyEncodingFormat)
+	}
+
+	keyPEM := pem.EncodeToMemory(pemBlock)
+
+	files := map[string][]byte{
+		attrs[csiapi.KeyFileKey]:  keyPEM,
+		attrs[csiapi.CertFileKey]: chain,
+		attrs[csiapi.CAFileKey]:   ca,
+	}
+
+	if attrs[csiapi.KeystoreFile] != "" {
+		switch keyStoreType := attrs[csiapi.KeystoreType]; keyStoreType {
+		case "PKCS12":
+			pfx, err := pkcs12.Create(key, chain, ca)
+			if err != nil {
+				return fmt.Errorf("pkcs12.Create: %v", err)
+			}
+
+			files[attrs[csiapi.KeystoreFile]] = pfx
+			meta.VolumeContext[csiapi.KeystoreFile] = attrs[csiapi.KeystoreFile]
+			meta.VolumeContext[csiapi.KeystoreType] = keyStoreType
+		default:
+			return fmt.Errorf("unsupported keystore-type: %s", keyStoreType)
+		}
 	}
 
 	// Calculate the next issuance time and check errors before writing files.
