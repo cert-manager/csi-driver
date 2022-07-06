@@ -19,31 +19,48 @@ package pkcs12
 import (
 	"crypto"
 	"crypto/rand"
-	"crypto/x509"
+	"errors"
 	"fmt"
 
 	"github.com/cert-manager/cert-manager/pkg/util/pki"
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-// TODO: other parts of this codebase reasons about the chain as cert + intermediate, and root separately
-//		 do we also want to do that in this signature? doesn't make sense for pkcs12
-// Create combines the inputs to a single pfx/p12 file
-func Create(key crypto.PrivateKey, leaf []byte, chain []byte) ([]byte, error) {
-	cert, err := pki.DecodeX509CertificateBytes(leaf)
+// Create combines the inputs to a single PKCS12 keystore file.
+// key must be PKCS1 or PKCS8 encoded. certificates must be PEM encoded.
+func Create(key crypto.PrivateKey, chainPEM []byte, rootPEM []byte) ([]byte, error) {
+	if key == nil {
+		return nil, errors.New("key must not be nil")
+	}
+
+	if len(chainPEM) == 0 {
+		return nil, errors.New("chain must not be empty")
+	}
+
+	if len(rootPEM) == 0 {
+		return nil, errors.New("root must not be empty")
+	}
+
+	rc, err := pki.DecodeX509CertificateBytes(rootPEM)
 	if err != nil {
-		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(leaf): %v", err)
+		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(rootPEM): %v", err)
 	}
 
-	var cas []*x509.Certificate
-	if len(chain) > 0 {
-		cas, err = pki.DecodeX509CertificateChainBytes(chain)
-		if err != nil {
-			return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(chain): %v", err)
-		}
+	cc, err := pki.DecodeX509CertificateChainBytes(chainPEM)
+	if err != nil {
+		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(chainPEM): %v", err)
 	}
 
-	pfx, err := pkcs12.Encode(rand.Reader, key, cert, cas, pkcs12.DefaultPassword)
+	// we need to grab the leaf cert from chain
+	// TODO: is it the first cert or the last?
+	// leaf is the last cert - right?
+	leaf := cc[len(cc)-1]
+	cc = cc[:len(cc)-1]
+
+	// add the root cert to the back of the chain
+	cc = append(cc, rc)
+
+	pfx, err := pkcs12.Encode(rand.Reader, key, leaf, cc, pkcs12.DefaultPassword)
 	if err != nil {
 		return nil, fmt.Errorf("pkcs12.Encode: %v", err)
 	}
