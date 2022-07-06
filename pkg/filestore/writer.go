@@ -52,12 +52,21 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 	}
 
 	var pemBlock *pem.Block
+	var files map[string][]byte
 
 	switch keyEncodingFormat := attrs[csiapi.KeyEncodingKey]; keyEncodingFormat {
 	case string(cmapi.PKCS1):
 		pemBlock = &pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key.(*rsa.PrivateKey)),
+		}
+
+		keyPEM := pem.EncodeToMemory(pemBlock)
+
+		files = map[string][]byte{
+			attrs[csiapi.KeyFileKey]:  keyPEM,
+			attrs[csiapi.CertFileKey]: chain,
+			attrs[csiapi.CAFileKey]:   ca,
 		}
 	case string(cmapi.PKCS8):
 		bytes, err := x509.MarshalPKCS8PrivateKey(key.(*rsa.PrivateKey))
@@ -69,35 +78,54 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			Type:  "PRIVATE KEY",
 			Bytes: bytes,
 		}
-	case "PKCS12": // TODO: use constant from cmapi
+
+		keyPEM := pem.EncodeToMemory(pemBlock)
+
+		files = map[string][]byte{
+			attrs[csiapi.KeyFileKey]:  keyPEM,
+			attrs[csiapi.CertFileKey]: chain,
+			attrs[csiapi.CAFileKey]:   ca,
+		}
+	case "PKCS12":
 		if attrs[csiapi.KeystoreFile] == "" {
 			return fmt.Errorf("%s must be set", csiapi.KeystoreFile)
 		}
 		pfx, err := pkcs12.Create(key, chain, ca)
-		err = w.Store.WriteFiles(meta, map[string][]byte{
-			attrs[csiapi.KeystoreFile]: pfx,
-		})
 		if err != nil {
-			return fmt.Errorf("w.Store.WriteFiles: %v", err)
+			return fmt.Errorf("pkcs12.Create: %v", err)
 		}
+
+		files = map[string][]byte{
+			attrs[csiapi.KeystoreFile]: pfx,
+		}
+
+		//err = w.Store.WriteFiles(meta, map[string][]byte{
+		//	attrs[csiapi.KeystoreFile]: pfx,
+		//})
+		//if err != nil {
+		//	return fmt.Errorf("w.Store.WriteFiles: %v", err)
+		//}
 
 		//TODO: de-duplicate issuance code
-		nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
-		if err != nil {
-			return fmt.Errorf("calculating next issuance time: %w", err)
-		}
-
-		meta.NextIssuanceTime = &nextIssuanceTime
-		if err := w.Store.WriteMetadata(meta.VolumeID, meta); err != nil {
-			return fmt.Errorf("writing metadata: %w", err)
-		}
-
-		return nil
+		//nextIssuanceTime, err := calculateNextIssuanceTime(attrs, chain)
+		//if err != nil {
+		//	return fmt.Errorf("calculating next issuance time: %w", err)
+		//}
+		//
+		//meta.NextIssuanceTime = &nextIssuanceTime
+		//if err := w.Store.WriteMetadata(meta.VolumeID, meta); err != nil {
+		//	klog.Errorf("w.Store.WriteMetadata: %v", err)
+		//	return fmt.Errorf("writing metadata: %w", err)
+		//}
+		//
+		//md, err := w.Store.ReadMetadata(meta.VolumeID)
+		//klog.InfoS("metadata: ", "next issuance", md.NextIssuanceTime)
+		//klog.Info("completed without error for PKCS12", err)
+		//
+		//return nil
 	default:
 		return fmt.Errorf("invalid key encoding format: %s", keyEncodingFormat)
 	}
-
-	keyPEM := pem.EncodeToMemory(pemBlock)
 
 	// Calculate the next issuance time and check errors before writing files.
 	// This prevents cases where we write files but also have errors in the
@@ -107,11 +135,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		return fmt.Errorf("calculating next issuance time: %w", err)
 	}
 
-	if err := w.Store.WriteFiles(meta, map[string][]byte{
-		attrs[csiapi.KeyFileKey]:  keyPEM,
-		attrs[csiapi.CertFileKey]: chain,
-		attrs[csiapi.CAFileKey]:   ca,
-	}); err != nil {
+	if err := w.Store.WriteFiles(meta, files); err != nil {
 		return fmt.Errorf("writing data: %w", err)
 	}
 
