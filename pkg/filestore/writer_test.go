@@ -43,6 +43,7 @@ type testBundle struct {
 }
 
 type keyEncoder func(key *rsa.PrivateKey) (*pem.Block, error)
+
 var (
 	pkcs1Encoder keyEncoder = func(key *rsa.PrivateKey) (*pem.Block, error) {
 		pkBytes := x509.MarshalPKCS1PrivateKey(key)
@@ -82,7 +83,20 @@ func newTestBundle(t *testing.T, encoder keyEncoder) testBundle {
 	}
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 
-	return testBundle{[]byte("CA Certificate"), certPEM, pk, pkPEM}
+	rootTemplate := &x509.Certificate{
+		SerialNumber:          new(big.Int).Lsh(big.NewInt(1), 128),
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		BasicConstraintsValid: true,
+	}
+
+	rootDER, err := x509.CreateCertificate(rand.Reader, rootTemplate, rootTemplate, &pk.PublicKey, pk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: rootDER})
+
+	return testBundle{caPEM, certPEM, pk, pkPEM}
 }
 
 func Test_calculateNextIssuanceTime(t *testing.T) {
@@ -137,9 +151,10 @@ func Test_WriteKeypair(t *testing.T) {
 	tests := map[string]struct {
 		meta metadata.Metadata
 
-		testBundle	testBundle
-		expFiles  	map[string][]byte
-		expErr    	bool
+		testBundle testBundle
+		expFiles   map[string][]byte
+		expErr     bool
+		isPKCS12   bool
 	}{
 		"if no additional attributes given, expect files to be written with NextIssuanceTime 2/3rds": {
 			testBundle: pkcs1Bundle,
@@ -226,7 +241,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "PKCS8",
 				},
 			},
@@ -247,7 +262,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "UNKNOWN_ENCODER",
 				},
 			},
@@ -285,7 +300,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "",
 				},
 			},
@@ -298,6 +313,25 @@ func Test_WriteKeypair(t *testing.T) {
 				),
 			},
 			expErr: false,
+		},
+		"if key-encoding is PKCS12, correct metadata should be written": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":   "ca-issuer",
+					"csi.cert-manager.io/key-encoding":  "PKCS12",
+					"csi.cert-manager.io/keystore-file": "my-file.pfx",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS12","csi.cert-manager.io/keystore-file":"my-file.pfx"}}`,
+				),
+			},
+			expErr:   false,
+			isPKCS12: true,
 		},
 	}
 
@@ -315,6 +349,15 @@ func Test_WriteKeypair(t *testing.T) {
 
 			files, err := store.ReadFiles("vol-id")
 			assert.NoError(t, err)
+
+			// there is some entropy in the PKCS12 process, so we cannot predict the contents of the file
+			if test.isPKCS12 {
+				key := test.meta.VolumeContext["csi.cert-manager.io/keystore-file"]
+				assert.NotEmpty(t, files[key])
+
+				// we'll delete the key to let the assertion for expFiles proceed
+				delete(files, key)
+			}
 			assert.Equal(t, test.expFiles, files)
 		})
 	}
