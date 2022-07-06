@@ -34,7 +34,7 @@ var (
 	notAfter  = time.Date(1970, time.January, 4, 0, 0, 0, 0, time.UTC)
 )
 
-func generateKeyAndCert(t *testing.T) (*rsa.PrivateKey, []byte, []byte) {
+func generateKeyAndCert(t *testing.T) (*rsa.PrivateKey, *x509.Certificate, []byte, []*x509.Certificate, []byte, *x509.Certificate, []byte, []*x509.Certificate) {
 	pk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
@@ -67,66 +67,98 @@ func generateKeyAndCert(t *testing.T) (*rsa.PrivateKey, []byte, []byte) {
 		t.Fatalf("x509.CreateCertificate: %v", err)
 	}
 
-	//cert, err := x509.ParseCertificate(db)
-	//if err != nil {
-	//	t.Fatalf("x509.ParseCertificate: %v", err)
-	//}
+	leaf, err := x509.ParseCertificate(db)
+	if err != nil {
+		t.Fatalf("x509.ParseCertificate: %v", err)
+	}
 
 	idb, err := x509.CreateCertificate(rand.Reader, &intermediateTemplate, &intermediateTemplate, &pk.PublicKey, pk)
 	if err != nil {
 		t.Fatalf("x509.CreateCertificate(intermediate): %v", err)
 	}
 
-	rdb, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &pk.PublicKey, pk)
+	ic, err := x509.ParseCertificate(idb)
+	if err != nil {
+		t.Errorf("x509.ParseCertificate(idb): %v", err)
+	}
+
+	rootDER, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &pk.PublicKey, pk)
 	if err != nil {
 		t.Fatalf("x509.CreateCertificate(ca): %v", err)
 	}
 
-	// TODO: can we use the concatenated PEM chain?
-	_ = append(idb, rdb...)
+	root, err := x509.ParseCertificate(rootDER)
+	if err != nil {
+		t.Fatalf("x509.ParseCertificate: %v", err)
+	}
 
-	//var blocks []*pem.Block
-	//for {
-	//	b, rest := pem.Decode(cdb)
-	//
-	//	blocks = append(blocks, b)
-	//
-	//	if len(rest) == 0 {
-	//		break
-	//	}
-	//}
+	caChain := []*x509.Certificate{ic, root}
+	chainDER := append(db, idb...)
 
-	//chain, err := x509.ParseCertificates(cb)
-	//if err != nil {
-	//	t.Fatalf("x509.ParseCertificates: %v", err)
-	//}
+	chain, err := x509.ParseCertificates(chainDER)
+	if err != nil {
+		t.Fatalf("x509.ParseCertificates(chainDER): %v", err)
+	}
 
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: db})
-	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: rdb})
+	leafPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: db})
+	rootPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: rootDER})
+	intermediatePEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idb})
 
-	//return pk, db, cb
-	return pk, certPEM, caPEM
+	chainPEM := append(leafPEM, intermediatePEM...)
+
+	return pk, leaf, leafPEM, chain, chainPEM, root, rootPEM, caChain
 }
 
 func TestCreate(t *testing.T) {
-	key, leaf, chain := generateKeyAndCert(t)
+	key, leaf, leafPEM, chain, chainPEM, root, rootPEM, caChain := generateKeyAndCert(t)
 	tests := map[string]struct {
-		key    *rsa.PrivateKey
-		leaf   []byte
-		chain  []byte
-		expErr bool
+		key      *rsa.PrivateKey
+		leaf     *x509.Certificate
+		leafPEM  []byte
+		chain    []*x509.Certificate
+		chainPEM []byte
+		root     *x509.Certificate
+		rootPEM  []byte
+		caChain  []*x509.Certificate
+		expErr   bool
 	}{
 		"happy path": {
-			key:    key,
-			leaf:   leaf,
-			chain:  chain,
-			expErr: false,
+			key:      key,
+			leaf:     leaf,
+			leafPEM:  leafPEM,
+			chain:    chain,
+			chainPEM: chainPEM,
+			root:     root,
+			rootPEM:  rootPEM,
+			caChain:  caChain,
+			expErr:   false,
+		},
+		"without intermediate succeeds": {
+			key:      key,
+			leaf:     leaf,
+			chainPEM: leafPEM,
+			rootPEM:  rootPEM,
+			caChain:  []*x509.Certificate{root},
+		},
+		"nil key": {
+			key:    nil,
+			expErr: true,
+		},
+		"empty chain": {
+			key:     key,
+			rootPEM: rootPEM,
+			expErr:  true,
+		},
+		"empty root": {
+			key:      key,
+			chainPEM: chainPEM,
+			expErr:   true,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			p12, err := Create(test.key, test.leaf, test.chain)
+			p12, err := Create(test.key, test.chainPEM, test.rootPEM)
 
 			if test.expErr {
 				assert.Error(t, err)
@@ -141,9 +173,9 @@ func TestCreate(t *testing.T) {
 			assert.NotNil(t, cert)
 			assert.NotNil(t, ca)
 
-			//assert.Equal(t, test.key, pk.(*rsa.PrivateKey))
-			//assert.Equal(t, test.cert, cert)
-			//assert.Equal(t, []*x509.Certificate{test.testBundle.ca}, ca)
+			assert.Equal(t, test.key, pk.(*rsa.PrivateKey))
+			assert.Equal(t, test.leaf, cert)
+			assert.Equal(t, test.caChain, ca)
 		})
 	}
 }
