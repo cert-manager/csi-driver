@@ -62,47 +62,47 @@ func generateKeyAndCert(t *testing.T) (*rsa.PrivateKey, *x509.Certificate, []byt
 		IsCA:                  true,
 	}
 
-	db, err := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk)
+	leafDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk)
 	if err != nil {
-		t.Fatalf("x509.CreateCertificate: %v", err)
+		t.Fatalf("x509.CreateCertificate(leaf): %v", err)
 	}
 
-	leaf, err := x509.ParseCertificate(db)
+	leaf, err := x509.ParseCertificate(leafDER)
 	if err != nil {
-		t.Fatalf("x509.ParseCertificate: %v", err)
+		t.Fatalf("x509.ParseCertificate(leafDER): %v", err)
 	}
 
-	idb, err := x509.CreateCertificate(rand.Reader, &intermediateTemplate, &intermediateTemplate, &pk.PublicKey, pk)
+	intermediateDER, err := x509.CreateCertificate(rand.Reader, &intermediateTemplate, &intermediateTemplate, &pk.PublicKey, pk)
 	if err != nil {
 		t.Fatalf("x509.CreateCertificate(intermediate): %v", err)
 	}
 
-	ic, err := x509.ParseCertificate(idb)
+	intermediate, err := x509.ParseCertificate(intermediateDER)
 	if err != nil {
-		t.Errorf("x509.ParseCertificate(idb): %v", err)
+		t.Errorf("x509.ParseCertificate(intermediateDER): %v", err)
 	}
 
 	rootDER, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &pk.PublicKey, pk)
 	if err != nil {
-		t.Fatalf("x509.CreateCertificate(ca): %v", err)
+		t.Fatalf("x509.CreateCertificate(root): %v", err)
 	}
 
 	root, err := x509.ParseCertificate(rootDER)
 	if err != nil {
-		t.Fatalf("x509.ParseCertificate: %v", err)
+		t.Fatalf("x509.ParseCertificate(rootDER): %v", err)
 	}
 
-	caChain := []*x509.Certificate{ic, root}
-	chainDER := append(db, idb...)
+	caChain := []*x509.Certificate{intermediate, root}
+	chainDER := append(leafDER, intermediateDER...)
 
 	chain, err := x509.ParseCertificates(chainDER)
 	if err != nil {
 		t.Fatalf("x509.ParseCertificates(chainDER): %v", err)
 	}
 
-	leafPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: db})
+	leafPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: leafDER})
+	intermediatePEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: intermediateDER})
 	rootPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: rootDER})
-	intermediatePEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idb})
 
 	chainPEM := append(leafPEM, intermediatePEM...)
 
