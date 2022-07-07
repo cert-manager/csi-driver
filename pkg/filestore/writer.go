@@ -90,8 +90,6 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 			}
 
 			files[attrs[csiapi.KeystoreFileKey]] = pfx
-			meta.VolumeContext[csiapi.KeystoreFileKey] = attrs[csiapi.KeystoreFileKey]
-			meta.VolumeContext[csiapi.KeystoreTypeKey] = keyStoreType
 		default:
 			return fmt.Errorf("unsupported keystore-type: %s", keyStoreType)
 		}

@@ -353,7 +353,7 @@ func Test_WriteKeypair(t *testing.T) {
 				"tls.crt": pkcs8Bundle.certPEM,
 				"tls.key": pkcs8Bundle.pkPEM,
 				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-file":"my-file.pfx","csi.cert-manager.io/keystore-type":"PKCS12"}}`,
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-file":"my-file.pfx"}}`,
 				),
 			},
 			expErr:   false,
