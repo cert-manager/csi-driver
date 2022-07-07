@@ -122,7 +122,7 @@ func TestCreate(t *testing.T) {
 		caChain  []*x509.Certificate
 		expErr   bool
 	}{
-		"happy path": {
+		"happy path, with intermediate": {
 			key:      key,
 			leaf:     leaf,
 			leafPEM:  leafPEM,
@@ -133,7 +133,7 @@ func TestCreate(t *testing.T) {
 			caChain:  caChain,
 			expErr:   false,
 		},
-		"without intermediate succeeds": {
+		"happy path, without intermediate": {
 			key:      key,
 			leaf:     leaf,
 			chainPEM: leafPEM,
