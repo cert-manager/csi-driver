@@ -34,11 +34,11 @@ func Create(key crypto.PrivateKey, chainPEM []byte, rootPEM []byte) ([]byte, err
 	}
 
 	if len(chainPEM) == 0 {
-		return nil, errors.New("chain must not be empty")
+		return nil, errors.New("chainPEM must not be empty")
 	}
 
 	if len(rootPEM) == 0 {
-		return nil, errors.New("root must not be empty")
+		return nil, errors.New("rootPEM must not be empty")
 	}
 
 	root, err := pki.DecodeX509CertificateBytes(rootPEM)
