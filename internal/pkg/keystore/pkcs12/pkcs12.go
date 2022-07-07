@@ -41,26 +41,23 @@ func Create(key crypto.PrivateKey, chainPEM []byte, rootPEM []byte) ([]byte, err
 		return nil, errors.New("root must not be empty")
 	}
 
-	rc, err := pki.DecodeX509CertificateBytes(rootPEM)
+	root, err := pki.DecodeX509CertificateBytes(rootPEM)
 	if err != nil {
 		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(rootPEM): %v", err)
 	}
 
-	cc, err := pki.DecodeX509CertificateChainBytes(chainPEM)
+	chain, err := pki.DecodeX509CertificateChainBytes(chainPEM)
 	if err != nil {
 		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(chainPEM): %v", err)
 	}
 
-	// we need to grab the leaf cert from chain
-	// TODO: is it the first cert or the last?
-	// leaf is the last cert - right?
-	leaf := cc[len(cc)-1]
-	cc = cc[:len(cc)-1]
+	leaf := chain[0]
+	chain = chain[1:]
 
 	// add the root cert to the back of the chain
-	cc = append(cc, rc)
+	chain = append(chain, root)
 
-	pfx, err := pkcs12.Encode(rand.Reader, key, leaf, cc, pkcs12.DefaultPassword)
+	pfx, err := pkcs12.Encode(rand.Reader, key, leaf, chain, pkcs12.DefaultPassword)
 	if err != nil {
 		return nil, fmt.Errorf("pkcs12.Encode: %v", err)
 	}
