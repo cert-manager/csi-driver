@@ -52,7 +52,7 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 
 	el = append(el, keyEncodingValue(path.Child(csiapi.KeyEncodingKey), attr[csiapi.KeyEncodingKey])...)
 
-	el = append(el, keystoreTypeValue(path.Child(csiapi.KeystoreType), attr[csiapi.KeystoreType])...)
+	el = append(el, keystoreTypeValue(path.Child(csiapi.KeystoreTypeKey), attr[csiapi.KeystoreTypeKey])...)
 
 	// If there are errors, then return not approved and the aggregated errors.
 	if len(el) > 0 {

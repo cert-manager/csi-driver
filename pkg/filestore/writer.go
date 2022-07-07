@@ -81,17 +81,17 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		attrs[csiapi.CAFileKey]:   ca,
 	}
 
-	if attrs[csiapi.KeystoreFile] != "" {
-		switch keyStoreType := attrs[csiapi.KeystoreType]; keyStoreType {
+	if attrs[csiapi.KeystoreFileKey] != "" {
+		switch keyStoreType := attrs[csiapi.KeystoreTypeKey]; keyStoreType {
 		case "PKCS12":
 			pfx, err := pkcs12.Create(key, chain, ca)
 			if err != nil {
 				return fmt.Errorf("pkcs12.Create: %v", err)
 			}
 
-			files[attrs[csiapi.KeystoreFile]] = pfx
-			meta.VolumeContext[csiapi.KeystoreFile] = attrs[csiapi.KeystoreFile]
-			meta.VolumeContext[csiapi.KeystoreType] = keyStoreType
+			files[attrs[csiapi.KeystoreFileKey]] = pfx
+			meta.VolumeContext[csiapi.KeystoreFileKey] = attrs[csiapi.KeystoreFileKey]
+			meta.VolumeContext[csiapi.KeystoreTypeKey] = keyStoreType
 		default:
 			return fmt.Errorf("unsupported keystore-type: %s", keyStoreType)
 		}
