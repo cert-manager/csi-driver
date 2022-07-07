@@ -81,6 +81,8 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		attrs[csiapi.CAFileKey]:   ca,
 	}
 
+	// keystore file is written in _addition_ to PEM files
+	// if not set, continue as usual
 	if attrs[csiapi.KeystoreFileKey] != "" {
 		switch keyStoreType := attrs[csiapi.KeystoreTypeKey]; keyStoreType {
 		case "PKCS12":
