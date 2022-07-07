@@ -314,7 +314,30 @@ func Test_WriteKeypair(t *testing.T) {
 			},
 			expErr: false,
 		},
-		"if keystore-file is set, correct metadata should be written": {
+		"keystore-file with keystore-type PKCS12": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":   "ca-issuer",
+					"csi.cert-manager.io/key-encoding":  "PKCS8",
+					"csi.cert-manager.io/keystore-file": "my-file.pfx",
+					"csi.cert-manager.io/keystore-type": "PKCS12",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs8Bundle.caPEM,
+				"tls.crt": pkcs8Bundle.certPEM,
+				"tls.key": pkcs8Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-file":"my-file.pfx","csi.cert-manager.io/keystore-type":"PKCS12"}}`,
+				),
+			},
+			expErr:   false,
+			isPKCS12: true,
+		},
+		"keystore-file without keystore-type should default to PKCS12": {
 			testBundle: pkcs8Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
@@ -336,6 +359,20 @@ func Test_WriteKeypair(t *testing.T) {
 			expErr:   false,
 			isPKCS12: true,
 		},
+		"incorrect keystore-type": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":   "ca-issuer",
+					"csi.cert-manager.io/key-encoding":  "PKCS8",
+					"csi.cert-manager.io/keystore-file": "my-file.pfx",
+					"csi.cert-manager.io/keystore-type": "PKCS13",
+				},
+			},
+			expErr: true,
+		},
 	}
 
 	for name, test := range tests {
@@ -348,7 +385,18 @@ func Test_WriteKeypair(t *testing.T) {
 
 			testBundle := test.testBundle
 			err = w.WriteKeypair(test.meta, testBundle.pk, testBundle.certPEM, testBundle.caPEM)
-			assert.Equal(t, test.expErr, err != nil, "%v", err)
+
+			// make sure to return here if error was expected and received
+			// validation will prevent files from being written
+			if test.expErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+				} else {
+					return
+				}
+			} else {
+				assert.NoError(t, err)
+			}
 
 			files, err := store.ReadFiles("vol-id")
 			assert.NoError(t, err)
