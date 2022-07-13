@@ -31,6 +31,7 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 func Test_RequestForMetadata(t *testing.T) {
@@ -67,6 +68,11 @@ func Test_RequestForMetadata(t *testing.T) {
 				"csi.cert-manager.io/issuer-name": "my-issuer",
 			}}),
 			expRequest: &manager.CertificateRequestBundle{
+				Annotations: map[string]string{
+					csiapi.PodNameAnnotation:      "my-pod-name",
+					csiapi.PodNamespaceAnnotation: "my-namespace",
+					csiapi.PodUIDAnnotation:       "my-pod-uuid",
+				},
 				Request: new(x509.CertificateRequest),
 				IsCA:    false,
 				Usages: []cmapi.KeyUsage{
@@ -145,6 +151,11 @@ func Test_RequestForMetadata(t *testing.T) {
 				"csi.cert-manager.io/key-usages":   "server auth,client auth",
 			}}),
 			expRequest: &manager.CertificateRequestBundle{
+				Annotations: map[string]string{
+					csiapi.PodNameAnnotation:      "my-pod-name",
+					csiapi.PodNamespaceAnnotation: "my-namespace",
+					csiapi.PodUIDAnnotation:       "my-pod-uuid",
+				},
 				Request: &x509.CertificateRequest{
 					Subject: pkix.Name{CommonName: "my-pod-name.my-namespace"},
 					DNSNames: []string{

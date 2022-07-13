@@ -73,6 +73,19 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
 	}
 
+	annotations := make(map[string]string)
+	if podName, ok := meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName]; ok {
+		annotations[csiapi.PodNameAnnotation] = podName
+	}
+
+	if podNamespace, ok := meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace]; ok {
+		annotations[csiapi.PodNamespaceAnnotation] = podNamespace
+	}
+
+	if podUID, ok := meta.VolumeContext[csiapi.K8sVolumeContextKeyPodUID]; ok {
+		annotations[csiapi.PodUIDAnnotation] = podUID
+	}
+
 	return &manager.CertificateRequestBundle{
 		Request: &x509.CertificateRequest{
 			Subject: pkix.Name{
@@ -91,7 +104,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 			Kind:  attrs[csiapi.IssuerKindKey],
 			Group: attrs[csiapi.IssuerGroupKey],
 		},
-		Annotations: nil,
+		Annotations: annotations,
 	}, nil
 }
 

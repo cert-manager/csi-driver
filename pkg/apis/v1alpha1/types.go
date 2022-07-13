@@ -39,10 +39,17 @@ const (
 	ReusePrivateKey = "csi.cert-manager.io/reuse-private-key"
 )
 
+// Well-known attribute keys that are present in the volume context, passed
+// from the Kubelet during PublishVolume calls.
 const (
-	// Well-known attribute keys that are present in the volume context, passed
-	// from the Kubelet during PublishVolume calls.
 	K8sVolumeContextKeyPodName      = "csi.storage.k8s.io/pod.name"
 	K8sVolumeContextKeyPodNamespace = "csi.storage.k8s.io/pod.namespace"
 	K8sVolumeContextKeyPodUID       = "csi.storage.k8s.io/pod.uid"
+)
+
+// Common annotations used in generated CertificateRequest resources
+const (
+	PodNameAnnotation      = "csi.cert-manager.io/pod-name"
+	PodNamespaceAnnotation = "csi.cert-manager.io/pod-namespace"
+	PodUIDAnnotation       = "csi.cert-manager.io/pod-uid"
 )
