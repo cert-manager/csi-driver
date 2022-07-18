@@ -28,10 +28,10 @@ import (
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 
-	"github.com/cert-manager/csi-driver/internal/pkg/keystore/pkcs12"
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/apis/validation"
+	"github.com/cert-manager/csi-driver/pkg/keystore/pkcs12"
 )
 
 // Writer wraps the storage backend to allow access for writing data.
@@ -81,20 +81,13 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		attrs[csiapi.CAFileKey]:   ca,
 	}
 
-	// keystore file is written in _addition_ to PEM files
-	// if not set, continue as usual
-	if attrs[csiapi.KeystoreFileKey] != "" {
-		switch keyStoreType := attrs[csiapi.KeystoreTypeKey]; keyStoreType {
-		case "PKCS12":
-			pfx, err := pkcs12.Create(key, chain, ca)
-			if err != nil {
-				return fmt.Errorf("pkcs12.Create: %v", err)
-			}
-
-			files[attrs[csiapi.KeystoreFileKey]] = pfx
-		default:
-			return fmt.Errorf("unsupported keystore-type: %s", keyStoreType)
+	if attrs[csiapi.KeyStorePKCS12EnableKey] == "true" {
+		pfx, err := pkcs12.Create(meta, key, chain)
+		if err != nil {
+			return fmt.Errorf("failed to create pkcs12 file: %w", err)
 		}
+
+		files[attrs[csiapi.KeyStorePKCS12FileKey]] = pfx
 	}
 
 	// Calculate the next issuance time and check errors before writing files.
