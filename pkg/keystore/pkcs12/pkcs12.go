@@ -19,47 +19,31 @@ package pkcs12
 import (
 	"crypto"
 	"crypto/rand"
-	"errors"
 	"fmt"
 
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
+
 	"github.com/cert-manager/cert-manager/pkg/util/pki"
+	"github.com/cert-manager/csi-lib/metadata"
 	"software.sslmate.com/src/go-pkcs12"
 )
 
 // Create combines the inputs to a single PKCS12 keystore file.
-// key must be PKCS1 or PKCS8 encoded. certificates must be PEM encoded.
-func Create(key crypto.PrivateKey, chainPEM []byte, rootPEM []byte) ([]byte, error) {
-	if key == nil {
-		return nil, errors.New("key must not be nil")
-	}
-
-	if len(chainPEM) == 0 {
-		return nil, errors.New("chainPEM must not be empty")
-	}
-
-	if len(rootPEM) == 0 {
-		return nil, errors.New("rootPEM must not be empty")
-	}
-
-	root, err := pki.DecodeX509CertificateBytes(rootPEM)
-	if err != nil {
-		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(rootPEM): %v", err)
-	}
-
+// Private key must be PKCS1 or PKCS8 encoded. Certificates must be PEM
+// encoded.
+func Create(meta metadata.Metadata, pk crypto.PrivateKey, chainPEM []byte) ([]byte, error) {
 	chain, err := pki.DecodeX509CertificateChainBytes(chainPEM)
 	if err != nil {
-		return nil, fmt.Errorf("pki.DecodeX509CertificateChainBytes(chainPEM): %v", err)
+		return nil, fmt.Errorf("failed to decode certificate chain: %w", err)
 	}
 
-	leaf := chain[0]
-	chain = chain[1:]
+	if len(chain) == 0 {
+		return nil, fmt.Errorf("no certificates decoded in certificate chain: %w", err)
+	}
 
-	// add the root cert to the back of the chain
-	chain = append(chain, root)
-
-	pfx, err := pkcs12.Encode(rand.Reader, key, leaf, chain, pkcs12.DefaultPassword)
+	pfx, err := pkcs12.Encode(rand.Reader, pk, chain[0], chain[1:], meta.VolumeContext[csiapi.KeyStorePKCS12PasswordKey])
 	if err != nil {
-		return nil, fmt.Errorf("pkcs12.Encode: %v", err)
+		return nil, fmt.Errorf("failed to encode the PKCS12 certificate chain file: %v", err)
 	}
 
 	return pfx, nil
