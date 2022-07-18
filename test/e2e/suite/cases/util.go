@@ -16,6 +16,47 @@ limitations under the License.
 
 package cases
 
-func boolPtr(b bool) *bool {
-	return &b
+import (
+	"github.com/cert-manager/csi-driver/test/e2e/framework"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+)
+
+func basePod(f *framework.Framework, csiAttributes map[string]string) (corev1.Volume, *corev1.Pod) {
+	volume := corev1.Volume{
+		Name: "tls",
+		VolumeSource: corev1.VolumeSource{
+			CSI: &corev1.CSIVolumeSource{
+				Driver:           "csi.cert-manager.io",
+				ReadOnly:         pointer.Bool(true),
+				VolumeAttributes: csiAttributes,
+			},
+		},
+	}
+
+	return volume, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: f.BaseName + "-",
+			Namespace:    f.Namespace.Name,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				corev1.Container{
+					Name:    "test-container-1",
+					Image:   "busybox",
+					Command: []string{"sleep", "10000"},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							MountPath: "/tls",
+							Name:      "tls",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				volume,
+			},
+		},
+	}
 }
