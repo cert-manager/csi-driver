@@ -38,8 +38,9 @@ const (
 	RenewBeforeKey  = "csi.cert-manager.io/renew-before"
 	ReusePrivateKey = "csi.cert-manager.io/reuse-private-key"
 
-	KeystoreTypeKey = "csi.cert-manager.io/keystore-type"
-	KeystoreFileKey = "csi.cert-manager.io/keystore-file"
+	KeyStorePKCS12EnableKey   = "csi.cert-manager.io/keystore-pkcs12-enable"
+	KeyStorePKCS12FileKey     = "csi.cert-manager.io/keystore-pkcs12-file"
+	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/keystore-pkcs12-password"
 )
 
 const (
