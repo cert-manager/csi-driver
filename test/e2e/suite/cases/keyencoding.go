@@ -31,7 +31,7 @@ import (
 	"github.com/cert-manager/csi-driver/test/e2e/util"
 )
 
-var _ = framework.CasesDescribe("Should write PKCS12 file correctly", func() {
+var _ = framework.CasesDescribe("Should set the key encoding correctly", func() {
 	setupPodAndReturnKeyData := func(f *framework.Framework, annotations map[string]string) *pem.Block {
 		testVolume, testPod := basePod(f, annotations)
 
