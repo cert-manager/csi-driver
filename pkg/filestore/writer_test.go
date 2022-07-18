@@ -360,7 +360,7 @@ func Test_WriteKeypair(t *testing.T) {
 			},
 			expErr: false,
 		},
-		"keystore PKCS12 with no password should error": {
+		"keystore PKCS12 with no password and breakout file should error": {
 			testBundle: pkcs8Bundle,
 			meta: metadata.Metadata{
 				VolumeID:   "vol-id",
@@ -369,13 +369,13 @@ func Test_WriteKeypair(t *testing.T) {
 					"csi.cert-manager.io/issuer-name":              "ca-issuer",
 					"csi.cert-manager.io/key-encoding":             "PKCS8",
 					"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
-					"csi.cert-manager.io/keystore-pkcs12-file":     "my-file.pfx",
+					"csi.cert-manager.io/keystore-pkcs12-file":     "../my-file.pfx",
 					"csi.cert-manager.io/keystore-pkcs12-password": "",
 				},
 			},
 			expFiles: map[string][]byte{
 				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-pkcs12-enable":"true","csi.cert-manager.io/keystore-pkcs12-file":"my-file.pfx","csi.cert-manager.io/keystore-pkcs12-password":""}}`,
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/keystore-pkcs12-enable":"true","csi.cert-manager.io/keystore-pkcs12-file":"../my-file.pfx","csi.cert-manager.io/keystore-pkcs12-password":""}}`,
 				),
 			},
 			expErr: true,
