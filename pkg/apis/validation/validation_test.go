@@ -38,9 +38,8 @@ func Test_ValidateAttributes(t *testing.T) {
 	}{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
-				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -48,9 +47,8 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
-				csiapi.CommonNameKey:   "foo.bar",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.CommonNameKey:  "foo.bar",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -58,49 +56,44 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:   "test-issuer",
-				csiapi.CommonNameKey:   "foo.bar",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CommonNameKey:  "foo.bar",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:   "test-issuer",
-				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with one key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:   "test-issuer",
-				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:    "client auth",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "client auth",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"valid attributes with key usages extended key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:   "test-issuer",
-				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:    "code signing  ,      email protection,    s/mime,ipsec end system",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "code signing  ,      email protection,    s/mime,ipsec end system",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: nil,
 		},
 		"attributes with wrong key usages should error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:   "test-issuer",
-				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:    "foo,bar,hello world",
-				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:   "foo,bar,hello world",
+				csiapi.KeyEncodingKey: "PKCS1",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "foo", "not a valid key usage"),
@@ -114,18 +107,41 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.DurationKey:     "bad-duration",
 				csiapi.ReusePrivateKey: "FOO",
 				csiapi.KeyEncodingKey:  "PKCS1",
-				csiapi.KeystoreTypeKey: "PKCS12",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/duration"), "bad-duration", `must be a valid duration string: time: invalid duration "bad-duration"`),
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/reuse-private-key"), "FOO", `may only accept values of "true" or "false"`),
 			},
 		},
+		"invalid PKCS12 options should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:             "test-issuer",
+				csiapi.KeyEncodingKey:            "PKCS1",
+				csiapi.KeyStorePKCS12FileKey:     "crt.p12",
+				csiapi.KeyStorePKCS12PasswordKey: "password",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "crt.p12",
+					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-password"), "password",
+					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+			},
+		},
+		"correct PKCS12 options should not error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:             "test-issuer",
+				csiapi.KeyEncodingKey:            "PKCS1",
+				csiapi.KeyStorePKCS12EnableKey:   "true",
+				csiapi.KeyStorePKCS12FileKey:     "crt.p12",
+				csiapi.KeyStorePKCS12PasswordKey: "password",
+			},
+			expErr: nil,
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expErr, ValidateAttributes(test.attr))
+			assert.EqualValues(t, test.expErr, ValidateAttributes(test.attr))
 		})
 	}
 }
@@ -242,6 +258,85 @@ func Test_keyEncodingValue(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expErr, keyEncodingValue(field.NewPath("my-pkcs"), test.s))
+		})
+	}
+}
+
+func Test_PKCS12Values(t *testing.T) {
+	basePath := field.NewPath("root")
+
+	tests := map[string]struct {
+		attr   map[string]string
+		expErr field.ErrorList
+	}{
+		"if no attributes, expect no error": {
+			attr:   map[string]string{},
+			expErr: nil,
+		},
+		"if key and password is defined, but enabled is not defined, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
+				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "my-file",
+					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "password",
+					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+			},
+		},
+
+		"if key and password is defined, and enabled is defined as false, expect no error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-enable":   "false",
+				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
+				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
+		"if key and password is defined, but enabled is defined as foo, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-enable":   "foo",
+				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
+				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+			},
+			expErr: field.ErrorList{
+				field.NotSupported(basePath.Child("csi.cert-manager.io/keystore-pkcs12-enable"), "foo", []string{"true", "false"}),
+			},
+		},
+		"if key and password is not defined, and enabled is defined as true, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-enable": "true",
+			},
+			expErr: field.ErrorList{
+				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "required attribute when PKCS12 key store is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "required attribute when PKCS12 key store is enabled"),
+			},
+		},
+		"if key and password is defined as empty string, and enabled is defined as true, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
+				"csi.cert-manager.io/keystore-pkcs12-file":     "",
+				"csi.cert-manager.io/keystore-pkcs12-password": "",
+			},
+			expErr: field.ErrorList{
+				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "required attribute when PKCS12 key store is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "required attribute when PKCS12 key store is enabled"),
+			},
+		},
+		"if key and password is defined, and enabled is defined as true, expect no error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
+				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
+				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.EqualValues(t, test.expErr, pkcs12Values(basePath, test.attr))
 		})
 	}
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package validation
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -52,7 +53,7 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 
 	el = append(el, keyEncodingValue(path.Child(csiapi.KeyEncodingKey), attr[csiapi.KeyEncodingKey])...)
 
-	el = append(el, keystoreTypeValue(path.Child(csiapi.KeystoreTypeKey), attr[csiapi.KeystoreTypeKey])...)
+	el = append(el, pkcs12Values(path, attr)...)
 
 	// If there are errors, then return not approved and the aggregated errors.
 	if len(el) > 0 {
@@ -116,9 +117,38 @@ func keyEncodingValue(path *field.Path, s string) field.ErrorList {
 	return nil
 }
 
-func keystoreTypeValue(path *field.Path, s string) field.ErrorList {
-	if s != "PKCS12" {
-		return field.ErrorList{field.NotSupported(path, s, []string{"PKCS12"})}
+func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
+	var el field.ErrorList
+
+	if enable, ok := attr[csiapi.KeyStorePKCS12EnableKey]; ok {
+		switch enable {
+		case "false":
+			break
+		case "true":
+			if file, ok := attr[csiapi.KeyStorePKCS12FileKey]; !ok || len(file) == 0 {
+				el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 key store is enabled"))
+			}
+			if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; !ok || len(password) == 0 {
+				el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 key store is enabled"))
+			}
+		default:
+			el = append(el, field.NotSupported(path.Child(csiapi.KeyStorePKCS12EnableKey), enable, []string{"true", "false"}))
+		}
+
+	} else {
+		if file, ok := attr[csiapi.KeyStorePKCS12FileKey]; ok {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12FileKey), file,
+				fmt.Sprintf("cannot use attribute without `%q: %q`", csiapi.KeyStorePKCS12EnableKey, "true")))
+		}
+
+		if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; ok {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordKey), password,
+				fmt.Sprintf("cannot use attribute without `%q: %q`", csiapi.KeyStorePKCS12EnableKey, "true")))
+		}
+	}
+
+	if len(el) > 0 {
+		return el
 	}
 
 	return nil
