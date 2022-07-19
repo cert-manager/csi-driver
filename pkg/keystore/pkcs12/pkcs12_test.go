@@ -33,7 +33,7 @@ import (
 func Test_Create(t *testing.T) {
 	const basepassword = "test-password"
 	basemeta := metadata.Metadata{
-		VolumeContext: map[string]string{"csi.cert-manager.io/keystore-pkcs12-password": basepassword},
+		VolumeContext: map[string]string{"csi.cert-manager.io/pkcs12-password": basepassword},
 	}
 
 	root := unit.MustCreateBundle(t, nil, "root")

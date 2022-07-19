@@ -148,11 +148,11 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.KeyStorePKCS12PasswordKey: "password",
 			},
 			expErr: field.ErrorList{
-				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "../crt.p12",
-					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
-				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-password"), "password",
-					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
-				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "../crt.p12",
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-file"), "../crt.p12",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-password"), "password",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-file"), "../crt.p12",
 					`filepaths may not contain ".."`),
 			},
 		},
@@ -170,7 +170,7 @@ func Test_ValidateAttributes(t *testing.T) {
 			expErr: field.ErrorList{
 				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "ca.crt"),
 				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/certificate-file"), "crt.tls"),
-				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "crt.tls"),
+				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-file"), "crt.tls"),
 				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "ca.crt"),
 			},
 		},
@@ -325,60 +325,60 @@ func Test_PKCS12Values(t *testing.T) {
 		},
 		"if key and password is defined, but enabled is not defined, expect error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
-				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+				"csi.cert-manager.io/pkcs12-file":     "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: field.ErrorList{
-				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "my-file",
-					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
-				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "password",
-					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(basePath.Child("csi.cert-manager.io/pkcs12-file"), "my-file",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(basePath.Child("csi.cert-manager.io/pkcs12-password"), "password",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
 			},
 		},
 
 		"if key and password is defined, and enabled is defined as false, expect no error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable":   "false",
-				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
-				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+				"csi.cert-manager.io/pkcs12-enable":   "false",
+				"csi.cert-manager.io/pkcs12-file":     "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: nil,
 		},
 		"if key and password is defined, but enabled is defined as foo, expect error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable":   "foo",
-				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
-				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+				"csi.cert-manager.io/pkcs12-enable":   "foo",
+				"csi.cert-manager.io/pkcs12-file":     "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: field.ErrorList{
-				field.NotSupported(basePath.Child("csi.cert-manager.io/keystore-pkcs12-enable"), "foo", []string{"true", "false"}),
+				field.NotSupported(basePath.Child("csi.cert-manager.io/pkcs12-enable"), "foo", []string{"true", "false"}),
 			},
 		},
 		"if key and password is not defined, and enabled is defined as true, expect error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable": "true",
+				"csi.cert-manager.io/pkcs12-enable": "true",
 			},
 			expErr: field.ErrorList{
-				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "required attribute when PKCS12 KeyStore is enabled"),
-				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-file"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
 			},
 		},
 		"if key and password is defined as empty string, and enabled is defined as true, expect error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
-				"csi.cert-manager.io/keystore-pkcs12-file":     "",
-				"csi.cert-manager.io/keystore-pkcs12-password": "",
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-file":     "",
+				"csi.cert-manager.io/pkcs12-password": "",
 			},
 			expErr: field.ErrorList{
-				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "required attribute when PKCS12 KeyStore is enabled"),
-				field.Required(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-file"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
 			},
 		},
 		"if key and password is defined, and enabled is defined as true, expect no error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
-				"csi.cert-manager.io/keystore-pkcs12-file":     "my-file",
-				"csi.cert-manager.io/keystore-pkcs12-password": "password",
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-file":     "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: nil,
 		},

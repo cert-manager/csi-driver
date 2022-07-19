@@ -30,7 +30,7 @@ import (
 )
 
 var _ = framework.CasesDescribe("Should write keystore pkcs12 file correctly", func() {
-	f := framework.NewDefaultFramework("keystore-pkcs12")
+	f := framework.NewDefaultFramework("pkcs12")
 
 	It("should create a pod with the pkcs12 file written", func() {
 		testVolume, testPod := basePod(f, map[string]string{
@@ -38,9 +38,9 @@ var _ = framework.CasesDescribe("Should write keystore pkcs12 file correctly", f
 			"csi.cert-manager.io/issuer-kind":              f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group":             f.Issuer.Group,
 			"csi.cert-manager.io/common-name":              "foo-bar",
-			"csi.cert-manager.io/keystore-pkcs12-enable":   "true",
-			"csi.cert-manager.io/keystore-pkcs12-password": "a-random-password",
-			"csi.cert-manager.io/keystore-pkcs12-file":     "foo.p12",
+			"csi.cert-manager.io/pkcs12-enable":   "true",
+			"csi.cert-manager.io/pkcs12-password": "a-random-password",
+			"csi.cert-manager.io/pkcs12-file":     "foo.p12",
 		})
 
 		By("Creating a Pod")

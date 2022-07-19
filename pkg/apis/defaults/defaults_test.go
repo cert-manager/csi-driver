@@ -33,12 +33,12 @@ func Test_pkcs12Values(t *testing.T) {
 		},
 		"if PKCS12 enable attribute present, expect PKCS12 attributes present": {
 			input: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable": "foo",
+				"csi.cert-manager.io/pkcs12-enable": "foo",
 			},
 			expOutput: map[string]string{
-				"csi.cert-manager.io/keystore-pkcs12-enable":   "foo",
-				"csi.cert-manager.io/keystore-pkcs12-file":     "keystore.p12",
-				"csi.cert-manager.io/keystore-pkcs12-password": "",
+				"csi.cert-manager.io/pkcs12-enable":   "foo",
+				"csi.cert-manager.io/pkcs12-file":     "keystore.p12",
+				"csi.cert-manager.io/pkcs12-password": "",
 			},
 		},
 	}
