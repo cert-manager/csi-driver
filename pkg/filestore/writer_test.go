@@ -274,6 +274,25 @@ func Test_WriteKeypair(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"if filename contains bad filenames, expect error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":      "ca-issuer",
+					"csi.cert-manager.io/certificate-file": "foo/bar",
+					"csi.cert-manager.io/privatekey-file":  "/foo",
+					"csi.cert-manager.io/ca-file":          "../foo",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/ca-file":"../foo","csi.cert-manager.io/certificate-file":"foo/bar","csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/privatekey-file":"/foo"}}`,
+				),
+			},
+			expErr: true,
+		},
 
 		"if encoder is empty, use default encoder PKCS1": {
 			testBundle: pkcs1Bundle,
