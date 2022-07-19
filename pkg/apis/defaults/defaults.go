@@ -66,6 +66,5 @@ func setDefaultIfEmpty(attr map[string]string, k, v string) {
 func setDefaultKeyStorePKCS12(attr map[string]string) {
 	if _, ok := attr[csiapi.KeyStorePKCS12EnableKey]; ok {
 		setDefaultIfEmpty(attr, csiapi.KeyStorePKCS12FileKey, "keystore.p12")
-		setDefaultIfEmpty(attr, csiapi.KeyStorePKCS12PasswordKey, "")
 	}
 }
