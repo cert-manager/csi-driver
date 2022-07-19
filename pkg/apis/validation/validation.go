@@ -169,16 +169,16 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 		}
 
 	} else {
-		// No PKCS12 attributes should be defined when PKCS12 is not enabled.
+		// No PKCS12 attributes should be defined when PKCS12 is not defined.
 
 		if file, ok := attr[csiapi.KeyStorePKCS12FileKey]; ok {
 			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12FileKey), file,
-				fmt.Sprintf("cannot use attribute without `%q: %q`", csiapi.KeyStorePKCS12EnableKey, "true")))
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
 		}
 
 		if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; ok {
 			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordKey), password,
-				fmt.Sprintf("cannot use attribute without `%q: %q`", csiapi.KeyStorePKCS12EnableKey, "true")))
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
 		}
 	}
 

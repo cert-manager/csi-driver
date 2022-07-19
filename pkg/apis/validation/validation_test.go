@@ -149,9 +149,9 @@ func Test_ValidateAttributes(t *testing.T) {
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "../crt.p12",
-					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-password"), "password",
-					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/keystore-pkcs12-file"), "../crt.p12",
 					`filepaths may not contain ".."`),
 			},
@@ -330,9 +330,9 @@ func Test_PKCS12Values(t *testing.T) {
 			},
 			expErr: field.ErrorList{
 				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-file"), "my-file",
-					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
 				field.Invalid(basePath.Child("csi.cert-manager.io/keystore-pkcs12-password"), "password",
-					"cannot use attribute without `\"csi.cert-manager.io/keystore-pkcs12-enable\": \"true\"`"),
+					"cannot use attribute without \"csi.cert-manager.io/keystore-pkcs12-enable\" set to \"true\" or \"false\""),
 			},
 		},
 
