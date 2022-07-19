@@ -18,6 +18,7 @@ package validation
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -45,9 +46,10 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 
 	el = append(el, keyUsages(path.Child(csiapi.KeyUsagesKey), attr[csiapi.KeyUsagesKey])...)
 
-	el = append(el, filepathBreakout(path.Child(csiapi.CAFileKey), attr[csiapi.CAFileKey])...)
-	el = append(el, filepathBreakout(path.Child(csiapi.CertFileKey), attr[csiapi.CertFileKey])...)
-	el = append(el, filepathBreakout(path.Child(csiapi.KeyFileKey), attr[csiapi.KeyFileKey])...)
+	el = append(el, filename(path.Child(csiapi.CAFileKey), attr[csiapi.CAFileKey])...)
+	el = append(el, filename(path.Child(csiapi.CertFileKey), attr[csiapi.CertFileKey])...)
+	el = append(el, filename(path.Child(csiapi.KeyFileKey), attr[csiapi.KeyFileKey])...)
+	el = append(el, filename(path.Child(csiapi.KeyStorePKCS12FileKey), attr[csiapi.KeyStorePKCS12FileKey])...)
 
 	el = append(el, durationParse(path.Child(csiapi.RenewBeforeKey), attr[csiapi.RenewBeforeKey])...)
 	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
@@ -91,13 +93,6 @@ func keyUsages(path *field.Path, ss string) field.ErrorList {
 	return el
 }
 
-func filepathBreakout(path *field.Path, s string) field.ErrorList {
-	if strings.Contains(s, "..") {
-		return field.ErrorList{field.Invalid(path, s, `filepaths may not contain ".."`)}
-	}
-	return nil
-}
-
 func durationParse(path *field.Path, s string) field.ErrorList {
 	if len(s) == 0 {
 		return nil
@@ -122,6 +117,37 @@ func keyEncodingValue(path *field.Path, s string) field.ErrorList {
 	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) {
 		return field.ErrorList{field.NotSupported(path, s, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
 	}
+	return nil
+}
+
+// filename ensures that a given filename, is indeed a valid filename. It does
+// this by validating that the given filename is not:
+// 1. absolute
+// 2. starting with '..'
+// 3. contain '/'
+// 4. longer than 255 characters
+func filename(path *field.Path, filename string) field.ErrorList {
+	var el field.ErrorList
+
+	if filepath.IsAbs(filename) {
+		el = append(el, field.Invalid(path, filename, "filename must not be an absolute path"))
+	}
+
+	if filepath.HasPrefix(filename, "..") {
+		el = append(el, field.Invalid(path, filename, "filename must not start with '..'"))
+	}
+
+	if strings.Contains(filename, "/") {
+		el = append(el, field.Invalid(path, filename, "filename must not include '/'"))
+	}
+
+	if len(filename) > 255 {
+		el = append(el, field.Invalid(path, filename, "filename must be no longer than 255 characters"))
+	}
+	if len(el) > 0 {
+		return el
+	}
+
 	return nil
 }
 
@@ -181,9 +207,6 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
 		}
 	}
-
-	// Always check for breakout.
-	el = append(el, filepathBreakout(path.Child(csiapi.KeyStorePKCS12FileKey), attr[csiapi.KeyStorePKCS12FileKey])...)
 
 	if len(el) > 0 {
 		return el
