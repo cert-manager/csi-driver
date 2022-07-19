@@ -40,7 +40,7 @@ var _ = framework.CasesDescribe("Should write keystore pkcs12 file correctly", f
 			"csi.cert-manager.io/common-name":              "foo-bar",
 			"csi.cert-manager.io/pkcs12-enable":   "true",
 			"csi.cert-manager.io/pkcs12-password": "a-random-password",
-			"csi.cert-manager.io/pkcs12-file":     "foo.p12",
+			"csi.cert-manager.io/pkcs12-filename":     "foo.p12",
 		})
 
 		By("Creating a Pod")

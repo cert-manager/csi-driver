@@ -69,4 +69,4 @@ spec:
                   csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/${POD_NAMESPACE}/pod/${POD_NAME}}/${POD_UID}"
                   csi.cert-manager.io/pkcs12-enable: "true"
                   csi.cert-manager.io/pkcs12-password: "my-password"
-                  csi.cert-manager.io/pkcs12-file: "crt.p12"
+                  csi.cert-manager.io/pkcs12-filename: "crt.p12"
