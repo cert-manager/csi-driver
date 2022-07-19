@@ -156,10 +156,10 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 
 	if enable, ok := attr[csiapi.KeyStorePKCS12EnableKey]; ok {
 		if file, ok := attr[csiapi.KeyStorePKCS12FileKey]; !ok || len(file) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 key store is enabled"))
+			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
 		}
 		if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; !ok || len(password) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 key store is enabled"))
+			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
 		}
 
 		switch enable {
