@@ -42,7 +42,8 @@ const (
 const (
 	// Well-known attribute keys that are present in the volume context, passed
 	// from the Kubelet during PublishVolume calls.
-	K8sVolumeContextKeyPodName      = "csi.storage.k8s.io/pod.name"
-	K8sVolumeContextKeyPodNamespace = "csi.storage.k8s.io/pod.namespace"
-	K8sVolumeContextKeyPodUID       = "csi.storage.k8s.io/pod.uid"
+	K8sVolumeContextKeyPodName            = "csi.storage.k8s.io/pod.name"
+	K8sVolumeContextKeyPodNamespace       = "csi.storage.k8s.io/pod.namespace"
+	K8sVolumeContextKeyPodUID             = "csi.storage.k8s.io/pod.uid"
+	K8sVolumeContextKeyServiceAccountName = "csi.storage.k8s.io/serviceAccount.name"
 )
