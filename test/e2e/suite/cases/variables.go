@@ -46,6 +46,17 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			},
 		}
 
+		testServiceAccount := &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: f.BaseName + "-",
+				Namespace:    f.Namespace.Name,
+			},
+		}
+
+		By("Creating a ServiceAccount")
+		testServiceAccount, err := f.KubeClientSet.CoreV1().ServiceAccounts(f.Namespace.Name).Create(context.TODO(), testServiceAccount, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
 		testPod := &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: f.BaseName + "-",
@@ -53,7 +64,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			},
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
-					corev1.Container{
+					{
 						Name:    "test-container-1",
 						Image:   "busybox",
 						Command: []string{"sleep", "10000"},
@@ -65,6 +76,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 						},
 					},
 				},
+				ServiceAccountName: testServiceAccount.Name,
 				Volumes: []corev1.Volume{
 					testVolume,
 				},
@@ -72,7 +84,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 		}
 
 		By("Creating a Pod")
-		testPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), testPod, metav1.CreateOptions{})
+		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), testPod, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
@@ -102,7 +114,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
 			"csi.cert-manager.io/common-name":  "$POD_NAME.${POD_NAMESPACE}",
-			"csi.cert-manager.io/dns-names":    "$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID},${POD_NAME},${POD_NAME}.${POD_NAMESPACE},$POD_NAME.${POD_NAMESPACE}.svc,${POD_UID}",
+			"csi.cert-manager.io/dns-names":    "$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID},${POD_NAME},${POD_NAME}.${POD_NAMESPACE},$POD_NAME.${POD_NAMESPACE}.svc,${POD_UID},${SERVICE_ACCOUNT_NAME}",
 			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/$POD_NAME/$POD_UID,file://foo-bar,${POD_UID}",
 		})
 
@@ -116,6 +128,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			fmt.Sprintf("%s.%s", pod.Name, pod.Namespace),
 			fmt.Sprintf("%s.%s.svc", pod.Name, pod.Namespace),
 			string(pod.UID),
+			pod.Spec.ServiceAccountName,
 		}))
 		Expect(request.URIs).To(ConsistOf([]*url.URL{
 			mustParseURI(fmt.Sprintf("spiffe://foo.bar/%s/%s/%s", pod.Namespace, pod.Name, pod.UID)),

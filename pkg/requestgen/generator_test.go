@@ -216,7 +216,7 @@ func Test_parseDNSNames(t *testing.T) {
 		"if references a variable that doesn't exist, error": {
 			csv:         `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID-$Foo`,
 			expDNSNames: nil,
-			expErr:      errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
+			expErr:      errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID SERVICE_ACCOUNT_NAME]`),
 		},
 		"a csv containing multiple entries which uses should be substituted correctly": {
 			csv:         `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,$POD_NAME,$POD_NAME.$POD_NAMESPACE,$POD_NAME.$POD_NAMESPACE.svc,$POD_UID`,
@@ -290,7 +290,7 @@ func Test_URIs(t *testing.T) {
 		"if variables references a variable that doesn't exist, error": {
 			csv:     `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID-${Foo}`,
 			expURIs: nil,
-			expErr:  errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
+			expErr:  errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID SERVICE_ACCOUNT_NAME]`),
 		},
 		"a csv containing multiple entries which uses variables should be substituted correctly": {
 			csv: `spiffe://$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,spiffe://$POD_NAME,file://${POD_NAME}.$POD_NAMESPACE,$POD_NAME.$POD_NAMESPACE.svc,spiffe://$POD_UID`,
@@ -334,14 +334,14 @@ func Test_expand(t *testing.T) {
 			expErr:    nil,
 		},
 		"if using variables, expect to be substituted": {
-			input:     "foo-$POD_NAME-,,${POD_NAMESPACE},$POD_UID",
-			expOutput: "foo-my-pod-name-,,my-namespace,my-pod-uuid",
+			input:     "foo-$POD_NAME-,,${POD_NAMESPACE},$POD_UID,${SERVICE_ACCOUNT_NAME}",
+			expOutput: "foo-my-pod-name-,,my-namespace,my-pod-uuid,my-service-account",
 			expErr:    nil,
 		},
 		"if reference a variable that does not exist, expect error": {
 			input:     "foo-${POD_NAME}-,,$POD_NAMESPACE,${POD_UID}.$Foo${Bar}",
 			expOutput: "",
-			expErr:    errors.New(`undefined variable "Foo", undefined variable "Bar", known variables: [POD_NAME POD_NAMESPACE POD_UID]`),
+			expErr:    errors.New(`undefined variable "Foo", undefined variable "Bar", known variables: [POD_NAME POD_NAMESPACE POD_UID SERVICE_ACCOUNT_NAME]`),
 		},
 	}
 
@@ -357,10 +357,11 @@ func Test_expand(t *testing.T) {
 func baseMetadata() metadata.Metadata {
 	return metadata.Metadata{
 		VolumeContext: map[string]string{
-			"csi.storage.k8s.io/pod.name":      "my-pod-name",
-			"csi.storage.k8s.io/pod.namespace": "my-namespace",
-			"csi.storage.k8s.io/pod.uid":       "my-pod-uuid",
-			"csi.storage.k8s.io/ephemeral":     "true",
+			"csi.storage.k8s.io/pod.name":            "my-pod-name",
+			"csi.storage.k8s.io/pod.namespace":       "my-namespace",
+			"csi.storage.k8s.io/pod.uid":             "my-pod-uuid",
+			"csi.storage.k8s.io/serviceAccount.name": "my-service-account",
+			"csi.storage.k8s.io/ephemeral":           "true",
 		},
 	}
 }
