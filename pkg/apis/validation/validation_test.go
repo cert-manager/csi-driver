@@ -325,7 +325,7 @@ func Test_PKCS12Values(t *testing.T) {
 		},
 		"if key and password is defined, but enabled is not defined, expect error": {
 			attr: map[string]string{
-				"csi.cert-manager.io/pkcs12-filename":     "my-file",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
 				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: field.ErrorList{
@@ -339,7 +339,7 @@ func Test_PKCS12Values(t *testing.T) {
 		"if key and password is defined, and enabled is defined as false, expect no error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "false",
-				"csi.cert-manager.io/pkcs12-filename":     "my-file",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
 				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: nil,
@@ -347,7 +347,7 @@ func Test_PKCS12Values(t *testing.T) {
 		"if key and password is defined, but enabled is defined as foo, expect error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "foo",
-				"csi.cert-manager.io/pkcs12-filename":     "my-file",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
 				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: field.ErrorList{
@@ -366,7 +366,7 @@ func Test_PKCS12Values(t *testing.T) {
 		"if key and password is defined as empty string, and enabled is defined as true, expect error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
-				"csi.cert-manager.io/pkcs12-filename":     "",
+				"csi.cert-manager.io/pkcs12-filename": "",
 				"csi.cert-manager.io/pkcs12-password": "",
 			},
 			expErr: field.ErrorList{
@@ -377,7 +377,7 @@ func Test_PKCS12Values(t *testing.T) {
 		"if key and password is defined, and enabled is defined as true, expect no error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
-				"csi.cert-manager.io/pkcs12-filename":     "my-file",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
 				"csi.cert-manager.io/pkcs12-password": "password",
 			},
 			expErr: nil,

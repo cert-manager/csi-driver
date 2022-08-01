@@ -22,9 +22,9 @@ import (
 	"crypto/rsa"
 	"errors"
 
+	"github.com/cert-manager/cert-manager/pkg/util/pki"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
-	"github.com/cert-manager/cert-manager/pkg/util/pki"
 
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
