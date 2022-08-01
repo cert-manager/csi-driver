@@ -16,6 +16,7 @@
 
 BINDIR ?= $(CURDIR)/bin
 ARCH   ?= $(shell go env GOARCH)
+HELM_VERSION ?= 3.8.1
 IMAGE_PLATFORMS ?= linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
 
 UNAME_S := $(shell uname -s)
@@ -79,7 +80,10 @@ deploy/charts/csi-driver/README.md: $(BINDIR)/helm-docs $(CHART_YAML)
 depend: $(BINDIR)/helm $(BINDIR)/helm-docs $(BINDIR)/kind
 
 $(BINDIR)/helm: | $(BINDIR)
-		cd hack/tools && go build -o $(BINDIR)/helm helm.sh/helm/v3/cmd/helm
+	curl -o $(BINDIR)/helm.tar.gz -LO "https://get.helm.sh/helm-v$(HELM_VERSION)-$(OS)-$(ARCH).tar.gz"
+	tar -C $(BINDIR) -xzf $(BINDIR)/helm.tar.gz
+	cp $(BINDIR)/$(OS)-$(ARCH)/helm $(BINDIR)/helm
+	rm -r $(BINDIR)/$(OS)-$(ARCH) $(BINDIR)/helm.tar.gz
 
 $(BINDIR)/helm-docs: $(BINDIR)
 		cd hack/tools && go build -o $(BINDIR)/helm-docs github.com/norwoodj/helm-docs/cmd/helm-docs

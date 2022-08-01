@@ -106,7 +106,7 @@ sleep 2
 
 echo "Creating kind cluster named '$CLUSTER_NAME'"
 # Kind image with Kubernetes v1.22.compatible with kind v0.11.1
-kind create cluster --image=kindest/node@sha256:100b3558428386d1372591f8d62add85b900538d94db8e455b66ebaf05a3ca3a --name="$CLUSTER_NAME"
+$KIND_BIN create cluster --image=kindest/node@sha256:100b3558428386d1372591f8d62add85b900538d94db8e455b66ebaf05a3ca3a --name="$CLUSTER_NAME"
 export KUBECONFIG="$($KIND_BIN get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml"
@@ -119,7 +119,7 @@ echo "Building cert-manager-csi-driver container"
 docker build -t "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG" .
 
 echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG' image into kind cluster"
-kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
+$KIND_BIN load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
 
 echo "Deploying cert-manager-csi-driver into test cluster"
 $HELM_BIN upgrade --install -n cert-manager cert-manager-csi-driver ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
