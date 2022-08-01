@@ -57,11 +57,6 @@ install_multiplatform() {
   chmod +x "$1/$2"
 }
 
-if ! command -v kind; then
-  echo "'kind' command not found - installing..."
-  install_multiplatform "${BIN_DIR}" kind "https://github.com/kubernetes-sigs/kind/releases/download/v0.12.0/kind-linux-amd64" "https://github.com/kubernetes-sigs/kind/releases/download/v0.12.0/kind-darwin-amd64"
-fi
-
 if ! command -v kubectl; then
   echo "'kubectl' command not found - installing..."
   install_multiplatform "${BIN_DIR}" kubectl "https://dl.k8s.io/release/v1.23.6/bin/linux/amd64/kubectl" "https://dl.k8s.io/release/v1.23.6/bin/darwin/amd64/kubectl"
@@ -77,13 +72,25 @@ if ! command -v docker; then
   exit 1
 fi
 
+KIND_BIN="$BIN_DIR/kind"
+if ! command -v $KIND_BIN; then
+  echo "'kind' not available in '$BIN_DIR', please run 'make depend'"
+  exit 1
+fi
+
+HELM_BIN="$BIN_DIR/helm"
+if ! command -v $HELM_BIN; then
+  echo "'helm' not available in '$BIN_DIR', please run 'make depend'"
+  exit 1
+fi
+
 export PATH="$BIN_DIR:$PATH"
 
 CLUSTER_NAME="cert-manager-csi-driver-cluster"
 exit_command() {
-  kind export logs "${ARTIFACTS}" --name="$CLUSTER_NAME"
+  $KIND_BIN export logs "${ARTIFACTS}" --name="$CLUSTER_NAME"
   if [ -z "${SKIP_CLEANUP:-}" ]; then
-    kind delete cluster --name="$CLUSTER_NAME"
+    $KIND_BIN delete cluster --name="$CLUSTER_NAME"
   else
     echo "Skipping cleanup due to SKIP_CLEANUP flag set - run 'kind delete cluster --name=$CLUSTER_NAME' to cleanup"
   fi
@@ -99,8 +106,8 @@ sleep 2
 
 echo "Creating kind cluster named '$CLUSTER_NAME'"
 # Kind image with Kubernetes v1.22.compatible with kind v0.11.1
-kind create cluster --image=kindest/node@sha256:100b3558428386d1372591f8d62add85b900538d94db8e455b66ebaf05a3ca3a --name="$CLUSTER_NAME"
-export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
+$KIND_BIN create cluster --image=kindest/node@sha256:100b3558428386d1372591f8d62add85b900538d94db8e455b66ebaf05a3ca3a --name="$CLUSTER_NAME"
+export KUBECONFIG="$($KIND_BIN get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml"
 echo "Installing cert-manager in test cluster using manifest URL '$CERT_MANAGER_MANIFEST_URL'"
@@ -112,10 +119,10 @@ echo "Building cert-manager-csi-driver container"
 docker build -t "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG" .
 
 echo "Loading '$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG' image into kind cluster"
-kind load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
+$KIND_BIN load docker-image --name="$CLUSTER_NAME" "$CERT_MANAGER_CSI_DOCKER_IMAGE:$CERT_MANAGER_CSI_DOCKER_TAG"
 
 echo "Deploying cert-manager-csi-driver into test cluster"
-./bin/helm upgrade --install -n cert-manager cert-manager-csi-driver ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
+$HELM_BIN upgrade --install -n cert-manager cert-manager-csi-driver ./deploy/charts/csi-driver --set image.repository=$CERT_MANAGER_CSI_DOCKER_IMAGE --set image.tag=$CERT_MANAGER_CSI_DOCKER_TAG
 
 echo "Waiting 30s to allow Deployment & DaemonSet controllers to create pods"
 sleep 30
