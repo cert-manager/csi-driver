@@ -27,15 +27,54 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 
 	"github.com/cert-manager/csi-driver/test/unit"
-	"github.com/cert-manager/csi-lib/metadata"
 )
 
-func Test_Create(t *testing.T) {
-	const basepassword = "test-password"
-	basemeta := metadata.Metadata{
-		VolumeContext: map[string]string{"csi.cert-manager.io/pkcs12-password": basepassword},
+func Test_Handle(t *testing.T) {
+	root := unit.MustCreateBundle(t, nil, "root")
+
+	tests := map[string]struct {
+		attributes map[string]string
+		pk         crypto.PrivateKey
+		chainPEM   []byte
+		expFiles   []string
+		expErr     bool
+	}{
+		"if no PKCS12 attributes provided, expect no files written": {
+			attributes: map[string]string{},
+			pk:         root.PK,
+			chainPEM:   root.PEM,
+			expFiles:   []string{},
+			expErr:     false,
+		},
+		"if PKCS12 enabled with options, expect file written": {
+			attributes: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-password": "my-password",
+				"csi.cert-manager.io/pkcs12-filename": "crt.p12",
+			},
+			pk:       root.PK,
+			chainPEM: root.PEM,
+			expFiles: []string{"crt.p12"},
+			expErr:   false,
+		},
 	}
 
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			files := make(map[string][]byte)
+			err := Handle(test.attributes, files, test.pk, test.chainPEM)
+			assert.NoError(t, err)
+
+			var gotFiles []string
+			for k := range files {
+				gotFiles = append(gotFiles, k)
+			}
+			assert.ElementsMatch(t, test.expFiles, gotFiles)
+		})
+	}
+}
+
+func Test_create(t *testing.T) {
 	root := unit.MustCreateBundle(t, nil, "root")
 	int1 := unit.MustCreateBundle(t, root, "int1")
 	int2 := unit.MustCreateBundle(t, int1, "int2")
@@ -76,11 +115,11 @@ func Test_Create(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			resp, err := Create(basemeta, test.pk, test.chainPEM)
+			resp, err := create("test-password", test.pk, test.chainPEM)
 			require.Equal(t, test.expErr, err != nil, "%v", err)
 
 			if !test.expErr {
-				pk, cert, cas, err := pkcs12.DecodeChain(resp, basepassword)
+				pk, cert, cas, err := pkcs12.DecodeChain(resp, "test-password")
 				require.NoError(t, err)
 
 				assert.Equal(t, test.expPK, pk)

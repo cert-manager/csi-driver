@@ -81,13 +81,9 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		attrs[csiapi.CAFileKey]:   ca,
 	}
 
-	if attrs[csiapi.KeyStorePKCS12EnableKey] == "true" {
-		pfx, err := pkcs12.Create(meta, key, chain)
-		if err != nil {
-			return fmt.Errorf("failed to create pkcs12 file: %w", err)
-		}
-
-		files[attrs[csiapi.KeyStorePKCS12FileKey]] = pfx
+	// Handle PKCS12 keystore attributes.
+	if err := pkcs12.Handle(attrs, files, key, chain); err != nil {
+		return err
 	}
 
 	// Calculate the next issuance time and check errors before writing files.
