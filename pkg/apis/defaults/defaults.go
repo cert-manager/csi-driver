@@ -47,11 +47,24 @@ func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, er
 
 	setDefaultIfEmpty(attr, csiapi.KeyUsagesKey, strings.Join([]string{string(cmapi.UsageDigitalSignature), string(cmapi.UsageKeyEncipherment)}, ","))
 
+	setDefaultKeyStorePKCS12(attr)
+
 	return attr, nil
 }
 
 func setDefaultIfEmpty(attr map[string]string, k, v string) {
 	if len(attr[string(k)]) == 0 {
 		attr[string(k)] = v
+	}
+}
+
+// setDefaultKeystorePKCS12 sets the default values for the PKCS12 relevant
+// attributes. If the csiapi.KeyStorePKCS12EnableKey key is not defined, omit
+// setting defaults on the other PKCS12 keys, since they should not be present
+// in the attributes at all. If the other attributes are present, then a
+// validation error will be picked up by validation.
+func setDefaultKeyStorePKCS12(attr map[string]string) {
+	if _, ok := attr[csiapi.KeyStorePKCS12EnableKey]; ok {
+		setDefaultIfEmpty(attr, csiapi.KeyStorePKCS12FileKey, "keystore.p12")
 	}
 }

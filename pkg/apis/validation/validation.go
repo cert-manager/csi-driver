@@ -17,6 +17,8 @@ limitations under the License.
 package validation
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -51,6 +53,15 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
 
 	el = append(el, keyEncodingValue(path.Child(csiapi.KeyEncodingKey), attr[csiapi.KeyEncodingKey])...)
+
+	el = append(el, pkcs12Values(path, attr)...)
+
+	el = append(el, uniqueFilePaths(path, map[string]string{
+		csiapi.CAFileKey:             attr[csiapi.CAFileKey],
+		csiapi.CertFileKey:           attr[csiapi.CertFileKey],
+		csiapi.KeyFileKey:            attr[csiapi.KeyFileKey],
+		csiapi.KeyStorePKCS12FileKey: attr[csiapi.KeyStorePKCS12FileKey],
+	})...)
 
 	// If there are errors, then return not approved and the aggregated errors.
 	if len(el) > 0 {
@@ -111,5 +122,72 @@ func keyEncodingValue(path *field.Path, s string) field.ErrorList {
 	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) {
 		return field.ErrorList{field.NotSupported(path, s, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
 	}
+	return nil
+}
+
+// uniqueFilePaths returns an error when the given attributes and corresponding
+// file path values have a duplicate file path value.
+func uniqueFilePaths(path *field.Path, paths map[string]string) field.ErrorList {
+	var el field.ErrorList
+
+	for k, v := range paths {
+		unique := make(map[string]struct{})
+		unique[v] = struct{}{}
+		for k2, v2 := range paths {
+			if k != k2 {
+				if _, ok := unique[v2]; ok {
+					el = append(el, field.Duplicate(path.Child(k2), v2))
+				}
+			}
+		}
+	}
+
+	// Sort to get output consistency for unit testing.
+	sort.SliceStable(el, func(i, j int) bool {
+		return el[i].Error() < el[j].Error()
+	})
+
+	return el
+}
+
+// pkcs12Values validates the PKCS12 attributes are valid.
+func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
+	var el field.ErrorList
+
+	if enable := attr[csiapi.KeyStorePKCS12EnableKey]; len(enable) > 0 {
+		if file := attr[csiapi.KeyStorePKCS12FileKey]; len(file) == 0 {
+			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
+		}
+		if password := attr[csiapi.KeyStorePKCS12PasswordKey]; len(password) == 0 {
+			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
+		}
+
+		switch enable {
+		case "false", "true":
+		default:
+			el = append(el, field.NotSupported(path.Child(csiapi.KeyStorePKCS12EnableKey), enable, []string{"true", "false"}))
+		}
+
+	} else {
+		// No PKCS12 attributes should be defined when PKCS12 is not defined.
+
+		if file, ok := attr[csiapi.KeyStorePKCS12FileKey]; ok {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12FileKey), file,
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
+		}
+
+		if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; ok {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordKey), password,
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
+		}
+	}
+
+	// Always check for breakout.
+	el = append(el, filepathBreakout(path.Child(csiapi.KeyStorePKCS12FileKey), attr[csiapi.KeyStorePKCS12FileKey])...)
+
+	if len(el) > 0 {
+		return el
+	}
+
 	return nil
 }

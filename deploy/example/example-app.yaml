@@ -67,3 +67,6 @@ spec:
                   csi.cert-manager.io/issuer-name: ca-issuer
                   csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
                   csi.cert-manager.io/uri-sans: "spiffe://cluster.local/ns/${POD_NAMESPACE}/pod/${POD_NAME}}/${POD_UID}"
+                  csi.cert-manager.io/pkcs12-enable: "true"
+                  csi.cert-manager.io/pkcs12-password: "my-password"
+                  csi.cert-manager.io/pkcs12-filename: "crt.p12"

@@ -28,6 +28,8 @@ import (
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"software.sslmate.com/src/go-pkcs12"
 )
 
 var (
@@ -36,13 +38,16 @@ var (
 )
 
 type testBundle struct {
+	ca      *x509.Certificate
 	caPEM   []byte
+	cert    *x509.Certificate
 	certPEM []byte
 	pk      *rsa.PrivateKey
 	pkPEM   []byte
 }
 
 type keyEncoder func(key *rsa.PrivateKey) (*pem.Block, error)
+
 var (
 	pkcs1Encoder keyEncoder = func(key *rsa.PrivateKey) (*pem.Block, error) {
 		pkBytes := x509.MarshalPKCS1PrivateKey(key)
@@ -64,9 +69,7 @@ func newTestBundle(t *testing.T, encoder keyEncoder) testBundle {
 	}
 
 	pemBlock, err := encoder(pk)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	pkPEM := pem.EncodeToMemory(pemBlock)
 
 	template := x509.Certificate{
@@ -77,12 +80,25 @@ func newTestBundle(t *testing.T, encoder keyEncoder) testBundle {
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	cert, err := x509.ParseCertificate(derBytes)
+	require.NoError(t, err)
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 
-	return testBundle{[]byte("CA Certificate"), certPEM, pk, pkPEM}
+	rootTemplate := &x509.Certificate{
+		SerialNumber:          new(big.Int).Lsh(big.NewInt(1), 128),
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		BasicConstraintsValid: true,
+	}
+
+	rootDER, err := x509.CreateCertificate(rand.Reader, rootTemplate, rootTemplate, &pk.PublicKey, pk)
+	require.NoError(t, err)
+	ca, err := x509.ParseCertificate(rootDER)
+	require.NoError(t, err)
+	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: rootDER})
+
+	return testBundle{ca, caPEM, cert, certPEM, pk, pkPEM}
 }
 
 func Test_calculateNextIssuanceTime(t *testing.T) {
@@ -137,9 +153,9 @@ func Test_WriteKeypair(t *testing.T) {
 	tests := map[string]struct {
 		meta metadata.Metadata
 
-		testBundle	testBundle
-		expFiles  	map[string][]byte
-		expErr    	bool
+		testBundle testBundle
+		expFiles   map[string][]byte
+		expErr     bool
 	}{
 		"if no additional attributes given, expect files to be written with NextIssuanceTime 2/3rds": {
 			testBundle: pkcs1Bundle,
@@ -226,7 +242,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "PKCS8",
 				},
 			},
@@ -247,7 +263,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "UNKNOWN_ENCODER",
 				},
 			},
@@ -285,7 +301,7 @@ func Test_WriteKeypair(t *testing.T) {
 				VolumeID:   "vol-id",
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
-					"csi.cert-manager.io/issuer-name": "ca-issuer",
+					"csi.cert-manager.io/issuer-name":  "ca-issuer",
 					"csi.cert-manager.io/key-encoding": "",
 				},
 			},
@@ -299,6 +315,91 @@ func Test_WriteKeypair(t *testing.T) {
 			},
 			expErr: false,
 		},
+		"keystore PKCS12 with defined file and password": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":     "ca-issuer",
+					"csi.cert-manager.io/key-encoding":    "PKCS8",
+					"csi.cert-manager.io/pkcs12-enable":   "true",
+					"csi.cert-manager.io/pkcs12-filename": "my-file.pfx",
+					"csi.cert-manager.io/pkcs12-password": "my-password",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs8Bundle.caPEM,
+				"tls.crt": pkcs8Bundle.certPEM,
+				"tls.key": pkcs8Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/pkcs12-enable":"true","csi.cert-manager.io/pkcs12-filename":"my-file.pfx","csi.cert-manager.io/pkcs12-password":"my-password"}}`,
+				),
+			},
+			expErr: false,
+		},
+		"keystore PKCS12 with no file should default to ketstore.p12": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":     "ca-issuer",
+					"csi.cert-manager.io/key-encoding":    "PKCS8",
+					"csi.cert-manager.io/pkcs12-enable":   "true",
+					"csi.cert-manager.io/pkcs12-password": "my-password",
+				},
+			},
+			expFiles: map[string][]byte{
+				"ca.crt":  pkcs8Bundle.caPEM,
+				"tls.crt": pkcs8Bundle.certPEM,
+				"tls.key": pkcs8Bundle.pkPEM,
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/pkcs12-enable":"true","csi.cert-manager.io/pkcs12-password":"my-password"}}`,
+				),
+			},
+			expErr: false,
+		},
+		"keystore PKCS12 with no password and breakout file should error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":     "ca-issuer",
+					"csi.cert-manager.io/key-encoding":    "PKCS8",
+					"csi.cert-manager.io/pkcs12-enable":   "true",
+					"csi.cert-manager.io/pkcs12-filename": "../my-file.pfx",
+					"csi.cert-manager.io/pkcs12-password": "",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/pkcs12-enable":"true","csi.cert-manager.io/pkcs12-filename":"../my-file.pfx","csi.cert-manager.io/pkcs12-password":""}}`,
+				),
+			},
+			expErr: true,
+		},
+		"incorrect pkcs12 attribute should error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":     "ca-issuer",
+					"csi.cert-manager.io/key-encoding":    "PKCS8",
+					"csi.cert-manager.io/pkcs12-enable":   "foo",
+					"csi.cert-manager.io/pkcs12-filename": "my-file.pfx",
+					"csi.cert-manager.io/pkcs12-password": "my-password",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"PKCS8","csi.cert-manager.io/pkcs12-enable":"foo","csi.cert-manager.io/pkcs12-filename":"my-file.pfx","csi.cert-manager.io/pkcs12-password":"my-password"}}`,
+				),
+			},
+			expErr: true,
+		},
 	}
 
 	for name, test := range tests {
@@ -310,11 +411,31 @@ func Test_WriteKeypair(t *testing.T) {
 			assert.NoError(t, err)
 
 			testBundle := test.testBundle
-			err = w.WriteKeypair(test.meta, testBundle.pk, testBundle.certPEM, testBundle.caPEM)
-			assert.Equal(t, test.expErr, err != nil, "%v", err)
+			werr := w.WriteKeypair(test.meta, testBundle.pk, testBundle.certPEM, testBundle.caPEM)
+			require.Equal(t, test.expErr, werr != nil, "%v", werr)
 
 			files, err := store.ReadFiles("vol-id")
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
+			// Only check pkcs12 files if it has been enabled, and if there was no
+			// WriteKeypair error.
+			if test.meta.VolumeContext["csi.cert-manager.io/pkcs12-enable"] == "true" && werr == nil {
+				pkcs12File := test.meta.VolumeContext["csi.cert-manager.io/pkcs12-filename"]
+				if pkcs12File == "" {
+					pkcs12File = "keystore.p12"
+				}
+
+				pk, cert, cas, err := pkcs12.DecodeChain(files[pkcs12File], test.meta.VolumeContext["csi.cert-manager.io/pkcs12-password"])
+				require.NoError(t, err)
+
+				assert.Equal(t, test.testBundle.pk, pk)
+				assert.Equal(t, test.testBundle.cert, cert)
+				assert.Empty(t, cas)
+
+				// Delete the pksc12 file to let the assertion for expFiles proceed.
+				delete(files, pkcs12File)
+			}
+
 			assert.Equal(t, test.expFiles, files)
 		})
 	}

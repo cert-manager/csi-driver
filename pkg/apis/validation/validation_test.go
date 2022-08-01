@@ -38,6 +38,9 @@ func Test_ValidateAttributes(t *testing.T) {
 	}{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
 				csiapi.KeyEncodingKey: "PKCS1",
 			},
@@ -47,6 +50,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.CommonNameKey:  "foo.bar",
 				csiapi.KeyEncodingKey: "PKCS1",
 			},
@@ -57,6 +63,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.CommonNameKey:  "foo.bar",
 				csiapi.KeyEncodingKey: "PKCS1",
 			},
@@ -65,6 +74,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
 				csiapi.KeyEncodingKey: "PKCS1",
 			},
@@ -73,6 +85,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"valid attributes with one key usages should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:   "client auth",
 				csiapi.KeyEncodingKey: "PKCS1",
@@ -82,6 +97,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"valid attributes with key usages extended key usages should return no error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:   "code signing  ,      email protection,    s/mime,ipsec end system",
 				csiapi.KeyEncodingKey: "PKCS1",
@@ -91,6 +109,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"attributes with wrong key usages should error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.CAFileKey:      "ca.crt",
+				csiapi.CertFileKey:    "crt.tls",
+				csiapi.KeyFileKey:     "key.tls",
 				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
 				csiapi.KeyUsagesKey:   "foo,bar,hello world",
 				csiapi.KeyEncodingKey: "PKCS1",
@@ -104,6 +125,9 @@ func Test_ValidateAttributes(t *testing.T) {
 		"bad duration and a bad bool value should error": {
 			attr: map[string]string{
 				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
 				csiapi.DurationKey:     "bad-duration",
 				csiapi.ReusePrivateKey: "FOO",
 				csiapi.KeyEncodingKey:  "PKCS1",
@@ -113,11 +137,61 @@ func Test_ValidateAttributes(t *testing.T) {
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/reuse-private-key"), "FOO", `may only accept values of "true" or "false"`),
 			},
 		},
+		"invalid PKCS12 options should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:             "test-issuer",
+				csiapi.KeyEncodingKey:            "PKCS1",
+				csiapi.CAFileKey:                 "ca.crt",
+				csiapi.CertFileKey:               "crt.tls",
+				csiapi.KeyFileKey:                "key.tls",
+				csiapi.KeyStorePKCS12FileKey:     "../crt.p12",
+				csiapi.KeyStorePKCS12PasswordKey: "password",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-password"), "password",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
+					`filepaths may not contain ".."`),
+			},
+		},
+		"setting output filenames which are duplicated should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:             "test-issuer",
+				csiapi.KeyEncodingKey:            "PKCS1",
+				csiapi.CAFileKey:                 "ca.crt",
+				csiapi.CertFileKey:               "crt.tls",
+				csiapi.KeyFileKey:                "ca.crt",
+				csiapi.KeyStorePKCS12FileKey:     "crt.tls",
+				csiapi.KeyStorePKCS12EnableKey:   "true",
+				csiapi.KeyStorePKCS12PasswordKey: "password",
+			},
+			expErr: field.ErrorList{
+				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "ca.crt"),
+				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/certificate-file"), "crt.tls"),
+				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "crt.tls"),
+				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "ca.crt"),
+			},
+		},
+		"correct PKCS12 options should not error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:             "test-issuer",
+				csiapi.KeyEncodingKey:            "PKCS1",
+				csiapi.CAFileKey:                 "ca.crt",
+				csiapi.CertFileKey:               "crt.tls",
+				csiapi.KeyFileKey:                "key.tls",
+				csiapi.KeyStorePKCS12EnableKey:   "true",
+				csiapi.KeyStorePKCS12FileKey:     "crt.p12",
+				csiapi.KeyStorePKCS12PasswordKey: "password",
+			},
+			expErr: nil,
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expErr, ValidateAttributes(test.attr))
+			assert.EqualValues(t, test.expErr, ValidateAttributes(test.attr))
 		})
 	}
 }
@@ -234,6 +308,140 @@ func Test_keyEncodingValue(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expErr, keyEncodingValue(field.NewPath("my-pkcs"), test.s))
+		})
+	}
+}
+
+func Test_PKCS12Values(t *testing.T) {
+	basePath := field.NewPath("root")
+
+	tests := map[string]struct {
+		attr   map[string]string
+		expErr field.ErrorList
+	}{
+		"if no attributes, expect no error": {
+			attr:   map[string]string{},
+			expErr: nil,
+		},
+		"if key and password is defined, but enabled is not defined, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(basePath.Child("csi.cert-manager.io/pkcs12-filename"), "my-file",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+				field.Invalid(basePath.Child("csi.cert-manager.io/pkcs12-password"), "password",
+					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
+			},
+		},
+
+		"if key and password is defined, and enabled is defined as false, expect no error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "false",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
+		"if key and password is defined, but enabled is defined as foo, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "foo",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: field.ErrorList{
+				field.NotSupported(basePath.Child("csi.cert-manager.io/pkcs12-enable"), "foo", []string{"true", "false"}),
+			},
+		},
+		"if key and password is not defined, and enabled is defined as true, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable": "true",
+			},
+			expErr: field.ErrorList{
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-filename"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
+			},
+		},
+		"if key and password is defined as empty string, and enabled is defined as true, expect error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-filename": "",
+				"csi.cert-manager.io/pkcs12-password": "",
+			},
+			expErr: field.ErrorList{
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-filename"), "required attribute when PKCS12 KeyStore is enabled"),
+				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
+			},
+		},
+		"if key and password is defined, and enabled is defined as true, expect no error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.EqualValues(t, test.expErr, pkcs12Values(basePath, test.attr))
+		})
+	}
+}
+
+func Test_uniqueFilePaths(t *testing.T) {
+	basePath := field.NewPath("root")
+
+	tests := map[string]struct {
+		paths  map[string]string
+		expErr field.ErrorList
+	}{
+		"if no paths, expect no error": {
+			paths:  map[string]string{},
+			expErr: nil,
+		},
+		"if all paths are unique, expect no error": {
+			paths: map[string]string{
+				"a": "1", "b": "2", "c": "3",
+			},
+			expErr: nil,
+		},
+		"if some paths have duplicates, expect error": {
+			paths: map[string]string{
+				"a": "1", "b": "2", "c": "2", "d": "4",
+			},
+			expErr: field.ErrorList{
+				field.Duplicate(basePath.Child("b"), "2"),
+				field.Duplicate(basePath.Child("c"), "2"),
+			},
+		},
+		"if some other paths have duplicates, expect error": {
+			paths: map[string]string{
+				"a": "1", "b": "2", "c": "3", "d": "1",
+			},
+			expErr: field.ErrorList{
+				field.Duplicate(basePath.Child("a"), "1"),
+				field.Duplicate(basePath.Child("d"), "1"),
+			},
+		},
+		"if all paths have duplicates, error": {
+			paths: map[string]string{
+				"a": "1", "b": "2", "c": "2", "d": "1",
+			},
+			expErr: field.ErrorList{
+				field.Duplicate(basePath.Child("a"), "1"),
+				field.Duplicate(basePath.Child("b"), "2"),
+				field.Duplicate(basePath.Child("c"), "2"),
+				field.Duplicate(basePath.Child("d"), "1"),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.EqualValues(t, test.expErr, uniqueFilePaths(basePath, test.paths))
 		})
 	}
 }

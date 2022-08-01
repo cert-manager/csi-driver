@@ -33,8 +33,8 @@ import (
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/remotecommand"
 
-	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/cert-manager/test/e2e/framework/log"
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, mountPath string,
@@ -51,12 +51,12 @@ func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, moun
 	}
 	keyPath = filepath.Join(mountPath, keyPath)
 
-	certData, err := h.readFilePathFromContainer(namespace, podName, containerName, certPath)
+	certData, err := h.ReadFilePathFromContainer(namespace, podName, containerName, certPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read cert data from pod: %s", err)
 	}
 
-	keyData, err := h.readFilePathFromContainer(namespace, podName, containerName, keyPath)
+	keyData, err := h.ReadFilePathFromContainer(namespace, podName, containerName, keyPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read key data from pod: %s", err)
 	}
@@ -93,7 +93,7 @@ func (h *Helper) CertificateKeyMatch(cr *cmapi.CertificateRequest, certData, key
 	return nil
 }
 
-func (h *Helper) readFilePathFromContainer(namespace, podName, containerName, path string) ([]byte, error) {
+func (h *Helper) ReadFilePathFromContainer(namespace, podName, containerName, path string) ([]byte, error) {
 	coreclient, err := corev1client.NewForConfig(h.RestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build core client form rest config: %s", err)

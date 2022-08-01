@@ -28,7 +28,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	csi "github.com/cert-manager/csi-driver/pkg/apis"
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 	"github.com/cert-manager/csi-driver/test/e2e/util"
 )
@@ -134,41 +133,7 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 		attributes[k] = v
 	}
 
-	testVolume := corev1.Volume{
-		Name: "tls",
-		VolumeSource: corev1.VolumeSource{
-			CSI: &corev1.CSIVolumeSource{
-				Driver:           csi.GroupName,
-				ReadOnly:         boolPtr(true),
-				VolumeAttributes: attributes,
-			},
-		},
-	}
-
-	testPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: f.BaseName + "-",
-			Namespace:    f.Namespace.Name,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				corev1.Container{
-					Name:    "test-container-1",
-					Image:   "busybox",
-					Command: []string{"sleep", "10000"},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							MountPath: "/tls",
-							Name:      "tls",
-						},
-					},
-				},
-			},
-			Volumes: []corev1.Volume{
-				testVolume,
-			},
-		},
-	}
+	testVolume, testPod := basePod(f, attributes)
 
 	By("Creating a Pod")
 	testPod, err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), testPod, metav1.CreateOptions{})

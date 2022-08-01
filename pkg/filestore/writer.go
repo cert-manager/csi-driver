@@ -24,13 +24,14 @@ import (
 	"fmt"
 	"time"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
-	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/apis/validation"
+	"github.com/cert-manager/csi-driver/pkg/keystore/pkcs12"
 )
 
 // Writer wraps the storage backend to allow access for writing data.
@@ -74,6 +75,17 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 
 	keyPEM := pem.EncodeToMemory(pemBlock)
 
+	files := map[string][]byte{
+		attrs[csiapi.KeyFileKey]:  keyPEM,
+		attrs[csiapi.CertFileKey]: chain,
+		attrs[csiapi.CAFileKey]:   ca,
+	}
+
+	// Handle PKCS12 keystore attributes.
+	if err := pkcs12.Handle(attrs, files, key, chain); err != nil {
+		return err
+	}
+
 	// Calculate the next issuance time and check errors before writing files.
 	// This prevents cases where we write files but also have errors in the
 	// nextIssuanceTime, putting the volume into a bad state.
@@ -82,11 +94,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 		return fmt.Errorf("calculating next issuance time: %w", err)
 	}
 
-	if err := w.Store.WriteFiles(meta, map[string][]byte{
-		attrs[csiapi.KeyFileKey]:  keyPEM,
-		attrs[csiapi.CertFileKey]: chain,
-		attrs[csiapi.CAFileKey]:   ca,
-	}); err != nil {
+	if err := w.Store.WriteFiles(meta, files); err != nil {
 		return fmt.Errorf("writing data: %w", err)
 	}
 
