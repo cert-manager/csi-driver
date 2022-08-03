@@ -126,6 +126,7 @@ func keyEncodingValue(path *field.Path, s string) field.ErrorList {
 // 2. starting with '..'
 // 3. contain '/'
 // 4. longer than 255 characters
+// 4. include leading or trailing spaces
 func filename(path *field.Path, filename string) field.ErrorList {
 	var el field.ErrorList
 
@@ -133,7 +134,7 @@ func filename(path *field.Path, filename string) field.ErrorList {
 		el = append(el, field.Invalid(path, filename, "filename must not be an absolute path"))
 	}
 
-	if filepath.HasPrefix(filename, "..") {
+	if strings.HasPrefix(filename, "..") {
 		el = append(el, field.Invalid(path, filename, "filename must not start with '..'"))
 	}
 
@@ -144,6 +145,11 @@ func filename(path *field.Path, filename string) field.ErrorList {
 	if len(filename) > 255 {
 		el = append(el, field.Invalid(path, filename, "filename must be no longer than 255 characters"))
 	}
+
+	if filename != strings.TrimSpace(filename) {
+		el = append(el, field.Invalid(path, filename, "filename must not include leading or trailing spaces"))
+	}
+
 	if len(el) > 0 {
 		return el
 	}

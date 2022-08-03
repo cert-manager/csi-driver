@@ -369,6 +369,14 @@ func Test_PKCS12Values(t *testing.T) {
 			},
 			expErr: nil,
 		},
+		"if key and password is defined, and enabled is defined as true, expect no error foo": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-filename": "/my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
 	}
 
 	for name, test := range tests {
@@ -402,6 +410,24 @@ func Test_filename(t *testing.T) {
 			filename: "foo/bar",
 			expErr: field.ErrorList{
 				field.Invalid(basePath, "foo/bar", "filename must not include '/'"),
+			},
+		},
+		"a filename which includes ' ' at the beginning should error": {
+			filename: "  foo",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "  foo", "filename must not include leading or trailing spaces"),
+			},
+		},
+		"a filename which includes ' ' at the end should error": {
+			filename: "foo  ",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "foo  ", "filename must not include leading or trailing spaces"),
+			},
+		},
+		"a filename which includes ' ' at the end or beginning should error": {
+			filename: " foo ",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, " foo ", "filename must not include leading or trailing spaces"),
 			},
 		},
 		"a filename which is too long should error": {
