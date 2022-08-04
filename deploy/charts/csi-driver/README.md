@@ -1,6 +1,6 @@
 # cert-manager-csi-driver
 
-![Version: v0.3.2](https://img.shields.io/badge/Version-v0.3.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.3.0](https://img.shields.io/badge/AppVersion-v0.3.0-informational?style=flat-square)
+![Version: v0.4.0](https://img.shields.io/badge/Version-v0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.4.0](https://img.shields.io/badge/AppVersion-v0.4.0-informational?style=flat-square)
 
 A Helm chart for cert-manager-csi-driver
 
@@ -29,7 +29,7 @@ A Helm chart for cert-manager-csi-driver
 | app.logLevel | int | `1` | Verbosity of cert-manager-csi-driver logging. |
 | image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on csi-driver. |
 | image.repository | string | `"quay.io/jetstack/cert-manager-csi-driver"` | Target image repository. |
-| image.tag | string | `"v0.3.0"` | Target image version tag. |
+| image.tag | string | `"v0.4.0"` | Target image version tag. |
 | livenessProbeImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on liveness probe. |
 | livenessProbeImage.repository | string | `"k8s.gcr.io/sig-storage/livenessprobe"` | Target image repository. |
 | livenessProbeImage.tag | string | `"v2.6.0"` | Target image version tag. |

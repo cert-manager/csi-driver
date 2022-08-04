@@ -2,7 +2,7 @@ image:
   # -- Target image repository.
   repository: quay.io/jetstack/cert-manager-csi-driver
   # -- Target image version tag.
-  tag: v0.3.0
+  tag: v0.4.0
   # -- Kubernetes imagePullPolicy on csi-driver.
   pullPolicy: IfNotPresent
 
