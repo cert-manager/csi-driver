@@ -220,17 +220,17 @@ func Test_WriteKeypair(t *testing.T) {
 				TargetPath: "/target-path",
 				VolumeContext: map[string]string{
 					"csi.cert-manager.io/issuer-name":      "ca-issuer",
-					"csi.cert-manager.io/ca-file":          "foo/bar",
+					"csi.cert-manager.io/ca-file":          "foo",
 					"csi.cert-manager.io/certificate-file": "my-crt",
-					"csi.cert-manager.io/privatekey-file":  "hello/world/key",
+					"csi.cert-manager.io/privatekey-file":  "hello",
 				},
 			},
 			expFiles: map[string][]byte{
-				"foo/bar":         pkcs1Bundle.caPEM,
-				"my-crt":          pkcs1Bundle.certPEM,
-				"hello/world/key": pkcs1Bundle.pkPEM,
+				"foo":    pkcs1Bundle.caPEM,
+				"my-crt": pkcs1Bundle.certPEM,
+				"hello":  pkcs1Bundle.pkPEM,
 				"metadata.json": []byte(
-					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/ca-file":"foo/bar","csi.cert-manager.io/certificate-file":"my-crt","csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/privatekey-file":"hello/world/key"}}`,
+					`{"volumeID":"vol-id","targetPath":"/target-path","nextIssuanceTime":"1970-01-03T00:00:00Z","volumeContext":{"csi.cert-manager.io/ca-file":"foo","csi.cert-manager.io/certificate-file":"my-crt","csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/privatekey-file":"hello"}}`,
 				),
 			},
 			expErr: false,
@@ -270,6 +270,25 @@ func Test_WriteKeypair(t *testing.T) {
 			expFiles: map[string][]byte{
 				"metadata.json": []byte(
 					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/key-encoding":"UNKNOWN_ENCODER"}}`,
+				),
+			},
+			expErr: true,
+		},
+		"if filename contains bad filenames, expect error": {
+			testBundle: pkcs8Bundle,
+			meta: metadata.Metadata{
+				VolumeID:   "vol-id",
+				TargetPath: "/target-path",
+				VolumeContext: map[string]string{
+					"csi.cert-manager.io/issuer-name":      "ca-issuer",
+					"csi.cert-manager.io/certificate-file": "foo/bar",
+					"csi.cert-manager.io/privatekey-file":  "/foo",
+					"csi.cert-manager.io/ca-file":          "../foo",
+				},
+			},
+			expFiles: map[string][]byte{
+				"metadata.json": []byte(
+					`{"volumeID":"vol-id","targetPath":"/target-path","volumeContext":{"csi.cert-manager.io/ca-file":"../foo","csi.cert-manager.io/certificate-file":"foo/bar","csi.cert-manager.io/issuer-name":"ca-issuer","csi.cert-manager.io/privatekey-file":"/foo"}}`,
 				),
 			},
 			expErr: true,

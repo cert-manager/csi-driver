@@ -149,11 +149,13 @@ func Test_ValidateAttributes(t *testing.T) {
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
+					`filename must not start with '..'`),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
+					`filename must not include '/'`),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
 					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-password"), "password",
 					"cannot use attribute without \"csi.cert-manager.io/pkcs12-enable\" set to \"true\" or \"false\""),
-				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
-					`filepaths may not contain ".."`),
 			},
 		},
 		"setting output filenames which are duplicated should error": {
@@ -187,43 +189,28 @@ func Test_ValidateAttributes(t *testing.T) {
 			},
 			expErr: nil,
 		},
+		"bad filenames for the certificate, key, and ca files should error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:  "test-issuer",
+				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
+				csiapi.CAFileKey:      "../foo/../bar",
+				csiapi.KeyEncodingKey: "PKCS8",
+				csiapi.CertFileKey:    "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo",
+				csiapi.KeyFileKey:     "/foobar",
+			},
+			expErr: field.ErrorList{
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "../foo/../bar", "filename must not start with '..'"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "../foo/../bar", "filename must not include '/'"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/certificate-file"), "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo", "filename must be no longer than 255 characters"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "/foobar", "filename must not be an absolute path"),
+				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "/foobar", "filename must not include '/'"),
+			},
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.EqualValues(t, test.expErr, ValidateAttributes(test.attr))
-		})
-	}
-}
-
-func Test_filepathBreakOut(t *testing.T) {
-	for name, test := range map[string]struct {
-		s      string
-		expErr field.ErrorList
-	}{
-		"normal filepath should not errors": {
-			s:      "foo/bar",
-			expErr: nil,
-		},
-		"no filepath shouldn't error": {
-			s:      "",
-			expErr: nil,
-		},
-		"single dot should not error": {
-			s:      "foo/./bar",
-			expErr: nil,
-		},
-		"two dots should error in middle": {
-			s:      "foo/../bar",
-			expErr: field.ErrorList{field.Invalid(field.NewPath("my-path"), "foo/../bar", `filepaths may not contain ".."`)},
-		},
-		"two dots should error": {
-			s:      "..",
-			expErr: field.ErrorList{field.Invalid(field.NewPath("my-path"), "..", `filepaths may not contain ".."`)},
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expErr, filepathBreakout(field.NewPath("my-path"), test.s))
 		})
 	}
 }
@@ -382,11 +369,90 @@ func Test_PKCS12Values(t *testing.T) {
 			},
 			expErr: nil,
 		},
+		"if key and password is defined, and enabled is defined as true, expect no error foo": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-filename": "/my-file",
+				"csi.cert-manager.io/pkcs12-password": "password",
+			},
+			expErr: nil,
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.EqualValues(t, test.expErr, pkcs12Values(basePath, test.attr))
+		})
+	}
+}
+
+func Test_filename(t *testing.T) {
+	basePath := field.NewPath("root")
+
+	tests := map[string]struct {
+		filename string
+		expErr   field.ErrorList
+	}{
+		"a filename which is absolute should error": {
+			filename: "/foo/bar",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "/foo/bar", "filename must not be an absolute path"),
+				field.Invalid(basePath, "/foo/bar", "filename must not include '/'"),
+			},
+		},
+		"a filename which has a prefix of '..' should error": {
+			filename: "...foobar",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "...foobar", "filename must not start with '..'"),
+			},
+		},
+		"a filename which includes '/' should error": {
+			filename: "foo/bar",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "foo/bar", "filename must not include '/'"),
+			},
+		},
+		"a filename which includes ' ' at the beginning should error": {
+			filename: "  foo",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "  foo", "filename must not include leading or trailing spaces"),
+			},
+		},
+		"a filename which includes ' ' at the end should error": {
+			filename: "foo  ",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "foo  ", "filename must not include leading or trailing spaces"),
+			},
+		},
+		"a filename which includes ' ' at the end or beginning should error": {
+			filename: " foo ",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, " foo ", "filename must not include leading or trailing spaces"),
+			},
+		},
+		"a filename which is too long should error": {
+			filename: "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo",
+			expErr: field.ErrorList{
+				field.Invalid(basePath, "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo", "filename must be no longer than 255 characters"),
+			},
+		},
+		"a valid filename should not error": {
+			filename: "foo.bar",
+			expErr:   nil,
+		},
+		"a filename which includes '..' in the middle should not error": {
+			filename: "foo...bar",
+			expErr:   nil,
+		},
+		"a filename which includes '..' at the end should not error": {
+			filename: "foobar...",
+			expErr:   nil,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expErr, filename(basePath, test.filename))
 		})
 	}
 }
