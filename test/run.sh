@@ -105,8 +105,8 @@ docker network create --driver=bridge --subnet=192.168.0.0/16 --gateway 192.168.
 sleep 2
 
 echo "Creating kind cluster named '$CLUSTER_NAME'"
-# Kind image with Kubernetes v1.22.compatible with kind v0.11.1
-$KIND_BIN create cluster --image=kindest/node@sha256:100b3558428386d1372591f8d62add85b900538d94db8e455b66ebaf05a3ca3a --name="$CLUSTER_NAME"
+# Kind image with Kubernetes v1.24.1
+$KIND_BIN create cluster --image=kindest/node@sha256:fd82cddc87336d91aa0a2fc35f3c7a9463c53fd8e9575e9052d2c75c61f5b083 --name="$CLUSTER_NAME"
 export KUBECONFIG="$($KIND_BIN get kubeconfig-path --name="$CLUSTER_NAME")"
 
 CERT_MANAGER_MANIFEST_URL="https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml"
