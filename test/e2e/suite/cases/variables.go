@@ -62,7 +62,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 	}
 
 	mustParseURI := func(uri string) *url.URL {
-		puri, err := url.Parse(uri)
+		puri, err := url.ParseRequestURI(uri)
 		Expect(err).NotTo(HaveOccurred())
 		return puri
 	}
@@ -93,7 +93,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 		Expect(request.URIs).To(ConsistOf([]*url.URL{
 			mustParseURI(fmt.Sprintf("spiffe://foo.bar/%s/%s/%s", pod.Namespace, pod.Name, pod.UID)),
 			mustParseURI("file://foo-bar"),
-			mustParseURI(string(pod.UID)),
+			mustParseURI(fmt.Sprintf("foo://%s", pod.UID)),
 		}))
 	})
 })

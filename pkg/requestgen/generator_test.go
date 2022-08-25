@@ -47,7 +47,7 @@ func Test_RequestForMetadata(t *testing.T) {
 	}
 
 	mustParseURI := func(t *testing.T, uri string) *url.URL {
-		puri, err := url.Parse(uri)
+		puri, err := url.ParseRequestURI(uri)
 		assert.NoError(t, err)
 		return puri
 	}
@@ -138,9 +138,9 @@ func Test_RequestForMetadata(t *testing.T) {
 				"csi.cert-manager.io/issuer-group": "joshvanl.com",
 				"csi.cert-manager.io/duration":     "1h",
 				"csi.cert-manager.io/common-name":  "${POD_NAME}.$POD_NAMESPACE",
-				"csi.cert-manager.io/dns-names":    "${POD_NAME}-my-dns-$POD_NAMESPACE-$POD_UID,$POD_NAME,${POD_NAME}.${POD_NAMESPACE},$POD_NAME.$POD_NAMESPACE.svc,$POD_UID",
-				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/${POD_NAME}/$POD_UID,file://foo-bar,${POD_UID}",
-				"csi.cert-manager.io/ip-sans":      "1.2.3.4,5.6.7.8",
+				"csi.cert-manager.io/dns-names":    "${POD_NAME}-my-dns-$POD_NAMESPACE-$POD_UID,$POD_NAME,\n             ${POD_NAME}.${POD_NAMESPACE},$POD_NAME.$POD_NAMESPACE.svc,$POD_UID",
+				"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/${POD_NAME}/$POD_UID,file://foo-bar,     foo://${POD_UID}",
+				"csi.cert-manager.io/ip-sans":      "1.2.3.4,\n \t 5.6.7.8",
 				"csi.cert-manager.io/is-ca":        "true",
 				"csi.cert-manager.io/key-usages":   "server auth,client auth",
 			}}),
@@ -156,7 +156,7 @@ func Test_RequestForMetadata(t *testing.T) {
 					URIs: []*url.URL{
 						mustParseURI(t, "spiffe://foo.bar/my-namespace/my-pod-name/my-pod-uuid"),
 						mustParseURI(t, "file://foo-bar"),
-						mustParseURI(t, "my-pod-uuid"),
+						mustParseURI(t, "foo://my-pod-uuid"),
 					},
 				},
 				IsCA: true,
@@ -263,26 +263,26 @@ func Test_URIs(t *testing.T) {
 			expErr: nil,
 		},
 		"a csv with multiple entries should expect those entries returned": {
-			csv: "spiffe://foo.bar,file://hello-world/1234,1234",
+			csv: "spiffe://foo.bar,file://hello-world/1234,foo://1234",
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "spiffe://foo.bar"),
 					mustParse(t, "file://hello-world/1234"),
-					mustParse(t, "1234"),
+					mustParse(t, "foo://1234"),
 				}
 			},
 			expErr: nil,
 		},
 		"a csv with a bad URI should return an error": {
-			csv:     "spiffe://foo.bar,\n,file://hello-world/1234,1234",
+			csv:     "spiffe://foo.bar,\n\nx\n,foo://foo\nbar,file://hello-world/1234,1234",
 			expURIs: nil,
-			expErr:  errors.New(`parse "\n": net/url: invalid control character in URL`),
+			expErr:  errors.New(`parse "x": invalid URI for request, parse "foo://foo\nbar": net/url: invalid control character in URL, parse "1234": invalid URI for request`),
 		},
 		"a single csv which uses variables should be substituted correctly": {
-			csv: `$POD_NAME-my-dns-${POD_NAMESPACE}-${POD_UID}`,
+			csv: `foo://$POD_NAME-my-dns-${POD_NAMESPACE}-${POD_UID}`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
-					mustParse(t, "my-pod-name-my-dns-my-namespace-my-pod-uuid"),
+					mustParse(t, "foo://my-pod-name-my-dns-my-namespace-my-pod-uuid"),
 				}
 			},
 			expErr: nil,
@@ -293,13 +293,13 @@ func Test_URIs(t *testing.T) {
 			expErr:  errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID SERVICE_ACCOUNT_NAME]`),
 		},
 		"a csv containing multiple entries which uses variables should be substituted correctly": {
-			csv: `spiffe://$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,spiffe://$POD_NAME,file://${POD_NAME}.$POD_NAMESPACE,$POD_NAME.$POD_NAMESPACE.svc,spiffe://$POD_UID`,
+			csv: `spiffe://$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,spiffe://$POD_NAME,file://${POD_NAME}.$POD_NAMESPACE,foo://$POD_NAME.$POD_NAMESPACE.svc,spiffe://$POD_UID`,
 			expURIs: func(t *testing.T) []*url.URL {
 				return []*url.URL{
 					mustParse(t, "spiffe://my-pod-name-my-dns-my-namespace-my-pod-uuid"),
 					mustParse(t, "spiffe://my-pod-name"),
 					mustParse(t, "file://my-pod-name.my-namespace"),
-					mustParse(t, "my-pod-name.my-namespace.svc"),
+					mustParse(t, "foo://my-pod-name.my-namespace.svc"),
 					mustParse(t, "spiffe://my-pod-uuid"),
 				}
 			},
