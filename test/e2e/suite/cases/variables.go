@@ -74,8 +74,8 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 			"csi.cert-manager.io/issuer-kind":  f.Issuer.Kind,
 			"csi.cert-manager.io/issuer-group": f.Issuer.Group,
 			"csi.cert-manager.io/common-name":  "$POD_NAME.${POD_NAMESPACE}",
-			"csi.cert-manager.io/dns-names":    "$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID},${POD_NAME},${POD_NAME}.${POD_NAMESPACE},$POD_NAME.${POD_NAMESPACE}.svc,${POD_UID},${SERVICE_ACCOUNT_NAME}",
-			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/$POD_NAME/$POD_UID,file://foo-bar,${POD_UID}",
+			"csi.cert-manager.io/dns-names":    "$POD_NAME-my-dns-$POD_NAMESPACE-${POD_UID},${POD_NAME},\n${POD_NAME}.${POD_NAMESPACE},$POD_NAME.${POD_NAMESPACE}.svc,${POD_UID},${SERVICE_ACCOUNT_NAME}",
+			"csi.cert-manager.io/uri-sans":     "spiffe://foo.bar/${POD_NAMESPACE}/$POD_NAME/$POD_UID,\nfile://foo-bar,\nbar://${POD_UID}",
 		})
 
 		request, err := pki.DecodeX509CertificateRequestBytes(cr.Spec.Request)
@@ -93,7 +93,7 @@ var _ = framework.CasesDescribe("Should correctly substitute out SANs with varia
 		Expect(request.URIs).To(ConsistOf([]*url.URL{
 			mustParseURI(fmt.Sprintf("spiffe://foo.bar/%s/%s/%s", pod.Namespace, pod.Name, pod.UID)),
 			mustParseURI("file://foo-bar"),
-			mustParseURI(fmt.Sprintf("foo://%s", pod.UID)),
+			mustParseURI(fmt.Sprintf("bar://%s", pod.UID)),
 		}))
 	})
 })
