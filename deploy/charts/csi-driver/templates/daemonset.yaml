@@ -26,7 +26,7 @@ spec:
           args:
             - -v={{ .Values.app.logLevel }}
             - --csi-address=/plugin/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/cert-manager-csi-driver/csi.sock
+            - --kubelet-registration-path={{ .Values.app.kubeletRootDir }}/plugins/cert-manager-csi-driver/csi.sock
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
@@ -76,7 +76,7 @@ spec:
             - name: plugin-dir
               mountPath: /plugin
             - name: pods-mount-dir
-              mountPath: /var/lib/kubelet/pods
+              mountPath: {{ .Values.app.kubeletRootDir }}/pods
               mountPropagation: "Bidirectional"
             - name: csi-data-dir
               mountPath: /csi-data-dir
@@ -103,14 +103,14 @@ spec:
       volumes:
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/cert-manager-csi-driver
+            path: {{ .Values.app.kubeletRootDir }}/plugins/cert-manager-csi-driver
             type: DirectoryOrCreate
         - name: pods-mount-dir
           hostPath:
-            path: /var/lib/kubelet/pods
+            path: {{ .Values.app.kubeletRootDir }}/pods
             type: Directory
         - hostPath:
-            path: /var/lib/kubelet/plugins_registry
+            path: {{ .Values.app.kubeletRootDir }}/plugins_registry
             type: Directory
           name: registration-dir
         - hostPath:
