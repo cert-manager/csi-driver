@@ -24,6 +24,7 @@ A Helm chart for cert-manager-csi-driver
 | app.driver.csiDataDir | string | `"/tmp/cert-manager-csi-driver"` | Configures the hostPath directory that the driver will write and mount volumes from. |
 | app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
 | app.driver.useTokenRequest | bool | `false` | If enabled, will use CSI token request for creating CertificateRequests. CertificateRequests will be created via mounting pod's service accounts. |
+| app.kubeletRootDir | string | `"/var/lib/kubelet"` | Overrides path to root kubelet directory in case of a non-standard k8s install. |
 | app.livenessProbe | object | `{"port":9809}` | Options for the liveness container. |
 | app.livenessProbe.port | int | `9809` | The port that will expose the livness of the csi-driver |
 | app.logLevel | int | `1` | Verbosity of cert-manager-csi-driver logging. |

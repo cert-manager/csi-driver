@@ -43,6 +43,8 @@ app:
   livenessProbe:
     # -- The port that will expose the livness of the csi-driver
     port: 9809
+  # -- Overrides path to root kubelet directory in case of a non-standard k8s install.
+  kubeletRootDir: /var/lib/kubelet
 
 resources: {}
   # -- Kubernetes pod resource limits for cert-manager-csi-driver
