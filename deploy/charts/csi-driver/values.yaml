@@ -9,7 +9,7 @@ image:
 # -- Optional secrets used for pulling the csi-driver container image
 imagePullSecrets: []
 #- name: Secret with Registry credentials
-  
+
 nodeDriverRegistrarImage:
   # -- Target image repository.
   repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
@@ -63,3 +63,6 @@ tolerations: []
   # -- Kubernetes pod tolerations for cert-manager-csi-driver
   # Allow scheduling of DaemonSet on all nodes
   # - operator: "Exists"
+
+# -- Optional priority class to be used for the csi-driver pods.
+priorityClassName: ""
