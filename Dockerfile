@@ -28,7 +28,7 @@ COPY pkg/ pkg/
 # Build
 RUN make build
 
-FROM alpine:3.15
+FROM alpine:3.16.2
 LABEL description="cert-manager CSI Driver"
 
 WORKDIR /
