@@ -39,6 +39,7 @@ A Helm chart for cert-manager-csi-driver
 | nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
 | nodeDriverRegistrarImage.tag | string | `"v2.5.0"` | Target image version tag. |
 | nodeSelector | object | `{}` |  |
+| priorityClassName | string | `""` | Optional priority class to be used for the csi-driver pods. |
 | resources | object | `{}` |  |
 | tolerations | list | `[]` |  |
 
