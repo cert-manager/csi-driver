@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/cert-manager/cert-manager/pkg/util/pki"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"software.sslmate.com/src/go-pkcs12"
