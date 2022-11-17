@@ -105,7 +105,7 @@ func parseDNSNames(meta metadata.Metadata, dnsNames string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(dns, ","), nil
+	return splitList(dns), nil
 }
 
 // parseIPAddresses parses a csi.cert-manager.io/ip-sans value, and returns the
@@ -117,7 +117,7 @@ func parseIPAddresses(ipCSV string) ([]net.IP, error) {
 
 	var ips []net.IP
 	var errs []string
-	for _, ipStr := range strings.Split(ipCSV, ",") {
+	for _, ipStr := range splitList(ipCSV) {
 		ip := net.ParseIP(ipStr)
 		if ip == nil {
 			errs = append(errs, ipStr)
@@ -147,8 +147,8 @@ func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
 
 	var uris []*url.URL
 	var errs []string
-	for _, uriS := range strings.Split(csv, ",") {
-		uri, err := url.Parse(uriS)
+	for _, uriS := range splitList(csv) {
+		uri, err := url.ParseRequestURI(uriS)
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -170,8 +170,8 @@ func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
 	}
 
 	var keyUsages []cmapi.KeyUsage
-	for _, usage := range strings.Split(usagesCSV, ",") {
-		keyUsages = append(keyUsages, cmapi.KeyUsage(strings.TrimSpace(usage)))
+	for _, usage := range splitList(usagesCSV) {
+		keyUsages = append(keyUsages, cmapi.KeyUsage(usage))
 	}
 
 	return keyUsages
@@ -204,4 +204,13 @@ func expand(meta metadata.Metadata, csv string) (string, error) {
 	}
 
 	return exp, nil
+}
+
+// splitList returns the given csv as a slice. Trims space of each element.
+func splitList(csv string) []string {
+	var list []string
+	for _, s := range strings.Split(csv, ",") {
+		list = append(list, strings.TrimSpace(s))
+	}
+	return list
 }
