@@ -17,8 +17,9 @@ limitations under the License.
 package suite
 
 import (
-	. "github.com/onsi/ginkgo"
 	"os"
+
+	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/cert-manager/csi-driver/test/e2e/environment"
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
