@@ -21,7 +21,17 @@ const (
 	IssuerKindKey  = "csi.cert-manager.io/issuer-kind"
 	IssuerGroupKey = "csi.cert-manager.io/issuer-group"
 
-	CommonNameKey  = "csi.cert-manager.io/common-name"
+	LiteralSubjectKey      = "csi.cert-manager.io/literal-subject"
+	CommonNameKey          = "csi.cert-manager.io/common-name"
+	OrganizationsKey       = "csi.cert-manager.io/organizations"
+	OrganizationalUnitsKey = "csi.cert-manager.io/organizationalunits"
+	CountriesKey           = "csi.cert-manager.io/countries"
+	ProvincesKey           = "csi.cert-manager.io/provinces"
+	LocalitiesKey          = "csi.cert-manager.io/localities"
+	StreetAddressesKey     = "csi.cert-manager.io/streetaddresses"
+	PostalCodesKey         = "csi.cert-manager.io/postalcodes"
+	SerialNumberKey        = "csi.cert-manager.io/serialnumber"
+
 	DNSNamesKey    = "csi.cert-manager.io/dns-names"
 	IPSANsKey      = "csi.cert-manager.io/ip-sans"
 	URISANsKey     = "csi.cert-manager.io/uri-sans"
