@@ -34,8 +34,10 @@ LABEL description="cert-manager CSI Driver"
 WORKDIR /
 
 COPY --from=builder /workspace/bin/cert-manager-csi-driver /usr/bin/cert-manager-csi-driver
+COPY entrypoint.sh /usr/bin/entrypoint
 
 # Add util-linux to get a new version of losetup.
 RUN apk add util-linux
 
-ENTRYPOINT ["/usr/bin/cert-manager-csi-driver"]
+ENTRYPOINT ["/usr/bin/entrypoint"]
+CMD ["/usr/bin/cert-manager-csi-driver"]
