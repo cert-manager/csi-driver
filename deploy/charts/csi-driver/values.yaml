@@ -1,3 +1,5 @@
+automountServiceAccountToken: true
+
 image:
   # -- Target image repository.
   repository: quay.io/jetstack/cert-manager-csi-driver
@@ -12,23 +14,58 @@ image:
 imagePullSecrets: []
 #- name: Secret with Registry credentials
 
-nodeDriverRegistrarImage:
-  # -- Target image repository.
-  repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
-  # -- Target image version tag.
-  tag: v2.5.0
-  # -- Kubernetes imagePullPolicy on node-driver.
-  pullPolicy: IfNotPresent
+volumes: []
+volumeMounts: []
 
-livenessProbeImage:
-  # -- Target image repository.
-  repository: k8s.gcr.io/sig-storage/livenessprobe
-  # -- Target image version tag.
-  tag: v2.6.0
-  # -- Kubernetes imagePullPolicy on liveness probe.
-  pullPolicy: IfNotPresent
-  # Setting a digest will override any tag
-  # digest: sha256:xxxx
+# securityContext:
+
+containerSecurityContext:
+  privileged: true
+  capabilities:
+    add: ["SYS_ADMIN"]
+  allowPrivilegeEscalation: true
+
+nodeDriverRegistrar:
+  image:
+    # -- Target image repository.
+    repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
+    # -- Target image version tag.
+    tag: v2.5.0
+    # -- Kubernetes imagePullPolicy on node-driver.
+    pullPolicy: IfNotPresent
+  volumeMounts: []
+  # securityContext:
+  resources: { }
+    # -- Kubernetes pod resource limits for cert-manager-csi-driver
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # -- Kubernetes pod memory resource requests for cert-manager-csi-driver
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+livenessProbe:
+  image:
+    # -- Target image repository.
+    repository: k8s.gcr.io/sig-storage/livenessprobe
+    # -- Target image version tag.
+    tag: v2.6.0
+    # -- Kubernetes imagePullPolicy on liveness probe.
+    pullPolicy: IfNotPresent
+    # Setting a digest will override any tag
+    # digest: sha256:xxxx
+  volumeMounts: []
+  # securityContext:
+  resources: { }
+    # -- Kubernetes pod resource limits for cert-manager-csi-driver
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # -- Kubernetes pod memory resource requests for cert-manager-csi-driver
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
 
 app:
   # -- Verbosity of cert-manager-csi-driver logging.
