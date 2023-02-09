@@ -17,12 +17,17 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ include "cert-manager-csi-driver.name" . }}
-      containers:
 
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 12 }}
+      {{- end }}
+      containers:
         - name: node-driver-registrar
-          image: "{{ .Values.nodeDriverRegistrarImage.repository }}{{- if (.Values.nodeDriverRegistrarImage.digest) -}} @{{.Values.nodeDriverRegistrarImage.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.nodeDriverRegistrarImage.tag }} {{- end -}}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.nodeDriverRegistrar.image.repository }}{{- if (.Values.nodeDriverRegistrar.image.digest) -}} @{{.Values.nodeDriverRegistrar.image.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.nodeDriverRegistrar.image.tag }} {{- end -}}"
+          imagePullPolicy: {{ .Values.nodeDriverRegistrar.image.pullPolicy }}
           args:
             - -v={{ .Values.app.logLevel }}
             - --csi-address=/plugin/csi.sock
@@ -37,25 +42,42 @@ spec:
               mountPath: /plugin
             - name: registration-dir
               mountPath: /registration
+            {{- if gt (len .Values.nodeDriverRegistrar.volumeMounts) 0 }}
+            {{- toYaml .Values.nodeDriverRegistrar.volumeMounts | nindent 12 }}
+            {{- end }}
+          {{- with .Values.nodeDriverRegistrar.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.nodeDriverRegistrar.resources | nindent 12 }}
 
         - name: liveness-probe
-          image: "{{ .Values.livenessProbeImage.repository }}:{{ .Values.livenessProbeImage.tag }}"
+          image: "{{ .Values.livenessProbe.image.repository }}:{{ .Values.livenessProbe.image.tag }}"
           args:
             - --csi-address=/plugin/csi.sock
             - --probe-timeout=3s
             - --health-port={{.Values.app.livenessProbe.port}}
             - -v={{ .Values.app.logLevel }}
-          imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
+          imagePullPolicy: {{ .Values.livenessProbe.image.pullPolicy }}
           volumeMounts:
             - name: plugin-dir
               mountPath: /plugin
+            {{- if gt (len .Values.livenessProbe.volumeMounts) 0 }}
+            {{- toYaml .Values.livenessProbe.volumeMounts | nindent 12 }}
+            {{- end }}
+          {{- with .Values.livenessProbe.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.livenessProbe.resources | nindent 12 }}
 
         - name: cert-manager-csi-driver
+          {{- with .Values.containerSecurityContext }}
           securityContext:
-            privileged: true
-            capabilities:
-              add: ["SYS_ADMIN"]
-            allowPrivilegeEscalation: true
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}{{- if (.Values.image.digest) -}} @{{.Values.image.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.image.tag }} {{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
@@ -81,6 +103,9 @@ spec:
             - name: csi-data-dir
               mountPath: /csi-data-dir
               mountPropagation: "Bidirectional"
+            {{- if gt (len .Values.livenessProbe.volumeMounts) 0 }}
+            {{- toYaml .Values.volumeMounts | nindent 12 }}
+            {{- end }}
           ports:
             - containerPort: {{.Values.app.livenessProbe.port}}
               name: healthz
@@ -121,3 +146,6 @@ spec:
             path: {{ .Values.app.driver.csiDataDir }}
             type: DirectoryOrCreate
           name: csi-data-dir
+        {{- if gt (len .Values.volumes) 0 }}
+        {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
