@@ -12,6 +12,9 @@ image:
 imagePullSecrets: []
 #- name: Secret with Registry credentials
 
+# -- Labels to apply to all resources
+commonLabels: {}
+
 nodeDriverRegistrarImage:
   # -- Target image repository.
   repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
@@ -50,24 +53,43 @@ app:
   # -- Overrides path to root kubelet directory in case of a non-standard k8s install.
   kubeletRootDir: /var/lib/kubelet
 
+# -- Optional additional annotations to add to the csi-driver DaemonSet
+daemonSetAnnotations: {}
+
+# -- Optional additional annotations to add to the csi-driver Pods
+podAnnotations: {}
+
+# -- Optional additional labels to add to the csi-driver Pods
+podLabels: {}
+
+# -- Kubernetes pod resources requests/limits for cert-manager-csi-driver
 resources: {}
-  # -- Kubernetes pod resource limits for cert-manager-csi-driver
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
-  # -- Kubernetes pod memory resource requests for cert-manager-csi-driver
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
 
+# -- Kubernetes node selector: node labels for pod assignment
 nodeSelector: {}
-  # -- Kubernetes node selector: node labels for pod assignment
-  # Allow scheduling of DaemonSet on linux nodes only
+  # -- Allow scheduling of DaemonSet on linux nodes only
   # kubernetes.io/os: linux
 
+# -- Kubernetes affinity: constraints for pod assignment
+affinity: {}
+  # nodeAffinity:
+  #  requiredDuringSchedulingIgnoredDuringExecution:
+  #    nodeSelectorTerms:
+  #    - matchExpressions:
+  #      - key: foo.bar.com/role
+  #        operator: In
+  #        values:
+  #        - master
+
+# -- Kubernetes pod tolerations for cert-manager-csi-driver
 tolerations: []
-  # -- Kubernetes pod tolerations for cert-manager-csi-driver
-  # Allow scheduling of DaemonSet on all nodes
+  # -- Allow scheduling of DaemonSet on all nodes
   # - operator: "Exists"
 
 # -- Optional priority class to be used for the csi-driver pods.

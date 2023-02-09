@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: v2
 
 name: cert-manager-csi-driver
 type: application

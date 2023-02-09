@@ -20,6 +20,7 @@ A Helm chart for cert-manager-csi-driver
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| affinity | object | `{}` | Kubernetes affinity: constraints for pod assignment |
 | app.driver | object | `{"csiDataDir":"/tmp/cert-manager-csi-driver","name":"csi.cert-manager.io","useTokenRequest":false}` | Options for CSI driver |
 | app.driver.csiDataDir | string | `"/tmp/cert-manager-csi-driver"` | Configures the hostPath directory that the driver will write and mount volumes from. |
 | app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
@@ -28,6 +29,8 @@ A Helm chart for cert-manager-csi-driver
 | app.livenessProbe | object | `{"port":9809}` | Options for the liveness container. |
 | app.livenessProbe.port | int | `9809` | The port that will expose the livness of the csi-driver |
 | app.logLevel | int | `1` | Verbosity of cert-manager-csi-driver logging. |
+| commonLabels | object | `{}` | Labels to apply to all resources |
+| daemonSetAnnotations | object | `{}` | Optional additional annotations to add to the csi-driver DaemonSet |
 | image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on csi-driver. |
 | image.repository | string | `"quay.io/jetstack/cert-manager-csi-driver"` | Target image repository. |
 | image.tag | string | `"v0.5.0"` | Target image version tag. |
@@ -38,8 +41,10 @@ A Helm chart for cert-manager-csi-driver
 | nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on node-driver. |
 | nodeDriverRegistrarImage.repository | string | `"registry.k8s.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
 | nodeDriverRegistrarImage.tag | string | `"v2.7.0"` | Target image version tag. |
-| nodeSelector | object | `{}` |  |
+| nodeSelector | object | `{}` | Kubernetes node selector: node labels for pod assignment |
+| podAnnotations | object | `{}` | Optional additional annotations to add to the csi-driver Pods |
+| podLabels | object | `{}` | Optional additional labels to add to the csi-driver Pods |
 | priorityClassName | string | `""` | Optional priority class to be used for the csi-driver pods. |
-| resources | object | `{}` |  |
-| tolerations | list | `[]` |  |
+| resources | object | `{}` | Kubernetes pod resources requests/limits for cert-manager-csi-driver |
+| tolerations | list | `[]` | Kubernetes pod tolerations for cert-manager-csi-driver |
 
