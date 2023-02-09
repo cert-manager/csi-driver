@@ -21,7 +21,7 @@ spec:
       containers:
 
         - name: node-driver-registrar
-          image: "{{ .Values.nodeDriverRegistrarImage.repository }}{{- if (.Values.nodeDriverRegistrarImage.digest) -}} @{{.Values.nodeDriverRegistrarImage.digest}}{{- else -}}:{{ default  .Values.nodeDriverRegistrarImage.tag }} {{- end -}}"
+          image: "{{ .Values.nodeDriverRegistrarImage.repository }}{{- if (.Values.nodeDriverRegistrarImage.digest) -}} @{{.Values.nodeDriverRegistrarImage.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.nodeDriverRegistrarImage.tag }} {{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - -v={{ .Values.app.logLevel }}
@@ -56,8 +56,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          image: "{{ .Values.image.repository }}{{- if (.Values.image.digest) -}} @{{.Values.image.digest}}{{- else -}}:{{ default  .Values.image.tag }} {{- end -}}"
+          image: "{{ .Values.image.repository }}{{- if (.Values.image.digest) -}} @{{.Values.image.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.image.tag }} {{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
             - --log-level={{ .Values.app.logLevel }}
