@@ -14,17 +14,17 @@ imagePullSecrets: []
 
 nodeDriverRegistrarImage:
   # -- Target image repository.
-  repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
+  repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
   # -- Target image version tag.
-  tag: v2.5.0
+  tag: v2.7.0
   # -- Kubernetes imagePullPolicy on node-driver.
   pullPolicy: IfNotPresent
 
 livenessProbeImage:
   # -- Target image repository.
-  repository: k8s.gcr.io/sig-storage/livenessprobe
+  repository: registry.k8s.io/sig-storage/livenessprobe
   # -- Target image version tag.
-  tag: v2.6.0
+  tag: v2.9.0
   # -- Kubernetes imagePullPolicy on liveness probe.
   pullPolicy: IfNotPresent
   # Setting a digest will override any tag

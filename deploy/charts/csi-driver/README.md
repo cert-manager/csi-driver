@@ -33,11 +33,11 @@ A Helm chart for cert-manager-csi-driver
 | image.tag | string | `"v0.5.0"` | Target image version tag. |
 | imagePullSecrets | list | `[]` | Optional secrets used for pulling the csi-driver container image |
 | livenessProbeImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on liveness probe. |
-| livenessProbeImage.repository | string | `"k8s.gcr.io/sig-storage/livenessprobe"` | Target image repository. |
-| livenessProbeImage.tag | string | `"v2.6.0"` | Target image version tag. |
+| livenessProbeImage.repository | string | `"registry.k8s.io/sig-storage/livenessprobe"` | Target image repository. |
+| livenessProbeImage.tag | string | `"v2.9.0"` | Target image version tag. |
 | nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on node-driver. |
-| nodeDriverRegistrarImage.repository | string | `"k8s.gcr.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
-| nodeDriverRegistrarImage.tag | string | `"v2.5.0"` | Target image version tag. |
+| nodeDriverRegistrarImage.repository | string | `"registry.k8s.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
+| nodeDriverRegistrarImage.tag | string | `"v2.7.0"` | Target image version tag. |
 | nodeSelector | object | `{}` |  |
 | priorityClassName | string | `""` | Optional priority class to be used for the csi-driver pods. |
 | resources | object | `{}` |  |
