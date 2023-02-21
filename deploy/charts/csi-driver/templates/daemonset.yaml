@@ -4,6 +4,10 @@ metadata:
   name: {{ include "cert-manager-csi-driver.name" . }}
   labels:
 {{ include "cert-manager-csi-driver.labels" . | indent 4 }}
+  {{- with .Values.daemonSetAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
@@ -12,12 +16,23 @@ spec:
     metadata:
       labels:
         app: {{ include "cert-manager-csi-driver.name" . }}
+        {{- include "cert-manager-csi-driver.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "cert-manager-csi-driver.name" . }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
       containers:
 
         - name: node-driver-registrar
@@ -90,18 +105,22 @@ spec:
               port: healthz
             initialDelaySeconds: 5
             timeoutSeconds: 5
+          {{- with .Values.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
-      {{- if .Values.nodeSelector }}
-      nodeSelector: {{-  toYaml .Values.nodeSelector | nindent 8 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
-
-      {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
 
       volumes:
