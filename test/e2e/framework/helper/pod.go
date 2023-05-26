@@ -33,8 +33,8 @@ import (
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/remotecommand"
 
-	"github.com/cert-manager/cert-manager/test/e2e/framework/log"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
+	"github.com/cert-manager/csi-driver/test/e2e/framework/log"
 )
 
 func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, mountPath string,
