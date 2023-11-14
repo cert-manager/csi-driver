@@ -16,8 +16,10 @@
 
 BINDIR ?= $(CURDIR)/bin
 ARCH   ?= $(shell go env GOARCH)
-HELM_VERSION ?= 3.8.1
 IMAGE_PLATFORMS ?= linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
+
+APP_VERSION ?= v0.6.0
+HELM_VERSION ?= 3.8.1
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -62,7 +64,7 @@ helm-docs: $(BINDIR)/helm-docs # verify helm-docs
 # arguments to `--push`.
 .PHONY: image
 image: ## build cert-manager-csi-driver docker image targeting all supported platforms
-	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:v0.5.0 --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
+	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
 
 .PHONY: e2e
 e2e: depend ## run end to end tests
@@ -79,15 +81,18 @@ deploy/charts/csi-driver/README.md: $(BINDIR)/helm-docs $(CHART_YAML)
 .PHONY: depend
 depend: $(BINDIR)/helm $(BINDIR)/helm-docs $(BINDIR)/kind
 
+# TODO: respect locally specified Helm version and overwrite binary when version changes
 $(BINDIR)/helm: | $(BINDIR)
 	curl -o $(BINDIR)/helm.tar.gz -LO "https://get.helm.sh/helm-v$(HELM_VERSION)-$(OS)-$(ARCH).tar.gz"
 	tar -C $(BINDIR) -xzf $(BINDIR)/helm.tar.gz
 	cp $(BINDIR)/$(OS)-$(ARCH)/helm $(BINDIR)/helm
 	rm -r $(BINDIR)/$(OS)-$(ARCH) $(BINDIR)/helm.tar.gz
 
+# TODO: respect locally specified helm-docs version and overwrite binary when version changes
 $(BINDIR)/helm-docs: $(BINDIR)
-		cd hack/tools && go build -o $(BINDIR)/helm-docs github.com/norwoodj/helm-docs/cmd/helm-docs
+	cd hack/tools && go build -o $(BINDIR)/helm-docs github.com/norwoodj/helm-docs/cmd/helm-docs
 
+# TODO: respect locally specified kind version and overwrite binary when version changes
 $(BINDIR)/kind:
 	cd hack/tools && go build -o $(BINDIR)/kind sigs.k8s.io/kind
 
