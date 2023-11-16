@@ -63,8 +63,16 @@ helm-docs: $(BINDIR)/helm-docs # verify helm-docs
 # To actually push an image to the public repo, replace the `--output` flag and
 # arguments to `--push`.
 .PHONY: image
-image: ## build cert-manager-csi-driver docker image targeting all supported platforms
+image: ## build cert-manager-csi-driver container image targeting all supported platforms
 	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
+
+# TODO: ideally we should ensure that image and image-push are identical save for the different output location (or we should use ko instead)
+# for now, we copy+paste the build steps to avoid the need for a manual edit to the Makefile in order to do a release
+# This allows us to release from a non-dirty checkout of a tag.
+
+.PHONY: push
+push: ## build cert-manager-csi-driver container images targeting all supported platforms and push to registry
+	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --output push .
 
 .PHONY: e2e
 e2e: depend ## run end to end tests
