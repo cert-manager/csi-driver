@@ -13,7 +13,9 @@
 # limitations under the License.
 
 # Build the cert-manager-csi-driver binary
-FROM docker.io/library/golang:1.21 as builder
+FROM docker.io/library/golang:1.21-alpine3.18 as builder
+
+RUN apk add make
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -24,11 +26,12 @@ COPY go.sum go.sum
 COPY Makefile Makefile
 COPY cmd/ cmd/
 COPY pkg/ pkg/
+COPY deploy/ deploy/
 
 # Build
 RUN make build
 
-FROM alpine:3.16.2
+FROM docker.io/library/alpine:3.18
 LABEL description="cert-manager CSI Driver"
 
 WORKDIR /
