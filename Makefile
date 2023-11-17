@@ -19,7 +19,7 @@ ARCH   ?= $(shell go env GOARCH)
 IMAGE_PLATFORMS ?= linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
 
 APP_VERSION ?= v0.6.0
-HELM_VERSION ?= 3.8.1
+HELM_VERSION ?= 3.13.2
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -58,6 +58,10 @@ boilerplate: ## verify boilerplate headers
 .PHONY: helm-docs
 helm-docs: $(BINDIR)/helm-docs # verify helm-docs
 	./hack/verify-helm-docs.sh
+
+.PHONY: chart
+chart: | $(BINDIR)/helm $(BINDIR)/chart
+	$(BINDIR)/helm package --app-version=$(APP_VERSION) --version=$(APP_VERSION) --destination "$(BINDIR)/chart" ./deploy/charts/csi-driver
 
 # image will only build and store the image locally, targeted in OCI format.
 # To actually push an image to the public repo, use `make push`
@@ -103,5 +107,5 @@ $(BINDIR)/helm-docs: $(BINDIR)
 $(BINDIR)/kind:
 	cd hack/tools && go build -o $(BINDIR)/kind sigs.k8s.io/kind
 
-$(BINDIR):
+$(BINDIR) $(BINDIR)/chart:
 	mkdir -p $@
