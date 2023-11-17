@@ -60,8 +60,7 @@ helm-docs: $(BINDIR)/helm-docs # verify helm-docs
 	./hack/verify-helm-docs.sh
 
 # image will only build and store the image locally, targeted in OCI format.
-# To actually push an image to the public repo, replace the `--output` flag and
-# arguments to `--push`.
+# To actually push an image to the public repo, use `make push`
 .PHONY: image
 image: ## build cert-manager-csi-driver container image targeting all supported platforms
 	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --output type=oci,dest=./bin/cert-manager-csi-driver-oci .
@@ -72,7 +71,7 @@ image: ## build cert-manager-csi-driver container image targeting all supported 
 
 .PHONY: push
 push: ## build cert-manager-csi-driver container images targeting all supported platforms and push to registry
-	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --output push .
+	docker buildx build --platform=$(IMAGE_PLATFORMS) -t quay.io/jetstack/cert-manager-csi-driver:$(APP_VERSION) --push .
 
 .PHONY: e2e
 e2e: depend ## run end to end tests
