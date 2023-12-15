@@ -2,7 +2,7 @@ image:
   # -- Target image repository.
   repository: quay.io/jetstack/cert-manager-csi-driver
   # -- Target image version tag.
-  tag: v0.6.0
+  tag: v0.6.1
   # -- Kubernetes imagePullPolicy on csi-driver.
   pullPolicy: IfNotPresent
   # Setting a digest will override any tag
@@ -19,7 +19,7 @@ nodeDriverRegistrarImage:
   # -- Target image repository.
   repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
   # -- Target image version tag.
-  tag: v2.9.1
+  tag: v2.9.2
   # -- Kubernetes imagePullPolicy on node-driver.
   pullPolicy: IfNotPresent
 
@@ -27,7 +27,7 @@ livenessProbeImage:
   # -- Target image repository.
   repository: registry.k8s.io/sig-storage/livenessprobe
   # -- Target image version tag.
-  tag: v2.9.0
+  tag: v2.11.0
   # -- Kubernetes imagePullPolicy on liveness probe.
   pullPolicy: IfNotPresent
   # Setting a digest will override any tag

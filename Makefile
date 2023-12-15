@@ -18,8 +18,8 @@ BINDIR ?= $(CURDIR)/bin
 ARCH   ?= $(shell go env GOARCH)
 IMAGE_PLATFORMS ?= linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
 
-APP_VERSION ?= v0.6.0
-HELM_VERSION ?= 3.13.2
+APP_VERSION ?= v0.6.1
+HELM_VERSION ?= 3.13.3
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
