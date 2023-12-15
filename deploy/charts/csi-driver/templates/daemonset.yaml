@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "cert-manager-csi-driver.name" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
 {{ include "cert-manager-csi-driver.labels" . | indent 4 }}
   {{- with .Values.daemonSetAnnotations }}
