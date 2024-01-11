@@ -33,10 +33,6 @@ type Config struct {
 	// If Cleanup is true, addons will be cleaned up both before and after provisioning
 	Cleanup bool
 
-	// RepoRoot is used as the base path for any parts of the framework that
-	// require access to repo files, such as Helm charts and test fixtures.
-	RepoRoot string
-
 	Environment *environment.Environment
 }
 
@@ -44,9 +40,6 @@ func (c *Config) Validate() error {
 	var errs []error
 	if c.KubeConfigPath == "" {
 		errs = append(errs, errors.New("kubeconfig path not defined"))
-	}
-	if c.RepoRoot == "" {
-		errs = append(errs, errors.New("repo root not defined"))
 	}
 
 	errs = append(errs, c.Ginkgo.Validate()...)

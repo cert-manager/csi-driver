@@ -68,10 +68,12 @@ spec:
 
         - name: cert-manager-csi-driver
           securityContext:
+            readOnlyRootFilesystem: true
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
+            runAsUser: 0
           image: "{{ .Values.image.repository }}{{- if (.Values.image.digest) -}} @{{.Values.image.digest}}{{- else -}}:{{ default $.Chart.AppVersion .Values.image.tag }} {{- end -}}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
@@ -133,11 +135,11 @@ spec:
           hostPath:
             path: {{ .Values.app.kubeletRootDir }}/pods
             type: Directory
-        - hostPath:
+        - name: registration-dir
+          hostPath:
             path: {{ .Values.app.kubeletRootDir }}/plugins_registry
             type: Directory
-          name: registration-dir
-        - hostPath:
+        - name: csi-data-dir
+          hostPath:
             path: {{ .Values.app.driver.csiDataDir }}
             type: DirectoryOrCreate
-          name: csi-data-dir
