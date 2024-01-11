@@ -23,13 +23,12 @@ import (
 )
 
 type Environment struct {
-	rootPath       string
 	kubeconfigPath string
 	client         kubernetes.Interface
 	clusterName    string
 }
 
-func Create(rootPath, kubeconfigPath, clusterName string) (*Environment, error) {
+func Create(kubeconfigPath, clusterName string) (*Environment, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, err
@@ -41,7 +40,6 @@ func Create(rootPath, kubeconfigPath, clusterName string) (*Environment, error) 
 	}
 
 	return &Environment{
-		rootPath:       rootPath,
 		kubeconfigPath: kubeconfigPath,
 		client:         client,
 		clusterName:    clusterName,
@@ -54,10 +52,6 @@ func (e *Environment) KubeClient() kubernetes.Interface {
 
 func (e *Environment) KubeConfigPath() string {
 	return e.kubeconfigPath
-}
-
-func (e *Environment) RootPath() string {
-	return e.rootPath
 }
 
 func (e *Environment) ClusterName() string {

@@ -32,14 +32,13 @@ var (
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	env, err = environment.Create(os.Getenv("REPO_ROOT"), os.Getenv("KUBECONFIG"), os.Getenv("CLUSTER_NAME"))
+	env, err = environment.Create(os.Getenv("KUBECONFIG"), os.Getenv("CLUSTER_NAME"))
 	if err != nil {
 		framework.Failf("Error building environment: %v", err)
 	}
 
 	cfg.KubeConfigPath = env.KubeConfigPath()
 	cfg.Kubectl = os.Getenv("KUBECTL")
-	cfg.RepoRoot = env.RootPath()
 	cfg.Environment = env
 
 	if err := framework.DefaultConfig.Validate(); err != nil {
@@ -49,5 +48,3 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return nil
 }, func([]byte) {
 })
-
-var globalLogs map[string]string

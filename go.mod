@@ -1,6 +1,6 @@
 module github.com/cert-manager/csi-driver
 
-go 1.20
+go 1.21
 
 require (
 	github.com/cert-manager/cert-manager v1.13.2
