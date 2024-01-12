@@ -37,7 +37,7 @@ $(images_tars): $(images_tar_dir)/%.tar: | $(NEEDS_CRANE)
 	@$(eval image_without_digest=$(shell cut -d@ -f1 <<<"$(image)"))
 	@$(eval digest=$(subst $(image_without_digest)@,,$(image)))
 	@mkdir -p $(dir $@)
-	diff <(echo "$(digest)  -" | cut -d: -f2) <($(CRANE) manifest $(image) | sha256sum)
+	diff <(echo "$(digest)  -" | cut -d: -f2) <($(CRANE) manifest --platform=linux/$(HOST_ARCH) $(image_without_digest) | sha256sum)
 	$(CRANE) pull $(image_without_digest) $@ --platform=linux/$(HOST_ARCH)
 
 images_tar_envs := $(images_files:%=env-%)

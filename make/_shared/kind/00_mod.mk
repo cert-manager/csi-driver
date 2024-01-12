@@ -15,5 +15,7 @@
 images_amd64 ?=
 images_arm64 ?=
 
-images_amd64 += docker.io/kindest/node:v1.27.3@sha256:9dd3392d79af1b084671b05bcf65b21de476256ad1dcc853d9f3b10b4ac52dde
-images_arm64 += docker.io/kindest/node:v1.27.3@sha256:de0b3dfe848ccf07e24f4278eaf93edb857b6231b39773f46b36a2b1a6543ae9
+kind_version := v1.27.3
+
+images_amd64 += docker.io/kindest/node:$(kind_version)@sha256:9dd3392d79af1b084671b05bcf65b21de476256ad1dcc853d9f3b10b4ac52dde
+images_arm64 += docker.io/kindest/node:$(kind_version)@sha256:de0b3dfe848ccf07e24f4278eaf93edb857b6231b39773f46b36a2b1a6543ae9
