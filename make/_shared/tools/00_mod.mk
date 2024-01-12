@@ -472,13 +472,13 @@ tools: $(TOOLS_PATHS) $(K8S_CODEGEN_TOOLS_PATHS)
 
 self_file := $(dir $(lastword $(MAKEFILE_LIST)))/00_mod.mk
 
+# This target is used to learn the sha256sum of the tools. It is used only
+# in the makefile-modules repo, and should not be used in any other repo.
 .PHONY: tools-learn-sha
-## re-download all tools and learn the sha values, useful after upgrading
-## @category [shared] Tools
 tools-learn-sha: | $(bin_dir)
 	rm -rf ./$(bin_dir)/
 	mkdir -p ./$(bin_dir)/scratch/
-	$(eval export LEARN_FILE=$(CURDIR)/$(bin_dir)/scratch/learn_file)
+	$(eval export LEARN_FILE=$(CURDIR)/$(bin_dir)/scratch/learn_tools_file)
 	echo -n "" > "$(LEARN_FILE)"
 
 	HOST_OS=linux HOST_ARCH=amd64 $(MAKE) tools
