@@ -24,7 +24,7 @@ PURPLE=$(tput setaf 125)
 EMPTYLINE_REGEX="^\s*$"
 DOCBLOCK_REGEX="^##\s*(.*)$"
 CATEGORY_REGEX="^##\s*@category\s*(.*)$"
-TARGET_REGEX="^([a-zA-Z0-9%_\/%-\$\(\)]+):.*$"
+TARGET_REGEX="^([a-zA-Z0-9\_\/\%\$\-\(\)]+):.*$"
 
 EMPTY_ITEM="<start-category><end-category><start-target><end-target><start-comment><end-comment>"
 
