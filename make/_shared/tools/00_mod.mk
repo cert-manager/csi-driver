@@ -90,6 +90,10 @@ TOOLS += oras=v1.1.0
 TOOLS += ginkgo=$(shell [[ -f go.mod ]] && awk '/ginkgo\/v2/ {print $$2}' go.mod || echo "v2.13.2")
 # https://pkg.go.dev/github.com/cert-manager/klone?tab=versions
 TOOLS += klone=v0.0.3
+# https://pkg.go.dev/github.com/goreleaser/goreleaser?tab=versions
+TOOLS += goreleaser=v1.23.0
+# https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
+TOOLS += syft=v0.100.0
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.0
@@ -100,7 +104,7 @@ TOOLS += etcd=$(KUBEBUILDER_ASSETS_VERSION)
 TOOLS += kube-apiserver=$(KUBEBUILDER_ASSETS_VERSION)
 
 # https://go.dev/dl/
-VENDORED_GO_VERSION := 1.21.5
+VENDORED_GO_VERSION := 1.21.6
 
 # Print the go version which can be used in GH actions
 .PHONY: print-go-version
@@ -262,6 +266,8 @@ GO_DEPENDENCIES += boilersuite=github.com/cert-manager/boilersuite
 GO_DEPENDENCIES += gomarkdoc=github.com/princjef/gomarkdoc/cmd/gomarkdoc
 GO_DEPENDENCIES += oras=oras.land/oras/cmd/oras
 GO_DEPENDENCIES += klone=github.com/cert-manager/klone
+GO_DEPENDENCIES += goreleaser=github.com/goreleaser/goreleaser
+GO_DEPENDENCIES += syft=github.com/anchore/syft/cmd/syft
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools

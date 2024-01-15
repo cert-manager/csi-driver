@@ -53,6 +53,9 @@ $(helm_chart_archive): $(helm_chart_sources) | $(NEEDS_HELM) $(NEEDS_YQ) $(bin_d
 		echo "Chart name does not match the name in the helm_chart_name variable"; \
 		exit 1; \
 	fi
+	
+	$(YQ) '.annotations."artifacthub.io/prerelease" = "$(IS_PRERELEASE)"' \
+		--inplace $(helm_chart_source_dir_versioned)/Chart.yaml
 
 	mkdir -p $(dir $@)
 	$(HELM) package $(helm_chart_source_dir_versioned) \
