@@ -21,10 +21,10 @@ CATEGORY_COLOR="$(tput setaf 3)"
 CLEAR_STYLE="$(tput sgr0)"
 PURPLE=$(tput setaf 125)
 
-EMPTYLINE_REGEX="^\s*$"
-DOCBLOCK_REGEX="^##\s*(.*)$"
-CATEGORY_REGEX="^##\s*@category\s*(.*)$"
-TARGET_REGEX="^([a-zA-Z0-9\_\/\%\$\-\(\)]+):.*$"
+EMPTYLINE_REGEX="^[[:space:]]*$"
+DOCBLOCK_REGEX="^##[[:space:]]*(.*)$"
+CATEGORY_REGEX="^##[[:space:]]*@category[[:space:]]*(.*)$"
+TARGET_REGEX="^(([a-zA-Z0-9\_\/\%\$\(\)]|-)+):.*$"
 
 EMPTY_ITEM="<start-category><end-category><start-target><end-target><start-comment><end-comment>"
 

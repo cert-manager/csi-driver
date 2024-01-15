@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Shared targets are set by other Makefile modules.
+shared_generate_targets ?=
+shared_verify_targets_dirty ?=
+
+# Extra targets are set by the Makefiles in the project.
 extra_generate_targets ?=
 extra_verify_targets ?=
 extra_verify_targets_dirty ?=

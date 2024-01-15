@@ -16,8 +16,6 @@
 # Check Inputs #
 ################
 
-shared_generate_targets ?= # empty
-
 ifndef go_header_file
 $(error go_header_file is not set)
 endif

@@ -16,8 +16,6 @@
 # Check Inputs #
 ################
 
-shared_generate_targets ?= # empty
-
 ifndef helm_chart_source_dir
 $(error helm_chart_source_dir is not set)
 endif
