@@ -56,7 +56,7 @@ jobs:
         run: |
           git config --global user.name "jetstack-bot"
           git config --global user.email "jetstack-bot@users.noreply.github.com"
-          git commit -a -m "BOT: run 'make upgrade-klone' and 'make generate'" --signoff
+          git add -A && git commit -m "BOT: run 'make upgrade-klone' and 'make generate'" --signoff
           git push -f origin self-upgrade
 
       - if: ${{ steps.is-up-to-date.outputs.result != 'true' }}
