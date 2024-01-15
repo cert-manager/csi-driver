@@ -58,6 +58,7 @@ endif
 ##################################
 
 VERSION ?= $(shell git describe --tags --always --match='v*' --abbrev=14 --dirty)
+IS_PRERELEASE := $(shell git describe --tags --always --match='v*' --abbrev=0 | grep -q '-' && echo true || echo false)
 GITCOMMIT := $(shell git rev-parse HEAD)
 GITEPOCH := $(shell git show -s --format=%ct HEAD)
 
