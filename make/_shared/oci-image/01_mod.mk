@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-oci_platforms := all
+oci_platforms := linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -82,6 +82,7 @@ ARGS ?= # default empty
 ## Run a controller from your host.
 ## @category [shared] Build
 $(run_targets): run-%: | $(NEEDS_GO)
+	CGO_ENABLED=$(CGO_ENABLED) \
 	$(GO) run \
 		-ldflags '$(go_$*_ldflags)' \
 		$(go_$*_source_path) $(ARGS)
@@ -92,7 +93,7 @@ $(run_targets): run-%: | $(NEEDS_GO)
 $(oci_build_targets): oci-build-%: | $(NEEDS_KO) $(NEEDS_GO) $(NEEDS_YQ) $(bin_dir)/scratch/image
 	$(eval oci_layout_path := $(bin_dir)/scratch/image/oci-layout-$*.$(oci_$*_image_tag))
 	rm -rf $(CURDIR)/$(oci_layout_path)
-	
+
 	echo '{}' | \
 		$(YQ) '.defaultBaseImage = "$(oci_$*_base_image)"' | \
 		$(YQ) '.builds[0].id = "$*"' | \

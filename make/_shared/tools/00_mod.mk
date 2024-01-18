@@ -97,6 +97,10 @@ TOOLS += syft=v0.100.0
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.0
+TOOLS += applyconfiguration-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += openapi-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += defaulter-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += conversion-gen=$(K8S_CODEGEN_VERSION)
 
 # https://github.com/kubernetes-sigs/kubebuilder/blob/tools-releases/build/cloudbuild_tools.yaml
 KUBEBUILDER_ASSETS_VERSION=1.28.3
@@ -268,6 +272,10 @@ GO_DEPENDENCIES += oras=oras.land/oras/cmd/oras
 GO_DEPENDENCIES += klone=github.com/cert-manager/klone
 GO_DEPENDENCIES += goreleaser=github.com/goreleaser/goreleaser
 GO_DEPENDENCIES += syft=github.com/anchore/syft/cmd/syft
+GO_DEPENDENCIES += applyconfiguration-gen=k8s.io/code-generator/cmd/applyconfiguration-gen
+GO_DEPENDENCIES += openapi-gen=k8s.io/code-generator/cmd/openapi-gen
+GO_DEPENDENCIES += defaulter-gen=k8s.io/code-generator/cmd/defaulter-gen
+GO_DEPENDENCIES += conversion-gen=k8s.io/code-generator/cmd/conversion-gen
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools
@@ -348,24 +356,6 @@ $(bin_dir)/downloaded/tools/azwi@$(AZWI_VERSION)_%: | $(bin_dir)/downloaded/tool
 	@# O writes the specified file to stdout
 	tar xfO $@.tar.gz azwi > $@ && chmod 775 $@
 	rm -f $@.tar.gz
-
-#####################
-# k8s codegen tools #
-#####################
-
-K8S_CODEGEN_TOOLS := applyconfiguration-gen openapi-gen
-K8S_CODEGEN_TOOLS_PATHS := $(K8S_CODEGEN_TOOLS:%=$(bin_dir)/tools/%)
-K8S_CODEGEN_TOOLS_DOWNLOADS := $(K8S_CODEGEN_TOOLS:%=$(bin_dir)/downloaded/tools/%@$(K8S_CODEGEN_VERSION))
-
-k8s-codegen-tools: $(K8S_CODEGEN_TOOLS_PATHS)
-
-$(K8S_CODEGEN_TOOLS_PATHS): $(bin_dir)/tools/%-gen: $(bin_dir)/scratch/K8S_CODEGEN_VERSION | $(bin_dir)/downloaded/tools/%-gen@$(K8S_CODEGEN_VERSION) $(bin_dir)/tools
-	cd $(dir $@) && $(LN) $(patsubst $(bin_dir)/%,../%,$(word 1,$|)) $(notdir $@)
-	@touch $@ # making sure the target of the symlink is newer than *_VERSION
-
-$(K8S_CODEGEN_TOOLS_DOWNLOADS): $(bin_dir)/downloaded/tools/%-gen@$(K8S_CODEGEN_VERSION): $(NEEDS_GO) | $(bin_dir)/downloaded/tools
-	GOBIN=$(CURDIR)/$(dir $@) $(GO) install k8s.io/code-generator/cmd/$(notdir $@)
-	@mv $(subst @$(K8S_CODEGEN_VERSION),,$@) $@
 
 ############################
 # kubebuilder-tools assets #
@@ -474,7 +464,7 @@ endif
 .PHONY: tools
 ## Download and setup all tools
 ## @category [shared] Tools
-tools: $(TOOLS_PATHS) $(K8S_CODEGEN_TOOLS_PATHS)
+tools: $(TOOLS_PATHS)
 
 self_file := $(dir $(lastword $(MAKEFILE_LIST)))/00_mod.mk
 
