@@ -21,16 +21,36 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # This script takes the hash of its first argument and verifies it against the
 # hex hash given in its second argument
 
-SHASUM=$("${SCRIPT_DIR}/hash.sh" "$1")
+function usage_and_exit() {
+	echo "usage: $0 <path-to-target> <expected-hash>"
+	echo "or: LEARN_FILE=<path-to-learn-file> $0 <path-to-target> <old-hash>"
+	exit 1
+}
 
-# When running 'make learn-sha-tools', we don't want this script to fail.
-# Instead we log what sha values are wrong, so the make.mk file can be updated.
-if [ "$SHASUM" != "$2" ] && [ "${LEARN_FILE:-}" != "" ]; then
-	echo "s/$2/$SHASUM/g" >> "${LEARN_FILE:-}"
+HASH_TARGET=${1:-}
+EXPECTED_HASH=${2:-}
+
+if [[ -z $HASH_TARGET ]]; then
+	usage_and_exit
+fi
+
+if [[ -z $EXPECTED_HASH ]]; then
+	usage_and_exit
+fi
+
+SHASUM=$("${SCRIPT_DIR}/hash.sh" "$HASH_TARGET")
+
+if [[ "$SHASUM" == "$EXPECTED_HASH" ]]; then
 	exit 0
 fi
 
-if [ "$SHASUM" != "$2"  ]; then
-	echo "invalid checksum for \"$1\": wanted \"$2\" but got \"$SHASUM\""
-	exit 1
+# When running 'make learn-sha-tools', we don't want this script to fail.
+# Instead we log what sha values are wrong, so the make.mk file can be updated.
+
+if [ "${LEARN_FILE:-}" != "" ]; then
+	echo "s/$EXPECTED_HASH/$SHASUM/g" >> "${LEARN_FILE:-}"
+	exit 0
 fi
+
+echo "invalid checksum for \"$HASH_TARGET\": wanted \"$EXPECTED_HASH\" but got \"$SHASUM\""
+exit 1
