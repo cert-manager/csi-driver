@@ -94,6 +94,8 @@ TOOLS += klone=v0.0.3
 TOOLS += goreleaser=v1.23.0
 # https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
 TOOLS += syft=v0.100.0
+# https://github.com/cert-manager/helm-tool
+TOOLS += helm-tool=v0.2.2
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.0
@@ -276,6 +278,7 @@ GO_DEPENDENCIES += applyconfiguration-gen=k8s.io/code-generator/cmd/applyconfigu
 GO_DEPENDENCIES += openapi-gen=k8s.io/code-generator/cmd/openapi-gen
 GO_DEPENDENCIES += defaulter-gen=k8s.io/code-generator/cmd/defaulter-gen
 GO_DEPENDENCIES += conversion-gen=k8s.io/code-generator/cmd/conversion-gen
+GO_DEPENDENCIES += helm-tool=github.com/cert-manager/helm-tool
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools
@@ -290,6 +293,7 @@ $(foreach GO_DEPENDENCY,$(GO_DEPENDENCIES),$(eval $(call go_dependency,$(word 1,
 ########
 
 HELM_linux_amd64_SHA256SUM=bbb6e7c6201458b235f335280f35493950dcd856825ddcfd1d3b40ae757d5c7d
+HELM_linux_arm64_SHA256SUM=44aaa094ae24d01e8c36e327e1837fd3377a0f9152626da088384c5bc6d94562
 HELM_darwin_amd64_SHA256SUM=da654c9e0fd4fcb50cc5dba051c1c9cf398e21ffa5064b47ac89a9697e139d39
 HELM_darwin_arm64_SHA256SUM=61ba210cd65c53be5c0021c8fc8e0b94f4c122aff32f5ed0e4ea81728108ea20
 
@@ -306,6 +310,7 @@ $(bin_dir)/downloaded/tools/helm@$(HELM_VERSION)_%: | $(bin_dir)/downloaded/tool
 ###########
 
 KUBECTL_linux_amd64_SHA256SUM=0e03ab096163f61ab610b33f37f55709d3af8e16e4dcc1eb682882ef80f96fd5
+KUBECTL_linux_arm64_SHA256SUM=8f7a4bd6bae900a4ddab12bd1399aa652c0d59ea508f39b910e111d248893ff7
 KUBECTL_darwin_amd64_SHA256SUM=d69c2b0929070e42518b304758fbe05cf76c4fb60d36e93bb667d7b76e582124
 KUBECTL_darwin_arm64_SHA256SUM=403beb5d64d8a8517f808a320619a28adc89003b1b710f02421933a9ee4eb968
 
@@ -319,6 +324,7 @@ $(bin_dir)/downloaded/tools/kubectl@$(KUBECTL_VERSION)_%: | $(bin_dir)/downloade
 ########
 
 KIND_linux_amd64_SHA256SUM=513a7213d6d3332dd9ef27c24dab35e5ef10a04fa27274fe1c14d8a246493ded
+KIND_linux_arm64_SHA256SUM=639f7808443559aa30c3642d9913b1615d611a071e34f122340afeda97b8f422
 KIND_darwin_amd64_SHA256SUM=bffd8fb2006dc89fa0d1dde5ba6bf48caacb707e4df8551528f49145ebfeb7ad
 KIND_darwin_arm64_SHA256SUM=8df041a5cae55471f3b039c3c9942226eb909821af63b5677fc80904caffaabf
 
@@ -332,6 +338,7 @@ $(bin_dir)/downloaded/tools/kind@$(KIND_VERSION)_%: | $(bin_dir)/downloaded/tool
 #########
 
 VAULT_linux_amd64_SHA256SUM=f42f550713e87cceef2f29a4e2b754491697475e3d26c0c5616314e40edd8e1b
+VAULT_linux_arm64_SHA256SUM=79aee168078eb8c0dbb31c283e1136a7575f59fe36fccbb1f1ef6a16e0b67fdb
 VAULT_darwin_amd64_SHA256SUM=a9d7c6e76d7d5c9be546e9a74860b98db6486fc0df095d8b00bc7f63fb1f6c1c
 VAULT_darwin_arm64_SHA256SUM=4bf594a231bef07fbcfbf7329c8004acb8d219ce6a7aff186e0bac7027a0ab25
 
@@ -347,6 +354,7 @@ $(bin_dir)/downloaded/tools/vault@$(VAULT_VERSION)_%: | $(bin_dir)/downloaded/to
 ########
 
 AZWI_linux_amd64_SHA256SUM=d2ef0f27609b7157595fe62b13c03381a481f833c1e1b6290df560454890d337
+AZWI_linux_arm64_SHA256SUM=72e34bc96611080095e90ecce58a72e50debf846106b13976f2972bf06ae12df
 AZWI_darwin_amd64_SHA256SUM=2be5f18c0acfb213a22db5a149dd89c7d494690988cb8e8a785dd6915f7094d0
 AZWI_darwin_arm64_SHA256SUM=d0b01768102dd472c72c98bb51ae990af8779e811c9f7ab1db48ccefc9988f4c
 
@@ -363,6 +371,7 @@ $(bin_dir)/downloaded/tools/azwi@$(AZWI_VERSION)_%: | $(bin_dir)/downloaded/tool
 ############################
 
 KUBEBUILDER_TOOLS_linux_amd64_SHA256SUM=878fded1b42261293419621b78c9deac319531a325ea57ef62d9060b444fe356
+KUBEBUILDER_TOOLS_linux_arm64_SHA256SUM=7e441e7cbbd53ba1585a27fded9f4a41d2f354ec86c09ac7de9caf666128461a
 KUBEBUILDER_TOOLS_darwin_amd64_SHA256SUM=f0ce69984cb1e51b68b34408fa79649368c85fe8db9caedc61d02bffc978fced
 KUBEBUILDER_TOOLS_darwin_arm64_SHA256SUM=98092c9edbfab1312d1418244f1f3f2d21509328e5ca8a84e0a6050e7aae69ea
 
@@ -384,6 +393,7 @@ $(bin_dir)/downloaded/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HO
 ###########
 
 KYVERNO_linux_amd64_SHA256SUM=c19d8da3107e75842779b73258f102da95467c3678f3f78b0f85a73fafb9e57d
+KYVERNO_linux_arm64_SHA256SUM=e0de7acb2a85b79c11208141987583bd06dbd95d1c3126d0e4b34fdb9e8abcf4
 KYVERNO_darwin_amd64_SHA256SUM=dee9270d7bbbeac27e737255fe6548ffb81cefc7e4b957fce810d57321a56d29
 KYVERNO_darwin_arm64_SHA256SUM=e08e16adfe373140a2cef9266f9abed5d114738b8ad94e06310dfc4979875369
 
@@ -400,6 +410,7 @@ $(bin_dir)/downloaded/tools/kyverno@$(KYVERNO_VERSION)_%: | $(bin_dir)/downloade
 ######
 
 YQ_linux_amd64_SHA256SUM=0d6aaf1cf44a8d18fbc7ed0ef14f735a8df8d2e314c4cc0f0242d35c0a440c95
+YQ_linux_arm64_SHA256SUM=9431f0fa39a0af03a152d7fe19a86e42e9ff28d503ed4a70598f9261ec944a97
 YQ_darwin_amd64_SHA256SUM=7f88b959c3fd2755e77dbf5bd92780dc3626c1c00ac45d5b5134f04189a142dc
 YQ_darwin_arm64_SHA256SUM=1ef0022ed6d0769d19e2d391dd731162034b0e0ba2c9b53dda039d16cec1c26a
 
@@ -413,6 +424,7 @@ $(bin_dir)/downloaded/tools/yq@$(YQ_VERSION)_%: | $(bin_dir)/downloaded/tools
 ######
 
 KO_linux_amd64_SHA256SUM=5b06079590371954cceadf0ddcfa8471afb039c29a2e971043915957366a2f39
+KO_linux_arm64_SHA256SUM=fcbb736f7440d686ca1cf8b4c3f6b9b80948eb17d6cef7c14242eddd275cab42
 KO_darwin_amd64_SHA256SUM=4f388a4b08bde612a20d799045a57a9b8847483baf1a1590d3c32735e7c30c16
 KO_darwin_arm64_SHA256SUM=45f2c1a50fdadb7ef38abbb479897d735c95238ec25c4f505177d77d60ed91d6
 
@@ -428,6 +440,7 @@ $(bin_dir)/downloaded/tools/ko@$(KO_VERSION)_%: | $(bin_dir)/downloaded/tools
 ##########
 
 PROTOC_linux_amd64_SHA256SUM=ed8fca87a11c888fed329d6a59c34c7d436165f662a2c875246ddb1ac2b6dd50
+PROTOC_linux_arm64_SHA256SUM=99975a8c11b83cd65c3e1151ae1714bf959abc0521acb659bf720524276ab0c8
 PROTOC_darwin_amd64_SHA256SUM=72c6d6b2bc855ff8688c3b7fb31288ccafd0ab55256ff8382d5711ecfcc11f4f
 PROTOC_darwin_arm64_SHA256SUM=320308ce18c359564948754f51748de41cf02a4e7edf0cf47a805b9d38610f16
 
@@ -478,6 +491,7 @@ tools-learn-sha: | $(bin_dir)
 	echo -n "" > "$(LEARN_FILE)"
 
 	HOST_OS=linux HOST_ARCH=amd64 $(MAKE) tools
+	HOST_OS=linux HOST_ARCH=arm64 $(MAKE) tools
 	HOST_OS=darwin HOST_ARCH=amd64 $(MAKE) tools
 	HOST_OS=darwin HOST_ARCH=arm64 $(MAKE) tools
 

@@ -49,8 +49,12 @@ noop: # do nothing
 # and Intel).
 HOST_OS ?= $(shell uname -s | tr A-Z a-z)
 HOST_ARCH ?= $(shell uname -m)
+
 ifeq (x86_64, $(HOST_ARCH))
 	HOST_ARCH = amd64
+else ifeq (aarch64, $(HOST_ARCH))
+	# linux reports the arm64 arch as aarch64
+	HOST_ARCH = arm64
 endif
 
 ##################################
