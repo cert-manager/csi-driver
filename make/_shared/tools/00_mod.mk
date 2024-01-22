@@ -282,7 +282,7 @@ GO_DEPENDENCIES += helm-tool=github.com/cert-manager/helm-tool
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools
-	GOBIN=$$(CURDIR)/$$(dir $$@) $$(GO) install $2@$($(call UC,$1)_VERSION)
+	GOWORK=off GOBIN=$$(CURDIR)/$$(dir $$@) $$(GO) install $2@$($(call UC,$1)_VERSION)
 	@mv $$(CURDIR)/$$(dir $$@)/$1 $$@
 endef
 

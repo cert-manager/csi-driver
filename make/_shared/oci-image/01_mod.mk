@@ -35,7 +35,8 @@ fatal_if_undefined = $(if $(findstring undefined,$(origin $1)),$(error $1 is not
 
 define check_variables
 $(call fatal_if_undefined,go_$1_ldflags)
-$(call fatal_if_undefined,go_$1_source_path)
+$(call fatal_if_undefined,go_$1_main_dir)
+$(call fatal_if_undefined,go_$1_mod_dir)
 $(call fatal_if_undefined,oci_$1_base_image_flavor)
 $(call fatal_if_undefined,oci_$1_image_name)
 $(call fatal_if_undefined,oci_$1_image_name_development)
@@ -46,6 +47,25 @@ else ifeq ($(oci_$1_base_image_flavor),csi-static)
     oci_$1_base_image := $(base_image_csi-static)
 else
     $$(error oci_$1_base_image_flavor has unknown value "$(oci_$1_base_image_flavor)")
+endif
+
+ifneq ($(go_$1_main_dir:.%=.),.)
+$$(error go_$1_main_dir "$(go_$1_main_dir)" should be a directory path that DOES start with ".")
+endif
+ifeq ($(go_$1_main_dir:%/=/),/)
+$$(error go_$1_main_dir "$(go_$1_main_dir)" should be a directory path that DOES NOT end with "/")
+endif
+ifeq ($(go_$1_main_dir:%.go=.go),.go)
+$$(error go_$1_main_dir "$(go_$1_main_dir)" should be a directory path that DOES NOT end with ".go")
+endif
+ifneq ($(go_$1_mod_dir:.%=.),.)
+$$(error go_$1_mod_dir "$(go_$1_mod_dir)" should be a directory path that DOES start with ".")
+endif
+ifeq ($(go_$1_mod_dir:%/=/),/)
+$$(error go_$1_mod_dir "$(go_$1_mod_dir)" should be a directory path that DOES NOT end with "/")
+endif
+ifeq ($(go_$1_mod_dir:%.go=.go),.go)
+$$(error go_$1_mod_dir "$(go_$1_mod_dir)" should be a directory path that DOES NOT end with ".go")
 endif
 
 endef
@@ -73,26 +93,36 @@ $(oci_build_targets): oci-build-%: | $(NEEDS_KO) $(NEEDS_GO) $(NEEDS_YQ) $(bin_d
 	$(eval oci_layout_path := $(bin_dir)/scratch/image/oci-layout-$*.$(oci_$*_image_tag))
 	rm -rf $(CURDIR)/$(oci_layout_path)
 
+	@if [ ! -f "$(go_$*_mod_dir)/go.mod" ]; then \
+		echo "ERROR: Specified directory "$(go_$*_mod_dir)" does not contain a go.mod file."; \
+		exit 1; \
+	fi
+
+	@if [ ! -f "$(go_$*_mod_dir)/$(go_$*_main_dir)/main.go" ]; then \
+		echo "ERROR: Specified directory "$(go_$*_mod_dir)$(go_$*_main_dir)" does not contain a main.go file."; \
+		exit 1; \
+	fi
+
 	echo '{}' | \
 		$(YQ) '.defaultBaseImage = "$(oci_$*_base_image)"' | \
 		$(YQ) '.builds[0].id = "$*"' | \
-		$(YQ) '.builds[0].main = "$(go_$*_source_path)"' | \
-		$(YQ) '.builds[0].env[0] = "CGO_ENABLED={{.Env.CGO_ENABLED}}"' | \
-		$(YQ) '.builds[0].env[1] = "GOEXPERIMENT={{.Env.GOEXPERIMENT}}"' | \
+		$(YQ) '.builds[0].dir = "$(go_$*_mod_dir)"' | \
+		$(YQ) '.builds[0].main = "$(go_$*_main_dir)"' | \
+		$(YQ) '.builds[0].env[0] = "CGO_ENABLED=$(CGO_ENABLED)"' | \
+		$(YQ) '.builds[0].env[1] = "GOEXPERIMENT=$(GOEXPERIMENT)"' | \
 		$(YQ) '.builds[0].ldflags[0] = "-s"' | \
 		$(YQ) '.builds[0].ldflags[1] = "-w"' | \
 		$(YQ) '.builds[0].ldflags[2] = "{{.Env.LDFLAGS}}"' \
 		> $(CURDIR)/$(oci_layout_path).ko_config.yaml
 
+	GOWORK=off \
 	KO_DOCKER_REPO=$(oci_$*_image_name_development) \
 	KOCACHE=$(bin_dir)/scratch/image/ko_cache \
 	KO_CONFIG_PATH=$(CURDIR)/$(oci_layout_path).ko_config.yaml \
 	SOURCE_DATE_EPOCH=$(GITEPOCH) \
 	KO_GO_PATH=$(GO) \
 	LDFLAGS="$(go_$*_ldflags)" \
-	CGO_ENABLED=$(CGO_ENABLED) \
-	GOEXPERIMENT=$(GOEXPERIMENT) \
-	$(KO) build $(go_$*_source_path) \
+	$(KO) build $(go_$*_mod_dir)/$(go_$*_main_dir) \
 		--platform=$(oci_platforms) \
 		--oci-layout-path=$(oci_layout_path) \
 		--sbom-dir=$(CURDIR)/$(oci_layout_path).sbom \
@@ -100,7 +130,7 @@ $(oci_build_targets): oci-build-%: | $(NEEDS_KO) $(NEEDS_GO) $(NEEDS_YQ) $(bin_d
 		--push=false \
 		--bare
 
-	cd $(image_tool_dir) && $(GO) run . list-digests \
+	cd $(image_tool_dir) && GOWORK=off $(GO) run . list-digests \
 		$(CURDIR)/$(oci_layout_path) \
 		> $(CURDIR)/$(oci_layout_path).digests
 
@@ -146,5 +176,5 @@ $(oci_load_targets): oci_platforms := ""
 $(oci_load_targets): oci-load-%: oci-build-% | kind-cluster $(NEEDS_KIND)
 	$(eval oci_layout_path := $(bin_dir)/scratch/image/oci-layout-$*.$(oci_$*_image_tag))
 
-	cd $(image_tool_dir) && $(GO) run . convert-to-docker-tar $(CURDIR)/$(oci_layout_path) $(CURDIR)/$(oci_layout_path).docker.tar $(oci_$*_image_name_development):$(oci_$*_image_tag)
+	cd $(image_tool_dir) && GOWORK=off $(GO) run . convert-to-docker-tar $(CURDIR)/$(oci_layout_path) $(CURDIR)/$(oci_layout_path).docker.tar $(oci_$*_image_name_development):$(oci_$*_image_tag)
 	$(KIND) load image-archive --name $(kind_cluster_name) $(oci_layout_path).docker.tar
