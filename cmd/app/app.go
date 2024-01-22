@@ -57,7 +57,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := opts.Logr.WithName("main")
-			log.Info("Version", "info", version.VersionInfo())
+			log.Info("Starting driver", "version", version.VersionInfo())
 
 			store, err := storage.NewFilesystem(opts.Logr.WithName("storage"), opts.DataRoot)
 			if err != nil {
