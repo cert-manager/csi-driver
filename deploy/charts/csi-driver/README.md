@@ -17,34 +17,486 @@ cert-manager-csi-driver enables issuing secretless X.509 certificates for pods u
 * <https://github.com/cert-manager/csi-driver>
 
 ## Values
+<!-- AUTO-GENERATED -->
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| affinity | object | `{}` | Kubernetes affinity: constraints for pod assignment |
-| app.driver | object | `{"csiDataDir":"/tmp/cert-manager-csi-driver","name":"csi.cert-manager.io","useTokenRequest":false}` | Options for CSI driver |
-| app.driver.csiDataDir | string | `"/tmp/cert-manager-csi-driver"` | Configures the hostPath directory that the driver will write and mount volumes from. |
-| app.driver.name | string | `"csi.cert-manager.io"` | Name of the driver which will be registered with Kubernetes. |
-| app.driver.useTokenRequest | bool | `false` | If enabled, will use CSI token request for creating CertificateRequests. CertificateRequests will be created via mounting pod's service accounts. |
-| app.kubeletRootDir | string | `"/var/lib/kubelet"` | Overrides path to root kubelet directory in case of a non-standard k8s install. |
-| app.livenessProbe | object | `{"port":9809}` | Options for the liveness container. |
-| app.livenessProbe.port | int | `9809` | The port that will expose the livness of the csi-driver |
-| app.logLevel | int | `1` | Verbosity of cert-manager-csi-driver logging. |
-| commonLabels | object | `{}` | Labels to apply to all resources |
-| daemonSetAnnotations | object | `{}` | Optional additional annotations to add to the csi-driver DaemonSet |
-| image.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on csi-driver. |
-| image.repository | string | `"quay.io/jetstack/cert-manager-csi-driver"` | Target image repository. |
-| image.tag | string | `"v0.0.0"` | Target image version tag. |
-| imagePullSecrets | list | `[]` | Optional secrets used for pulling the csi-driver container image |
-| livenessProbeImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on liveness probe. |
-| livenessProbeImage.repository | string | `"registry.k8s.io/sig-storage/livenessprobe"` | Target image repository. |
-| livenessProbeImage.tag | string | `"v2.12.0"` | Target image version tag. |
-| nodeDriverRegistrarImage.pullPolicy | string | `"IfNotPresent"` | Kubernetes imagePullPolicy on node-driver. |
-| nodeDriverRegistrarImage.repository | string | `"registry.k8s.io/sig-storage/csi-node-driver-registrar"` | Target image repository. |
-| nodeDriverRegistrarImage.tag | string | `"v2.10.0"` | Target image version tag. |
-| nodeSelector | object | `{}` | Kubernetes node selector: node labels for pod assignment |
-| podAnnotations | object | `{}` | Optional additional annotations to add to the csi-driver Pods |
-| podLabels | object | `{}` | Optional additional labels to add to the csi-driver Pods |
-| priorityClassName | string | `""` | Optional priority class to be used for the csi-driver pods. |
-| resources | object | `{}` | Kubernetes pod resources requests/limits for cert-manager-csi-driver |
-| tolerations | list | `[]` | Kubernetes pod tolerations for cert-manager-csi-driver |
 
+<table>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+<tr>
+
+<td>image.repository</td>
+<td>
+
+Target image repository.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+quay.io/jetstack/cert-manager-csi-driver
+```
+
+</td>
+</tr>
+<tr>
+
+<td>image.tag</td>
+<td>
+
+Target image version tag.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+v0.0.0
+```
+
+</td>
+</tr>
+<tr>
+
+<td>image.pullPolicy</td>
+<td>
+
+Kubernetes imagePullPolicy on csi-driver.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+IfNotPresent
+```
+
+</td>
+</tr>
+<tr>
+
+<td>imagePullSecrets</td>
+<td>
+
+Optional secrets used for pulling the csi-driver container image  
+  
+For example:
+
+```yaml
+imagePullSecrets:
+- name: secret-name
+```
+
+</td>
+<td>array</td>
+<td>
+
+```yaml
+[]
+```
+
+</td>
+</tr>
+<tr>
+
+<td>commonLabels</td>
+<td>
+
+Labels to apply to all resources
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>nodeDriverRegistrarImage.repository</td>
+<td>
+
+Target image repository.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+registry.k8s.io/sig-storage/csi-node-driver-registrar
+```
+
+</td>
+</tr>
+<tr>
+
+<td>nodeDriverRegistrarImage.tag</td>
+<td>
+
+Target image version tag.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+v2.10.0
+```
+
+</td>
+</tr>
+<tr>
+
+<td>nodeDriverRegistrarImage.pullPolicy</td>
+<td>
+
+Kubernetes imagePullPolicy on node-driver.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+IfNotPresent
+```
+
+</td>
+</tr>
+<tr>
+
+<td>livenessProbeImage.repository</td>
+<td>
+
+Target image repository.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+registry.k8s.io/sig-storage/livenessprobe
+```
+
+</td>
+</tr>
+<tr>
+
+<td>livenessProbeImage.tag</td>
+<td>
+
+Target image version tag.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+v2.12.0
+```
+
+</td>
+</tr>
+<tr>
+
+<td>livenessProbeImage.pullPolicy</td>
+<td>
+
+Kubernetes imagePullPolicy on liveness probe.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+IfNotPresent
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.logLevel</td>
+<td>
+
+Verbosity of cert-manager-csi-driver logging.
+
+</td>
+<td>number</td>
+<td>
+
+```yaml
+1
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.driver.name</td>
+<td>
+
+Name of the driver which will be registered with Kubernetes.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+csi.cert-manager.io
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.driver.useTokenRequest</td>
+<td>
+
+If enabled, will use CSI token request for creating. CertificateRequests. CertificateRequests will be created via mounting pod's service accounts.
+
+</td>
+<td>bool</td>
+<td>
+
+```yaml
+false
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.driver.csiDataDir</td>
+<td>
+
+Configures the hostPath directory that the driver will write and mount volumes from.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+/tmp/cert-manager-csi-driver
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.livenessProbe.port</td>
+<td>
+
+The port that will expose the livness of the csi-driver
+
+</td>
+<td>number</td>
+<td>
+
+```yaml
+9809
+```
+
+</td>
+</tr>
+<tr>
+
+<td>app.kubeletRootDir</td>
+<td>
+
+Overrides path to root kubelet directory in case of a non-standard k8s install.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+/var/lib/kubelet
+```
+
+</td>
+</tr>
+<tr>
+
+<td>daemonSetAnnotations</td>
+<td>
+
+Optional additional annotations to add to the csi-driver DaemonSet
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>podAnnotations</td>
+<td>
+
+Optional additional annotations to add to the csi-driver Pods
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>podLabels</td>
+<td>
+
+Optional additional labels to add to the csi-driver Pods
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>resources</td>
+<td>
+
+Kubernetes pod resources requests/limits for cert-manager-csi-driver  
+  
+For example:
+
+```yaml
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+```
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>nodeSelector</td>
+<td>
+
+Kubernetes node selector: node labels for pod assignment. For example, to allow scheduling of DaemonSet on linux nodes only:
+
+```yaml
+nodeSelector:
+  kubernetes.io/os: linux
+```
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>affinity</td>
+<td>
+
+Kubernetes affinity: constraints for pod assignment  
+  
+For example:
+
+```yaml
+affinity:
+  nodeAffinity:
+   requiredDuringSchedulingIgnoredDuringExecution:
+     nodeSelectorTerms:
+     - matchExpressions:
+       - key: foo.bar.com/role
+         operator: In
+         values:
+         - master
+```
+
+</td>
+<td>object</td>
+<td>
+
+```yaml
+{}
+```
+
+</td>
+</tr>
+<tr>
+
+<td>tolerations</td>
+<td>
+
+Kubernetes pod tolerations for cert-manager-csi-driver  
+  
+For example:
+
+```yaml
+tolerations:
+- operator: "Exists"
+```
+
+</td>
+<td>array</td>
+<td>
+
+```yaml
+[]
+```
+
+</td>
+</tr>
+<tr>
+
+<td>priorityClassName</td>
+<td>
+
+Optional priority class to be used for the csi-driver pods.
+
+</td>
+<td>string</td>
+<td>
+
+```yaml
+""
+```
+
+</td>
+</tr>
+</table>
+
+<!-- /AUTO-GENERATED -->

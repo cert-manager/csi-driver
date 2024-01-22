@@ -1,96 +1,108 @@
 image:
-  # -- Target image repository.
+  # Target image repository.
   repository: quay.io/jetstack/cert-manager-csi-driver
-  # -- Target image version tag.
+  # Target image version tag.
   tag: v0.0.0
-  # -- Kubernetes imagePullPolicy on csi-driver.
+  # Kubernetes imagePullPolicy on csi-driver.
   pullPolicy: IfNotPresent
   # Setting a digest will override any tag
   # digest: sha256:xxxx
 
-# -- Optional secrets used for pulling the csi-driver container image
+# Optional secrets used for pulling the csi-driver container image
+#
+# For example:
+#  imagePullSecrets:
+#  - name: secret-name
 imagePullSecrets: []
-#- name: Secret with Registry credentials
 
-# -- Labels to apply to all resources
+# Labels to apply to all resources
 commonLabels: {}
 
 nodeDriverRegistrarImage:
-  # -- Target image repository.
+  # Target image repository.
   repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
-  # -- Target image version tag.
+  # Target image version tag.
   tag: v2.10.0
-  # -- Kubernetes imagePullPolicy on node-driver.
+  # Kubernetes imagePullPolicy on node-driver.
   pullPolicy: IfNotPresent
 
 livenessProbeImage:
-  # -- Target image repository.
+  # Target image repository.
   repository: registry.k8s.io/sig-storage/livenessprobe
-  # -- Target image version tag.
+  # Target image version tag.
   tag: v2.12.0
-  # -- Kubernetes imagePullPolicy on liveness probe.
+  # Kubernetes imagePullPolicy on liveness probe.
   pullPolicy: IfNotPresent
   # Setting a digest will override any tag
   # digest: sha256:xxxx
 
 app:
-  # -- Verbosity of cert-manager-csi-driver logging.
+  # Verbosity of cert-manager-csi-driver logging.
   logLevel: 1 # 1-5
-  # -- Options for CSI driver
+  # Options for CSI driver
   driver:
-    # -- Name of the driver which will be registered with Kubernetes.
+    # Name of the driver which will be registered with Kubernetes.
     name: csi.cert-manager.io
-    # -- If enabled, will use CSI token request for creating
+    # If enabled, will use CSI token request for creating
     # CertificateRequests. CertificateRequests will be created via mounting
     # pod's service accounts.
     useTokenRequest: false
-    # -- Configures the hostPath directory that the driver will write and mount volumes from.
+    # Configures the hostPath directory that the driver will write and mount volumes from.
     csiDataDir: /tmp/cert-manager-csi-driver
-  # -- Options for the liveness container.
+  # Options for the liveness container.
   livenessProbe:
-    # -- The port that will expose the livness of the csi-driver
+    # The port that will expose the livness of the csi-driver
     port: 9809
-  # -- Overrides path to root kubelet directory in case of a non-standard k8s install.
+  # Overrides path to root kubelet directory in case of a non-standard k8s install.
   kubeletRootDir: /var/lib/kubelet
 
-# -- Optional additional annotations to add to the csi-driver DaemonSet
+# Optional additional annotations to add to the csi-driver DaemonSet
 daemonSetAnnotations: {}
 
-# -- Optional additional annotations to add to the csi-driver Pods
+# Optional additional annotations to add to the csi-driver Pods
 podAnnotations: {}
 
-# -- Optional additional labels to add to the csi-driver Pods
+# Optional additional labels to add to the csi-driver Pods
 podLabels: {}
 
-# -- Kubernetes pod resources requests/limits for cert-manager-csi-driver
+# Kubernetes pod resources requests/limits for cert-manager-csi-driver
+#
+# For example:
+#  resources:
+#    limits:
+#      cpu: 100m
+#      memory: 128Mi
+#    requests:
+#      cpu: 100m
+#      memory: 128Mi
 resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
-# -- Kubernetes node selector: node labels for pod assignment
+# Kubernetes node selector: node labels for pod assignment.
+# For example, to allow scheduling of DaemonSet on linux nodes only:
+#  nodeSelector:
+#    kubernetes.io/os: linux
 nodeSelector: {}
-  # -- Allow scheduling of DaemonSet on linux nodes only
-  # kubernetes.io/os: linux
 
-# -- Kubernetes affinity: constraints for pod assignment
+# Kubernetes affinity: constraints for pod assignment
+# 
+# For example:
+#  affinity:
+#    nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: foo.bar.com/role
+#           operator: In
+#           values:
+#           - master
 affinity: {}
-  # nodeAffinity:
-  #  requiredDuringSchedulingIgnoredDuringExecution:
-  #    nodeSelectorTerms:
-  #    - matchExpressions:
-  #      - key: foo.bar.com/role
-  #        operator: In
-  #        values:
-  #        - master
 
-# -- Kubernetes pod tolerations for cert-manager-csi-driver
+# Kubernetes pod tolerations for cert-manager-csi-driver
+#
+# For example:
+#  tolerations:
+#  - operator: "Exists"
 tolerations: []
-  # -- Allow scheduling of DaemonSet on all nodes
-  # - operator: "Exists"
 
-# -- Optional priority class to be used for the csi-driver pods.
+# Optional priority class to be used for the csi-driver pods.
 priorityClassName: ""

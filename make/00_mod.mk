@@ -39,6 +39,8 @@ api_docs_branch := main
 helm_chart_source_dir := deploy/charts/csi-driver
 helm_chart_name := cert-manager-csi-driver
 helm_chart_version := $(VERSION)
+helm_docs_use_helm_tool := 1
+
 define helm_values_mutation_function
 $(YQ) \
 	'( .image.repository = "$(oci_manager_image_name)" ) | \
