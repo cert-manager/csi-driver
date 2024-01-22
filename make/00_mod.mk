@@ -21,7 +21,8 @@ oci_platforms := linux/amd64,linux/arm64
 
 build_names := manager
 
-go_manager_source_path := cmd/main.go
+go_manager_main_dir := ./cmd
+go_manager_mod_dir := .
 go_manager_ldflags := -X $(repo_name)/internal/version.AppVersion=$(VERSION) -X $(repo_name)/internal/version.GitCommit=$(GITCOMMIT)
 oci_manager_base_image_flavor := csi-static
 oci_manager_image_name := quay.io/jetstack/cert-manager-csi-driver
