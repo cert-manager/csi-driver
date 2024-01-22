@@ -33,6 +33,7 @@ import (
 	"k8s.io/utils/clock"
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
+	"github.com/cert-manager/csi-driver/internal/version"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
 	"github.com/cert-manager/csi-driver/pkg/keygen"
@@ -56,7 +57,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := opts.Logr.WithName("main")
-			log.Info("building driver")
+			log.Info("Version", "info", version.VersionInfo())
 
 			store, err := storage.NewFilesystem(opts.Logr.WithName("storage"), opts.DataRoot)
 			if err != nil {
@@ -75,7 +76,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			mngrlog := opts.Logr.WithName("manager")
 			d, err := driver.New(opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:    opts.DriverName,
-				DriverVersion: "v0.3.0",
+				DriverVersion: version.AppVersion,
 				NodeID:        opts.NodeID,
 				Store:         store,
 				Manager: manager.NewManagerOrDie(manager.Options{
