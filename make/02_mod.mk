@@ -23,13 +23,8 @@ include make/test-unit.mk
 .PHONY: release
 ## Publish all release artifacts (image + helm chart)
 ## @category [shared] Release
-release: $(helm_chart_archive) | $(NEEDS_CRANE)
-	if $(CRANE) manifest digest $(oci_manager_image_name):$(oci_manager_image_tag) > /dev/null 2>&1; then \
-		echo "Image $(oci_manager_image_name):$(oci_manager_image_tag) already exists in registry"; \
-	else \
-		echo "Image $(oci_manager_image_name):$(oci_manager_image_tag) does not exist in registry"; \
-		$(MAKE) oci-push-manager; \
-	fi
+release: $(helm_chart_archive)
+	$(MAKE) oci-push-manager
 
 	@echo "RELEASE_OCI_MANAGER_IMAGE=$(oci_manager_image_name)" >> "$(GITHUB_OUTPUT)"
 	@echo "RELEASE_OCI_MANAGER_TAG=$(oci_manager_image_tag)" >> "$(GITHUB_OUTPUT)"
