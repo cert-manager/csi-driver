@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-oci_platforms := linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le
+oci_platforms ?= linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -117,7 +117,7 @@ $(oci_build_targets): oci-build-%: | $(NEEDS_KO) $(NEEDS_GO) $(NEEDS_YQ) $(bin_d
 
 	GOWORK=off \
 	KO_DOCKER_REPO=$(oci_$*_image_name_development) \
-	KOCACHE=$(bin_dir)/scratch/image/ko_cache \
+	KOCACHE=$(CURDIR)/$(bin_dir)/scratch/image/ko_cache \
 	KO_CONFIG_PATH=$(CURDIR)/$(oci_layout_path).ko_config.yaml \
 	SOURCE_DATE_EPOCH=$(GITEPOCH) \
 	KO_GO_PATH=$(GO) \

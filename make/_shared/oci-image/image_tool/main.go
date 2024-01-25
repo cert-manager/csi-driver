@@ -107,7 +107,7 @@ func convertToDockerTar(path string, output string, imageName string) error {
 				return nil, err
 			}
 
-			if config.Platform().OS == runtime.GOOS && config.Platform().Architecture == runtime.GOARCH {
+			if config.Platform().Architecture == runtime.GOARCH {
 				matchingImages = append(matchingImages, obj)
 			}
 		case oci.SignedImageIndex:

@@ -109,6 +109,10 @@ KUBEBUILDER_ASSETS_VERSION=1.28.3
 TOOLS += etcd=$(KUBEBUILDER_ASSETS_VERSION)
 TOOLS += kube-apiserver=$(KUBEBUILDER_ASSETS_VERSION)
 
+# Additional tools can be defined to reuse the tooling in this file
+ADDITIONAL_TOOLS ?=
+TOOLS += $(ADDITIONAL_TOOLS)
+
 # https://go.dev/dl/
 VENDORED_GO_VERSION := 1.21.6
 
@@ -279,6 +283,10 @@ GO_DEPENDENCIES += openapi-gen=k8s.io/code-generator/cmd/openapi-gen
 GO_DEPENDENCIES += defaulter-gen=k8s.io/code-generator/cmd/defaulter-gen
 GO_DEPENDENCIES += conversion-gen=k8s.io/code-generator/cmd/conversion-gen
 GO_DEPENDENCIES += helm-tool=github.com/cert-manager/helm-tool
+
+# Additional Go dependencies can be defined to re-use the tooling in this file
+ADDITIONAL_GO_DEPENDENCIES ?=
+GO_DEPENDENCIES += $(ADDITIONAL_GO_DEPENDENCIES)
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools
