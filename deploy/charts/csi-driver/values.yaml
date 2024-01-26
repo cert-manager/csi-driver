@@ -1,12 +1,19 @@
 image:
   # Target image repository.
   repository: quay.io/jetstack/cert-manager-csi-driver
-  # Target image version tag.
-  tag: v0.0.0
-  # Kubernetes imagePullPolicy on the csi-driver.
+  # Target image registry. This value is prepended to the target image repository, if set.
+  registry:
+
+  # Target image version tag. Defaults to the chart's appVersion.
+  tag:
+
+  # Target image digest. Override any tag, if set.
+  # For example:
+  # digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+  digest:
+
+  # Kubernetes imagePullPolicy on Deployment.
   pullPolicy: IfNotPresent
-  # Setting a digest will override any tag
-  # digest: sha256:xxxx
 
 # Optional secrets used for pulling the csi-driver container image.
 #
@@ -21,20 +28,36 @@ commonLabels: {}
 nodeDriverRegistrarImage:
   # Target image repository.
   repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
-  # Target image version tag.
+  # Target image registry. This value is prepended to the target image repository, if set.
+  registry:
+
+  # Target image version tag. Defaults to the chart's appVersion.
   tag: v2.10.0
-  # Kubernetes imagePullPolicy on the node-driver.
+
+  # Target image digest. Override any tag, if set.
+  # For example:
+  # digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+  digest:
+
+  # Kubernetes imagePullPolicy on Deployment.
   pullPolicy: IfNotPresent
 
 livenessProbeImage:
   # Target image repository.
   repository: registry.k8s.io/sig-storage/livenessprobe
-  # Target image version tag.
+  # Target image registry. This value is prepended to the target image repository, if set.
+  registry:
+
+  # Target image version tag. Defaults to the chart's appVersion.
   tag: v2.12.0
-  # Kubernetes imagePullPolicy on the liveness probe.
+
+  # Target image digest. Override any tag, if set.
+  # For example:
+  # digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+  digest:
+
+  # Kubernetes imagePullPolicy on Deployment.
   pullPolicy: IfNotPresent
-  # Setting a digest will override any tag.
-  # digest: sha256:xxxx
 
 app:
   # Verbosity of cert-manager-csi-driver logging.

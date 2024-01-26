@@ -13,20 +13,39 @@
 > ```
 
 Target image repository.
-#### **image.tag** ~ `string`
+#### **image.registry** ~ `unknown`
 > Default value:
 > ```yaml
-> v0.0.0
+> null
 > ```
 
-Target image version tag.
+Target image registry. This value is prepended to the target image repository, if set.
+#### **image.tag** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image version tag. Defaults to the chart's appVersion.
+#### **image.digest** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
 #### **image.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the csi-driver.
+Kubernetes imagePullPolicy on Deployment.
 #### **imagePullSecrets** ~ `array`
 > Default value:
 > ```yaml
@@ -55,20 +74,39 @@ Labels to apply to all resources.
 > ```
 
 Target image repository.
+#### **nodeDriverRegistrarImage.registry** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image registry. This value is prepended to the target image repository, if set.
 #### **nodeDriverRegistrarImage.tag** ~ `string`
 > Default value:
 > ```yaml
 > v2.10.0
 > ```
 
-Target image version tag.
+Target image version tag. Defaults to the chart's appVersion.
+#### **nodeDriverRegistrarImage.digest** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
 #### **nodeDriverRegistrarImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the node-driver.
+Kubernetes imagePullPolicy on Deployment.
 #### **livenessProbeImage.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -76,20 +114,39 @@ Kubernetes imagePullPolicy on the node-driver.
 > ```
 
 Target image repository.
+#### **livenessProbeImage.registry** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image registry. This value is prepended to the target image repository, if set.
 #### **livenessProbeImage.tag** ~ `string`
 > Default value:
 > ```yaml
 > v2.12.0
 > ```
 
-Target image version tag.
+Target image version tag. Defaults to the chart's appVersion.
+#### **livenessProbeImage.digest** ~ `unknown`
+> Default value:
+> ```yaml
+> null
+> ```
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
 #### **livenessProbeImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the liveness probe.
+Kubernetes imagePullPolicy on Deployment.
 #### **app.logLevel** ~ `number`
 > Default value:
 > ```yaml
