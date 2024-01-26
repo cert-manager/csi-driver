@@ -29,6 +29,13 @@
 
 ##################################
 
+# Some modules build their dependencies from variables, we want these to be 
+# evalutated at the last possible moment. For this we use second expansion to 
+# re-evaluate the generate and verify targets a second time.
+#
+# See https://www.gnu.org/software/make/manual/html_node/Secondary-Expansion.html
+.SECONDEXPANSION:
+
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -uo pipefail -c
