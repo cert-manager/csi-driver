@@ -37,9 +37,9 @@ CTR=docker
 
 TOOLS :=
 # https://github.com/helm/helm/releases
-TOOLS += helm=v3.13.3
+TOOLS += helm=v3.14.0
 # https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
-TOOLS += kubectl=v1.29.0
+TOOLS += kubectl=v1.29.1
 # https://github.com/kubernetes-sigs/kind/releases
 TOOLS += kind=v0.20.0
 # https://www.vaultproject.io/downloads
@@ -47,21 +47,21 @@ TOOLS += vault=1.15.4
 # https://github.com/Azure/azure-workload-identity/releases
 TOOLS += azwi=v1.2.0
 # https://github.com/kyverno/kyverno/releases
-TOOLS += kyverno=v1.11.1
+TOOLS += kyverno=v1.11.3
 # https://github.com/mikefarah/yq/releases
 TOOLS += yq=v4.40.5
 # https://github.com/ko-build/ko/releases
 TOOLS += ko=0.15.1
 # https://github.com/protocolbuffers/protobuf/releases
-TOOLS += protoc=25.1
+TOOLS += protoc=25.2
 
 ### go packages
 # https://pkg.go.dev/sigs.k8s.io/controller-tools/cmd/controller-gen?tab=versions
-TOOLS += controller-gen=v0.13.0
+TOOLS += controller-gen=v0.14.0
 # https://pkg.go.dev/golang.org/x/tools/cmd/goimports?tab=versions
-TOOLS += goimports=v0.16.1
+TOOLS += goimports=v0.17.0
 # https://pkg.go.dev/github.com/google/go-licenses/licenses?tab=versions
-TOOLS += go-licenses=v1.6.0
+TOOLS += go-licenses=706b9c60edd424a8b6d253fe10dfb7b8e942d4a5
 # https://pkg.go.dev/gotest.tools/gotestsum?tab=versions
 TOOLS += gotestsum=v1.11.0
 # https://pkg.go.dev/sigs.k8s.io/kustomize/kustomize/v4?tab=versions
@@ -69,11 +69,11 @@ TOOLS += kustomize=v4.5.7
 # https://pkg.go.dev/github.com/itchyny/gojq?tab=versions
 TOOLS += gojq=v0.12.14
 # https://pkg.go.dev/github.com/google/go-containerregistry/pkg/crane?tab=versions
-TOOLS += crane=v0.17.0
+TOOLS += crane=v0.18.0
 # https://pkg.go.dev/google.golang.org/protobuf/cmd/protoc-gen-go?tab=versions
-TOOLS += protoc-gen-go=v1.31.0
+TOOLS += protoc-gen-go=v1.32.0
 # https://pkg.go.dev/github.com/norwoodj/helm-docs/cmd/helm-docs?tab=versions
-TOOLS += helm-docs=v1.11.2
+TOOLS += helm-docs=v1.12.0
 # https://pkg.go.dev/github.com/sigstore/cosign/v2/cmd/cosign?tab=versions
 TOOLS += cosign=v2.2.2
 # https://pkg.go.dev/github.com/cert-manager/boilersuite?tab=versions
@@ -89,23 +89,23 @@ TOOLS += oras=v1.1.0
 # because otherwise the awk failure renders the whole makefile unusable.
 TOOLS += ginkgo=$(shell [[ -f go.mod ]] && awk '/ginkgo\/v2/ {print $$2}' go.mod || echo "v2.13.2")
 # https://pkg.go.dev/github.com/cert-manager/klone?tab=versions
-TOOLS += klone=v0.0.3
+TOOLS += klone=v0.0.4
 # https://pkg.go.dev/github.com/goreleaser/goreleaser?tab=versions
 TOOLS += goreleaser=v1.23.0
 # https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
 TOOLS += syft=v0.100.0
 # https://github.com/cert-manager/helm-tool
-TOOLS += helm-tool=v0.2.2
+TOOLS += helm-tool=v0.2.3
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
-K8S_CODEGEN_VERSION=v0.29.0
+K8S_CODEGEN_VERSION=v0.29.1
 TOOLS += applyconfiguration-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += openapi-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += defaulter-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += conversion-gen=$(K8S_CODEGEN_VERSION)
 
 # https://github.com/kubernetes-sigs/kubebuilder/blob/tools-releases/build/cloudbuild_tools.yaml
-KUBEBUILDER_ASSETS_VERSION=1.28.3
+KUBEBUILDER_ASSETS_VERSION=1.29.0
 TOOLS += etcd=$(KUBEBUILDER_ASSETS_VERSION)
 TOOLS += kube-apiserver=$(KUBEBUILDER_ASSETS_VERSION)
 
@@ -300,10 +300,10 @@ $(foreach GO_DEPENDENCY,$(GO_DEPENDENCIES),$(eval $(call go_dependency,$(word 1,
 # Helm #
 ########
 
-HELM_linux_amd64_SHA256SUM=bbb6e7c6201458b235f335280f35493950dcd856825ddcfd1d3b40ae757d5c7d
-HELM_linux_arm64_SHA256SUM=44aaa094ae24d01e8c36e327e1837fd3377a0f9152626da088384c5bc6d94562
-HELM_darwin_amd64_SHA256SUM=da654c9e0fd4fcb50cc5dba051c1c9cf398e21ffa5064b47ac89a9697e139d39
-HELM_darwin_arm64_SHA256SUM=61ba210cd65c53be5c0021c8fc8e0b94f4c122aff32f5ed0e4ea81728108ea20
+HELM_linux_amd64_SHA256SUM=f43e1c3387de24547506ab05d24e5309c0ce0b228c23bd8aa64e9ec4b8206651
+HELM_linux_arm64_SHA256SUM=b29e61674731b15f6ad3d1a3118a99d3cc2ab25a911aad1b8ac8c72d5a9d2952
+HELM_darwin_amd64_SHA256SUM=804586896496f7b3da97f56089ea00f220e075e969b6fdf6c0b7b9cdc22de120
+HELM_darwin_arm64_SHA256SUM=c2f36f3289a01c7c93ca11f84d740a170e0af1d2d0280bd523a409a62b8dfa1d
 
 $(bin_dir)/downloaded/tools/helm@$(HELM_VERSION)_%: | $(bin_dir)/downloaded/tools
 	$(CURL) https://get.helm.sh/helm-$(HELM_VERSION)-$(subst _,-,$*).tar.gz -o $@.tar.gz
@@ -317,10 +317,10 @@ $(bin_dir)/downloaded/tools/helm@$(HELM_VERSION)_%: | $(bin_dir)/downloaded/tool
 # kubectl #
 ###########
 
-KUBECTL_linux_amd64_SHA256SUM=0e03ab096163f61ab610b33f37f55709d3af8e16e4dcc1eb682882ef80f96fd5
-KUBECTL_linux_arm64_SHA256SUM=8f7a4bd6bae900a4ddab12bd1399aa652c0d59ea508f39b910e111d248893ff7
-KUBECTL_darwin_amd64_SHA256SUM=d69c2b0929070e42518b304758fbe05cf76c4fb60d36e93bb667d7b76e582124
-KUBECTL_darwin_arm64_SHA256SUM=403beb5d64d8a8517f808a320619a28adc89003b1b710f02421933a9ee4eb968
+KUBECTL_linux_amd64_SHA256SUM=69ab3a931e826bf7ac14d38ba7ca637d66a6fcb1ca0e3333a2cafdf15482af9f
+KUBECTL_linux_arm64_SHA256SUM=96d6dc7b2bdcd344ce58d17631c452225de5bbf59b83fd3c89c33c6298fb5d8b
+KUBECTL_darwin_amd64_SHA256SUM=c4da86e5c0fc9415db14a48d9ef1515b0b472346cbc9b7f015175b6109505d2c
+KUBECTL_darwin_arm64_SHA256SUM=c31b99d7bf0faa486a6554c5f96e36af4821a488e90176a12ba18298bc4c8fb0
 
 $(bin_dir)/downloaded/tools/kubectl@$(KUBECTL_VERSION)_%: | $(bin_dir)/downloaded/tools
 	$(CURL) https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(subst _,/,$*)/kubectl -o $@
@@ -378,10 +378,10 @@ $(bin_dir)/downloaded/tools/azwi@$(AZWI_VERSION)_%: | $(bin_dir)/downloaded/tool
 # kube-apiserver / etcd    #
 ############################
 
-KUBEBUILDER_TOOLS_linux_amd64_SHA256SUM=878fded1b42261293419621b78c9deac319531a325ea57ef62d9060b444fe356
-KUBEBUILDER_TOOLS_linux_arm64_SHA256SUM=7e441e7cbbd53ba1585a27fded9f4a41d2f354ec86c09ac7de9caf666128461a
-KUBEBUILDER_TOOLS_darwin_amd64_SHA256SUM=f0ce69984cb1e51b68b34408fa79649368c85fe8db9caedc61d02bffc978fced
-KUBEBUILDER_TOOLS_darwin_arm64_SHA256SUM=98092c9edbfab1312d1418244f1f3f2d21509328e5ca8a84e0a6050e7aae69ea
+KUBEBUILDER_TOOLS_linux_amd64_SHA256SUM=79c6023c67a1786232b55e21382c278311d751c82716eb615026b9aebf15691e
+KUBEBUILDER_TOOLS_linux_arm64_SHA256SUM=57cf10df8ed10f2dd0ef11f07c4e199fc7271dffedf285e7db440c175bf7a34d
+KUBEBUILDER_TOOLS_darwin_amd64_SHA256SUM=a719a59f4d0c3c2a7d00d95f33b8852b000ff3fa3b23f531bcd9bc8568da836b
+KUBEBUILDER_TOOLS_darwin_arm64_SHA256SUM=4ef1c8499247654c927ab36244c641ee55a17295af339755b42144c2a5a3d02c
 
 $(bin_dir)/downloaded/tools/etcd@$(KUBEBUILDER_ASSETS_VERSION)_%: $(bin_dir)/downloaded/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_%.tar.gz | $(bin_dir)/downloaded/tools
 	$(checkhash_script) $< $(KUBEBUILDER_TOOLS_$*_SHA256SUM)
@@ -400,10 +400,10 @@ $(bin_dir)/downloaded/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HO
 # kyverno #
 ###########
 
-KYVERNO_linux_amd64_SHA256SUM=c19d8da3107e75842779b73258f102da95467c3678f3f78b0f85a73fafb9e57d
-KYVERNO_linux_arm64_SHA256SUM=e0de7acb2a85b79c11208141987583bd06dbd95d1c3126d0e4b34fdb9e8abcf4
-KYVERNO_darwin_amd64_SHA256SUM=dee9270d7bbbeac27e737255fe6548ffb81cefc7e4b957fce810d57321a56d29
-KYVERNO_darwin_arm64_SHA256SUM=e08e16adfe373140a2cef9266f9abed5d114738b8ad94e06310dfc4979875369
+KYVERNO_linux_amd64_SHA256SUM=08cf3640b847e3bbd41c5014ece4e0aa6c39915f5c199eeac8d80267955676e6
+KYVERNO_linux_arm64_SHA256SUM=31805a52e98733b390c60636f209e0bda3174bd09e764ba41fa971126b98d2fc
+KYVERNO_darwin_amd64_SHA256SUM=21fa0733d1a73d510fa0e30ac10310153b7124381aa21224b54fe34a38239542
+KYVERNO_darwin_arm64_SHA256SUM=022bc2640f05482cab290ca8cd28a67f55b24c14b93076bd144c37a1732e6d7e
 
 $(bin_dir)/downloaded/tools/kyverno@$(KYVERNO_VERSION)_%: | $(bin_dir)/downloaded/tools
 	$(CURL) https://github.com/kyverno/kyverno/releases/download/$(KYVERNO_VERSION)/kyverno-cli_$(KYVERNO_VERSION)_$(subst amd64,x86_64,$*).tar.gz	-fsSL -o $@.tar.gz
@@ -447,10 +447,10 @@ $(bin_dir)/downloaded/tools/ko@$(KO_VERSION)_%: | $(bin_dir)/downloaded/tools
 # protoc #
 ##########
 
-PROTOC_linux_amd64_SHA256SUM=ed8fca87a11c888fed329d6a59c34c7d436165f662a2c875246ddb1ac2b6dd50
-PROTOC_linux_arm64_SHA256SUM=99975a8c11b83cd65c3e1151ae1714bf959abc0521acb659bf720524276ab0c8
-PROTOC_darwin_amd64_SHA256SUM=72c6d6b2bc855ff8688c3b7fb31288ccafd0ab55256ff8382d5711ecfcc11f4f
-PROTOC_darwin_arm64_SHA256SUM=320308ce18c359564948754f51748de41cf02a4e7edf0cf47a805b9d38610f16
+PROTOC_linux_amd64_SHA256SUM=78ab9c3288919bdaa6cfcec6127a04813cf8a0ce406afa625e48e816abee2878
+PROTOC_linux_arm64_SHA256SUM=07683afc764e4efa3fa969d5f049fbc2bdfc6b4e7786a0b233413ac0d8753f6b
+PROTOC_darwin_amd64_SHA256SUM=5fe89993769616beff1ed77408d1335216379ce7010eee80284a01f9c87c8888
+PROTOC_darwin_arm64_SHA256SUM=8822b090c396800c96ac652040917eb3fbc5e542538861aad7c63b8457934b20
 
 $(bin_dir)/downloaded/tools/protoc@$(PROTOC_VERSION)_%: | $(bin_dir)/downloaded/tools
 	$(CURL) https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(subst darwin,osx,$(subst arm64,aarch_64,$(subst amd64,x86_64,$(subst _,-,$*)))).zip -o $@.zip
