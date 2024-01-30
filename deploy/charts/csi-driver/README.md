@@ -66,7 +66,7 @@ v0.0.0
 <td>image.pullPolicy</td>
 <td>
 
-Kubernetes imagePullPolicy on csi-driver.
+Kubernetes imagePullPolicy on the csi-driver.
 
 </td>
 <td>string</td>
@@ -83,7 +83,7 @@ IfNotPresent
 <td>imagePullSecrets</td>
 <td>
 
-Optional secrets used for pulling the csi-driver container image  
+Optional secrets used for pulling the csi-driver container image.  
   
 For example:
 
@@ -107,7 +107,7 @@ imagePullSecrets:
 <td>commonLabels</td>
 <td>
 
-Labels to apply to all resources
+Labels to apply to all resources.
 
 </td>
 <td>object</td>
@@ -158,7 +158,7 @@ v2.10.0
 <td>nodeDriverRegistrarImage.pullPolicy</td>
 <td>
 
-Kubernetes imagePullPolicy on node-driver.
+Kubernetes imagePullPolicy on the node-driver.
 
 </td>
 <td>string</td>
@@ -209,7 +209,7 @@ v2.12.0
 <td>livenessProbeImage.pullPolicy</td>
 <td>
 
-Kubernetes imagePullPolicy on liveness probe.
+Kubernetes imagePullPolicy on the liveness probe.
 
 </td>
 <td>string</td>
@@ -243,7 +243,7 @@ Verbosity of cert-manager-csi-driver logging.
 <td>app.driver.name</td>
 <td>
 
-Name of the driver which will be registered with Kubernetes.
+Name of the driver to be registered with Kubernetes.
 
 </td>
 <td>string</td>
@@ -260,7 +260,7 @@ csi.cert-manager.io
 <td>app.driver.useTokenRequest</td>
 <td>
 
-If enabled, will use CSI token request for creating. CertificateRequests. CertificateRequests will be created via mounting pod's service accounts.
+If enabled, this uses a CSI token request for creating. CertificateRequests. CertificateRequests are created by mounting the pod's service accounts.
 
 </td>
 <td>bool</td>
@@ -277,7 +277,7 @@ false
 <td>app.driver.csiDataDir</td>
 <td>
 
-Configures the hostPath directory that the driver will write and mount volumes from.
+Configures the hostPath directory that the driver writes and mounts volumes from.
 
 </td>
 <td>string</td>
@@ -294,7 +294,7 @@ Configures the hostPath directory that the driver will write and mount volumes f
 <td>app.livenessProbe.port</td>
 <td>
 
-The port that will expose the livness of the csi-driver
+The port that will expose the liveness of the csi-driver.
 
 </td>
 <td>number</td>
@@ -311,7 +311,7 @@ The port that will expose the livness of the csi-driver
 <td>app.kubeletRootDir</td>
 <td>
 
-Overrides path to root kubelet directory in case of a non-standard k8s install.
+Overrides the path to root kubelet directory in case of a non-standard Kubernetes install.
 
 </td>
 <td>string</td>
@@ -328,7 +328,7 @@ Overrides path to root kubelet directory in case of a non-standard k8s install.
 <td>daemonSetAnnotations</td>
 <td>
 
-Optional additional annotations to add to the csi-driver DaemonSet
+Optional additional annotations to add to the csi-driver DaemonSet.
 
 </td>
 <td>object</td>
@@ -345,7 +345,7 @@ Optional additional annotations to add to the csi-driver DaemonSet
 <td>podAnnotations</td>
 <td>
 
-Optional additional annotations to add to the csi-driver Pods
+Optional additional annotations to add to the csi-driver pods.
 
 </td>
 <td>object</td>
@@ -362,7 +362,7 @@ Optional additional annotations to add to the csi-driver Pods
 <td>podLabels</td>
 <td>
 
-Optional additional labels to add to the csi-driver Pods
+Optional additional labels to add to the csi-driver pods.
 
 </td>
 <td>object</td>
@@ -379,7 +379,7 @@ Optional additional labels to add to the csi-driver Pods
 <td>resources</td>
 <td>
 
-Kubernetes pod resources requests/limits for cert-manager-csi-driver  
+Kubernetes pod resources requests/limits for cert-manager-csi-driver.  
   
 For example:
 
@@ -408,7 +408,7 @@ resources:
 <td>nodeSelector</td>
 <td>
 
-Kubernetes node selector: node labels for pod assignment. For example, to allow scheduling of DaemonSet on linux nodes only:
+Kubernetes node selector: node labels for pod assignment. For example, use this to allow scheduling of DaemonSet on linux nodes only:
 
 ```yaml
 nodeSelector:
@@ -430,7 +430,7 @@ nodeSelector:
 <td>affinity</td>
 <td>
 
-Kubernetes affinity: constraints for pod assignment  
+Kubernetes affinity: constraints for pod assignment.  
   
 For example:
 
@@ -461,7 +461,7 @@ affinity:
 <td>tolerations</td>
 <td>
 
-Kubernetes pod tolerations for cert-manager-csi-driver  
+Kubernetes pod tolerations for cert-manager-csi-driver.  
   
 For example:
 
