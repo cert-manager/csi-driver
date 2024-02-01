@@ -1,22 +1,9 @@
-# cert-manager-csi-driver
+# cert-manager csi-driver
 
-![Version: v0.6.1](https://img.shields.io/badge/Version-v0.6.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.6.1](https://img.shields.io/badge/AppVersion-v0.6.1-informational?style=flat-square)
+<!-- see https://artifacthub.io/packages/helm/cert-manager/cert-manager-csi-driver for the rendered version -->
 
-cert-manager-csi-driver enables issuing secretless X.509 certificates for pods using cert-manager
+## Helm Values
 
-**Homepage:** <https://github.com/cert-manager/csi-driver>
-
-## Maintainers
-
-| Name | Email | Url |
-| ---- | ------ | --- |
-| cert-manager-maintainers | <cert-manager-maintainers@googlegroups.com> | <https://cert-manager.io> |
-
-## Source Code
-
-* <https://github.com/cert-manager/csi-driver>
-
-## Values
 <!-- AUTO-GENERATED -->
 
 #### **image.repository** ~ `string`
