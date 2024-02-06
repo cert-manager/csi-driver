@@ -15,7 +15,7 @@
 .PHONY: generate
 ## Generate all generate targets.
 ## @category [shared] Generate/ Verify
-generate: $(shared_generate_targets)
+generate: $$(shared_generate_targets)
 
 verify_script := $(dir $(lastword $(MAKEFILE_LIST)))/util/verify.sh
 
@@ -23,9 +23,11 @@ verify_script := $(dir $(lastword $(MAKEFILE_LIST)))/util/verify.sh
 verify-%: FORCE
 	$(verify_script) $(MAKE) -s $*
 
+verify_generated_targets = $(shared_generate_targets:%=verify-%)
+
 .PHONY: verify
 ## Verify code and generate targets.
 ## @category [shared] Generate/ Verify
-verify: $(shared_generate_targets:%=verify-%) $(shared_verify_targets)
+verify: $$(verify_generated_targets) $$(shared_verify_targets)
 	@echo "The following targets create temporary files in the current directory, that is why they have to be run last:"
 	$(MAKE) noop $(shared_verify_targets_dirty)
