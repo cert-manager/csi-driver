@@ -20,6 +20,9 @@ ifndef deploy_namespace
 $(error deploy_namespace is not set)
 endif
 
+# Install options allows the user configuration of extra flags
+INSTALL_OPTIONS ?=
+
 ##########################################
 
 .PHONY: install

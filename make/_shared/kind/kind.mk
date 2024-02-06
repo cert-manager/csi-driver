@@ -27,7 +27,7 @@ endif
 ##########################################
 
 kind_kubeconfig := $(bin_dir)/scratch/kube.config
-export KUBECONFIG := $(CURDIR)/$(kind_kubeconfig)
+absolute_kubeconfig := $(CURDIR)/$(kind_kubeconfig)
 
 $(bin_dir)/scratch/cluster-check: FORCE | $(NEEDS_KIND) $(bin_dir)/scratch
 	@if ! $(KIND) get clusters -q | grep -q "^$(kind_cluster_name)\$$"; then \
@@ -36,6 +36,7 @@ $(bin_dir)/scratch/cluster-check: FORCE | $(NEEDS_KIND) $(bin_dir)/scratch
 	else \
 		echo "✅  existing cluster $(kind_cluster_name) found"; \
 	fi
+	$(eval export KUBECONFIG=$(absolute_kubeconfig))
 
 kind_post_create_hook ?= 
 $(kind_kubeconfig): $(kind_cluster_config) $(bin_dir)/scratch/cluster-check | images-preload $(bin_dir)/scratch $(NEEDS_KIND) $(NEEDS_KUBECTL)
