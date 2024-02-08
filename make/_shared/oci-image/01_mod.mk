@@ -45,6 +45,8 @@ ifeq ($(oci_$1_base_image_flavor),static)
     oci_$1_base_image := $(base_image_static)
 else ifeq ($(oci_$1_base_image_flavor),csi-static)
     oci_$1_base_image := $(base_image_csi-static)
+else ifeq ($(oci_$1_base_image_flavor),custom)
+	$$(call fatal_if_undefined,oci_$1_base_image)
 else
     $$(error oci_$1_base_image_flavor has unknown value "$(oci_$1_base_image_flavor)")
 endif
