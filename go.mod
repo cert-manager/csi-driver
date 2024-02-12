@@ -3,7 +3,7 @@ module github.com/cert-manager/csi-driver
 go 1.21
 
 require (
-	github.com/cert-manager/cert-manager v1.14.1
+	github.com/cert-manager/cert-manager v1.14.2
 	github.com/cert-manager/csi-lib v0.6.0
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.15.0
@@ -19,7 +19,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kubectl v0.29.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
-	sigs.k8s.io/controller-runtime v0.17.0
+	sigs.k8s.io/controller-runtime v0.17.1
 	software.sslmate.com/src/go-pkcs12 v0.4.0
 )
 
