@@ -95,7 +95,7 @@ TOOLS += goreleaser=v1.23.0
 # https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
 TOOLS += syft=v0.100.0
 # https://github.com/cert-manager/helm-tool
-TOOLS += helm-tool=v0.3.0
+TOOLS += helm-tool=v0.4.1
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.1
