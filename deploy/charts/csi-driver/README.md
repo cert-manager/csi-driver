@@ -6,6 +6,16 @@
 
 <!-- AUTO-GENERATED -->
 
+#### **image.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: quay.io
+repository: jetstack/cert-manager-csi-driver
+```
+
 #### **image.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -13,25 +23,11 @@
 > ```
 
 Target image repository.
-#### **image.registry** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
+#### **image.tag** ~ `string`
 
-Target image registry. This value is prepended to the target image repository, if set.
-#### **image.tag** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
 
-Target image version tag. Defaults to the chart's appVersion.
-#### **image.digest** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
+#### **image.digest** ~ `string`
 
 Target image digest. Override any tag, if set.  
 For example:
@@ -39,6 +35,7 @@ For example:
 ```yaml
 digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
 ```
+
 #### **image.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
@@ -67,6 +64,16 @@ imagePullSecrets:
 > ```
 
 Labels to apply to all resources.
+#### **nodeDriverRegistrarImage.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: registry.k8s.io
+repository: sig-storage/csi-node-driver-registrar
+```
+
 #### **nodeDriverRegistrarImage.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -74,25 +81,15 @@ Labels to apply to all resources.
 > ```
 
 Target image repository.
-#### **nodeDriverRegistrarImage.registry** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
-
-Target image registry. This value is prepended to the target image repository, if set.
 #### **nodeDriverRegistrarImage.tag** ~ `string`
 > Default value:
 > ```yaml
 > v2.10.0
 > ```
 
-Target image version tag. Defaults to the chart's appVersion.
-#### **nodeDriverRegistrarImage.digest** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+
+#### **nodeDriverRegistrarImage.digest** ~ `string`
 
 Target image digest. Override any tag, if set.  
 For example:
@@ -100,6 +97,7 @@ For example:
 ```yaml
 digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
 ```
+
 #### **nodeDriverRegistrarImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
@@ -107,6 +105,16 @@ digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
 > ```
 
 Kubernetes imagePullPolicy on Deployment.
+#### **livenessProbeImage.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: registry.k8s.io
+repository: sig-storage/livenessprobe
+```
+
 #### **livenessProbeImage.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -114,25 +122,15 @@ Kubernetes imagePullPolicy on Deployment.
 > ```
 
 Target image repository.
-#### **livenessProbeImage.registry** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
-
-Target image registry. This value is prepended to the target image repository, if set.
 #### **livenessProbeImage.tag** ~ `string`
 > Default value:
 > ```yaml
 > v2.12.0
 > ```
 
-Target image version tag. Defaults to the chart's appVersion.
-#### **livenessProbeImage.digest** ~ `unknown`
-> Default value:
-> ```yaml
-> null
-> ```
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+
+#### **livenessProbeImage.digest** ~ `string`
 
 Target image digest. Override any tag, if set.  
 For example:
@@ -140,6 +138,7 @@ For example:
 ```yaml
 digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
 ```
+
 #### **livenessProbeImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml

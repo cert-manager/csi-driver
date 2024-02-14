@@ -157,7 +157,8 @@
       "type": "object"
     },
     "helm-values.image.digest": {
-      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20"
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
     },
     "helm-values.image.pullPolicy": {
       "default": "IfNotPresent",
@@ -165,7 +166,8 @@
       "type": "string"
     },
     "helm-values.image.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set."
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: quay.io\nrepository: jetstack/cert-manager-csi-driver",
+      "type": "string"
     },
     "helm-values.image.repository": {
       "default": "quay.io/jetstack/cert-manager-csi-driver",
@@ -173,7 +175,8 @@
       "type": "string"
     },
     "helm-values.image.tag": {
-      "description": "Target image version tag. Defaults to the chart's appVersion."
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
+      "type": "string"
     },
     "helm-values.imagePullSecrets": {
       "default": [],
@@ -203,7 +206,8 @@
       "type": "object"
     },
     "helm-values.livenessProbeImage.digest": {
-      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20"
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
     },
     "helm-values.livenessProbeImage.pullPolicy": {
       "default": "IfNotPresent",
@@ -211,7 +215,8 @@
       "type": "string"
     },
     "helm-values.livenessProbeImage.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set."
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/livenessprobe",
+      "type": "string"
     },
     "helm-values.livenessProbeImage.repository": {
       "default": "registry.k8s.io/sig-storage/livenessprobe",
@@ -220,7 +225,7 @@
     },
     "helm-values.livenessProbeImage.tag": {
       "default": "v2.12.0",
-      "description": "Target image version tag. Defaults to the chart's appVersion.",
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage": {
@@ -245,7 +250,8 @@
       "type": "object"
     },
     "helm-values.nodeDriverRegistrarImage.digest": {
-      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20"
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.pullPolicy": {
       "default": "IfNotPresent",
@@ -253,7 +259,8 @@
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set."
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/csi-node-driver-registrar",
+      "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.repository": {
       "default": "registry.k8s.io/sig-storage/csi-node-driver-registrar",
@@ -262,7 +269,7 @@
     },
     "helm-values.nodeDriverRegistrarImage.tag": {
       "default": "v2.10.0",
-      "description": "Target image version tag. Defaults to the chart's appVersion.",
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
     "helm-values.nodeSelector": {
