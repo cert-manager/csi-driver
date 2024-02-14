@@ -6,6 +6,16 @@
 
 <!-- AUTO-GENERATED -->
 
+#### **image.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: quay.io
+repository: jetstack/cert-manager-csi-driver
+```
+
 #### **image.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -14,19 +24,25 @@
 
 Target image repository.
 #### **image.tag** ~ `string`
-> Default value:
-> ```yaml
-> v0.0.0
-> ```
 
-Target image version tag.
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+
+#### **image.digest** ~ `string`
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
+
 #### **image.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the csi-driver.
+Kubernetes imagePullPolicy on Deployment.
 #### **imagePullSecrets** ~ `array`
 > Default value:
 > ```yaml
@@ -48,6 +64,16 @@ imagePullSecrets:
 > ```
 
 Labels to apply to all resources.
+#### **nodeDriverRegistrarImage.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: registry.k8s.io
+repository: sig-storage/csi-node-driver-registrar
+```
+
 #### **nodeDriverRegistrarImage.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -61,14 +87,34 @@ Target image repository.
 > v2.10.0
 > ```
 
-Target image version tag.
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+
+#### **nodeDriverRegistrarImage.digest** ~ `string`
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
+
 #### **nodeDriverRegistrarImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the node-driver.
+Kubernetes imagePullPolicy on Deployment.
+#### **livenessProbeImage.registry** ~ `string`
+
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
+
+```yaml
+registry: registry.k8s.io
+repository: sig-storage/livenessprobe
+```
+
 #### **livenessProbeImage.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -82,14 +128,24 @@ Target image repository.
 > v2.12.0
 > ```
 
-Target image version tag.
+Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
+
+#### **livenessProbeImage.digest** ~ `string`
+
+Target image digest. Override any tag, if set.  
+For example:
+
+```yaml
+digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+```
+
 #### **livenessProbeImage.pullPolicy** ~ `string`
 > Default value:
 > ```yaml
 > IfNotPresent
 > ```
 
-Kubernetes imagePullPolicy on the liveness probe.
+Kubernetes imagePullPolicy on Deployment.
 #### **app.logLevel** ~ `number`
 > Default value:
 > ```yaml

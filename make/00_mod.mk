@@ -41,6 +41,8 @@ helm_chart_name := cert-manager-csi-driver
 helm_chart_version := $(VERSION)
 helm_labels_template_name := cert-manager-csi-driver.labels
 helm_docs_use_helm_tool := 1
+helm_generate_schema := 1
+helm_verify_values := 1
 
 define helm_values_mutation_function
 $(YQ) \

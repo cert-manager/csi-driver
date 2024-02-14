@@ -1,0 +1,309 @@
+{
+  "$defs": {
+    "helm-values": {
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "$ref": "#/$defs/helm-values.affinity"
+        },
+        "app": {
+          "$ref": "#/$defs/helm-values.app"
+        },
+        "commonLabels": {
+          "$ref": "#/$defs/helm-values.commonLabels"
+        },
+        "daemonSetAnnotations": {
+          "$ref": "#/$defs/helm-values.daemonSetAnnotations"
+        },
+        "image": {
+          "$ref": "#/$defs/helm-values.image"
+        },
+        "imagePullSecrets": {
+          "$ref": "#/$defs/helm-values.imagePullSecrets"
+        },
+        "livenessProbeImage": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage"
+        },
+        "nodeDriverRegistrarImage": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage"
+        },
+        "nodeSelector": {
+          "$ref": "#/$defs/helm-values.nodeSelector"
+        },
+        "podAnnotations": {
+          "$ref": "#/$defs/helm-values.podAnnotations"
+        },
+        "podLabels": {
+          "$ref": "#/$defs/helm-values.podLabels"
+        },
+        "priorityClassName": {
+          "$ref": "#/$defs/helm-values.priorityClassName"
+        },
+        "resources": {
+          "$ref": "#/$defs/helm-values.resources"
+        },
+        "tolerations": {
+          "$ref": "#/$defs/helm-values.tolerations"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.affinity": {
+      "default": {},
+      "description": "Kubernetes affinity: constraints for pod assignment.\n\nFor example:\naffinity:\n  nodeAffinity:\n   requiredDuringSchedulingIgnoredDuringExecution:\n     nodeSelectorTerms:\n     - matchExpressions:\n       - key: foo.bar.com/role\n         operator: In\n         values:\n         - master",
+      "type": "object"
+    },
+    "helm-values.app": {
+      "additionalProperties": false,
+      "properties": {
+        "driver": {
+          "$ref": "#/$defs/helm-values.app.driver"
+        },
+        "kubeletRootDir": {
+          "$ref": "#/$defs/helm-values.app.kubeletRootDir"
+        },
+        "livenessProbe": {
+          "$ref": "#/$defs/helm-values.app.livenessProbe"
+        },
+        "logLevel": {
+          "$ref": "#/$defs/helm-values.app.logLevel"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.driver": {
+      "additionalProperties": false,
+      "properties": {
+        "csiDataDir": {
+          "$ref": "#/$defs/helm-values.app.driver.csiDataDir"
+        },
+        "name": {
+          "$ref": "#/$defs/helm-values.app.driver.name"
+        },
+        "useTokenRequest": {
+          "$ref": "#/$defs/helm-values.app.driver.useTokenRequest"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.driver.csiDataDir": {
+      "default": "/tmp/cert-manager-csi-driver",
+      "description": "Configures the hostPath directory that the driver writes and mounts volumes from.",
+      "type": "string"
+    },
+    "helm-values.app.driver.name": {
+      "default": "csi.cert-manager.io",
+      "description": "Name of the driver to be registered with Kubernetes.",
+      "type": "string"
+    },
+    "helm-values.app.driver.useTokenRequest": {
+      "default": false,
+      "description": "If enabled, this uses a CSI token request for creating. CertificateRequests. CertificateRequests are created by mounting the pod's service accounts.",
+      "type": "boolean"
+    },
+    "helm-values.app.kubeletRootDir": {
+      "default": "/var/lib/kubelet",
+      "description": "Overrides the path to root kubelet directory in case of a non-standard Kubernetes install.",
+      "type": "string"
+    },
+    "helm-values.app.livenessProbe": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/helm-values.app.livenessProbe.port"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.livenessProbe.port": {
+      "default": 9809,
+      "description": "The port that will expose the liveness of the csi-driver.",
+      "type": "number"
+    },
+    "helm-values.app.logLevel": {
+      "default": 1,
+      "description": "Verbosity of cert-manager-csi-driver logging.",
+      "type": "number"
+    },
+    "helm-values.commonLabels": {
+      "default": {},
+      "description": "Labels to apply to all resources.",
+      "type": "object"
+    },
+    "helm-values.daemonSetAnnotations": {
+      "default": {},
+      "description": "Optional additional annotations to add to the csi-driver DaemonSet.",
+      "type": "object"
+    },
+    "helm-values.image": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/helm-values.image.digest"
+        },
+        "pullPolicy": {
+          "$ref": "#/$defs/helm-values.image.pullPolicy"
+        },
+        "registry": {
+          "$ref": "#/$defs/helm-values.image.registry"
+        },
+        "repository": {
+          "$ref": "#/$defs/helm-values.image.repository"
+        },
+        "tag": {
+          "$ref": "#/$defs/helm-values.image.tag"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.image.digest": {
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.image.pullPolicy": {
+      "default": "IfNotPresent",
+      "description": "Kubernetes imagePullPolicy on Deployment.",
+      "type": "string"
+    },
+    "helm-values.image.registry": {
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: quay.io\nrepository: jetstack/cert-manager-csi-driver",
+      "type": "string"
+    },
+    "helm-values.image.repository": {
+      "default": "quay.io/jetstack/cert-manager-csi-driver",
+      "description": "Target image repository.",
+      "type": "string"
+    },
+    "helm-values.image.tag": {
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
+      "type": "string"
+    },
+    "helm-values.imagePullSecrets": {
+      "default": [],
+      "description": "Optional secrets used for pulling the csi-driver container image.\n\nFor example:\nimagePullSecrets:\n- name: secret-name",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.livenessProbeImage": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.digest"
+        },
+        "pullPolicy": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.pullPolicy"
+        },
+        "registry": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.registry"
+        },
+        "repository": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.repository"
+        },
+        "tag": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.tag"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.livenessProbeImage.digest": {
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.livenessProbeImage.pullPolicy": {
+      "default": "IfNotPresent",
+      "description": "Kubernetes imagePullPolicy on Deployment.",
+      "type": "string"
+    },
+    "helm-values.livenessProbeImage.registry": {
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/livenessprobe",
+      "type": "string"
+    },
+    "helm-values.livenessProbeImage.repository": {
+      "default": "registry.k8s.io/sig-storage/livenessprobe",
+      "description": "Target image repository.",
+      "type": "string"
+    },
+    "helm-values.livenessProbeImage.tag": {
+      "default": "v2.12.0",
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.digest"
+        },
+        "pullPolicy": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.pullPolicy"
+        },
+        "registry": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.registry"
+        },
+        "repository": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.repository"
+        },
+        "tag": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.tag"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.nodeDriverRegistrarImage.digest": {
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage.pullPolicy": {
+      "default": "IfNotPresent",
+      "description": "Kubernetes imagePullPolicy on Deployment.",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage.registry": {
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/csi-node-driver-registrar",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage.repository": {
+      "default": "registry.k8s.io/sig-storage/csi-node-driver-registrar",
+      "description": "Target image repository.",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage.tag": {
+      "default": "v2.10.0",
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
+      "type": "string"
+    },
+    "helm-values.nodeSelector": {
+      "default": {},
+      "description": "Kubernetes node selector: node labels for pod assignment. For example, use this to allow scheduling of DaemonSet on linux nodes only:\nnodeSelector:\n  kubernetes.io/os: linux",
+      "type": "object"
+    },
+    "helm-values.podAnnotations": {
+      "default": {},
+      "description": "Optional additional annotations to add to the csi-driver pods.",
+      "type": "object"
+    },
+    "helm-values.podLabels": {
+      "default": {},
+      "description": "Optional additional labels to add to the csi-driver pods.",
+      "type": "object"
+    },
+    "helm-values.priorityClassName": {
+      "default": "",
+      "description": "Optional priority class to be used for the csi-driver pods.",
+      "type": "string"
+    },
+    "helm-values.resources": {
+      "default": {},
+      "description": "Kubernetes pod resources requests/limits for cert-manager-csi-driver.\n\nFor example:\nresources:\n  limits:\n    cpu: 100m\n    memory: 128Mi\n  requests:\n    cpu: 100m\n    memory: 128Mi",
+      "type": "object"
+    },
+    "helm-values.tolerations": {
+      "default": [],
+      "description": "Kubernetes pod tolerations for cert-manager-csi-driver.\n\nFor example:\ntolerations:\n- operator: \"Exists\"",
+      "items": {},
+      "type": "array"
+    }
+  },
+  "$ref": "#/$defs/helm-values",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
