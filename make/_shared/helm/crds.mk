@@ -20,9 +20,22 @@ ifndef helm_chart_source_dir
 $(error helm_chart_source_dir is not set)
 endif
 
+ifndef helm_labels_template_name
+$(error helm_labels_template_name is not set)
+endif
+
 ################
 # Add targets #
 ################
+
+crd_template_header := $(dir $(lastword $(MAKEFILE_LIST)))/crd.template.header.yaml
+crd_template_footer := $(dir $(lastword $(MAKEFILE_LIST)))/crd.template.footer.yaml
+
+# see https://stackoverflow.com/a/53408233
+sed_inplace := sed -i''
+ifeq ($(HOST_OS),darwin)
+	sed_inplace := sed -i ''
+endif
 
 .PHONY: generate-crds
 ## Generate CRD manifests.
@@ -41,7 +54,13 @@ generate-crds: | $(NEEDS_CONTROLLER-GEN) $(NEEDS_YQ)
 	echo "Updating CRDs with helm templating, writing to $(helm_chart_source_dir)/templates"
 
 	@for i in $$(ls $(crds_gen_temp)); do \
-		$(YQ) $(crds_gen_temp)/$$i > $(helm_chart_source_dir)/templates/crd-$$i; \
+		crd_name=$$($(YQ) eval '.metadata.name' $(crds_gen_temp)/$$i); \
+		cat $(crd_template_header) > $(helm_chart_source_dir)/templates/crd-$$i; \
+		echo "" >> $(helm_chart_source_dir)/templates/crd-$$i; \
+		$(sed_inplace) "s/REPLACE_CRD_NAME/$$crd_name/g" $(helm_chart_source_dir)/templates/crd-$$i; \
+		$(sed_inplace) "s/REPLACE_LABELS_TEMPLATE/$(helm_labels_template_name)/g" $(helm_chart_source_dir)/templates/crd-$$i; \
+		$(YQ) -I2 '{"spec": .spec}' $(crds_gen_temp)/$$i >> $(helm_chart_source_dir)/templates/crd-$$i; \
+		cat $(crd_template_footer) >> $(helm_chart_source_dir)/templates/crd-$$i; \
 	done
 
 shared_generate_targets += generate-crds
