@@ -86,8 +86,17 @@ generate-helm-docs: | $(NEEDS_HELM-DOCS)
 	$(HELM-DOCS) $(helm_chart_source_dir)/
 endif
 
-
 shared_generate_targets += generate-helm-docs
+
+ifdef helm_generate_schema
+.PHONY: generate-helm-schema
+## Generate Helm chart schema.
+## @category [shared] Generate/ Verify
+generate-helm-schema: | $(NEEDS_HELM-TOOL) $(NEEDS_GOJQ)
+	$(HELM-TOOL) schema -i $(helm_chart_source_dir)/values.yaml | $(GOJQ) > $(helm_chart_source_dir)/values.schema.json
+
+shared_generate_targets += generate-helm-schema
+endif
 
 .PHONY: verify-pod-security-standards
 ## Verify that the Helm chart complies with the pod security standards.
