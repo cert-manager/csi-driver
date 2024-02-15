@@ -15,7 +15,7 @@ annotations:
   artifacthub.io/license: Apache-2.0
   artifacthub.io/category: security
   artifacthub.io/recommendations: |
-    - url: https://artifacthub.io/packages/helm/cert-manager/csi-driver-spiffe
+    - url: https://artifacthub.io/packages/helm/cert-manager/cert-manager-csi-driver-spiffe
     - url: https://artifacthub.io/packages/helm/cert-manager/cert-manager
     - url: https://artifacthub.io/packages/helm/cert-manager/trust-manager
 maintainers:
