@@ -36,6 +36,8 @@
 # See https://www.gnu.org/software/make/manual/html_node/Secondary-Expansion.html
 .SECONDEXPANSION:
 
+# For details on some of these "prelude" settings, see:
+# https://clarkgrubb.com/makefile-style-guide
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -uo pipefail -c

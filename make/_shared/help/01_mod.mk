@@ -17,4 +17,6 @@ help_sh := $(dir $(lastword $(MAKEFILE_LIST)))/help.sh
 
 .PHONY: help
 help:
-	@MAKEFILE_LIST="$(MAKEFILE_LIST)" $(help_sh)
+	@MAKEFILE_LIST="$(MAKEFILE_LIST)" \
+		MAKE="$(MAKE)" \
+		$(help_sh)
