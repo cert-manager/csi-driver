@@ -2,7 +2,7 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-{{ include "cert-manager-csi-driver.labels" . | indent 4 }}
+    {{ include "cert-manager-csi-driver.labels" . | nindent 4 }}
   name: {{ include "cert-manager-csi-driver.name" . }}
 rules:
 - apiGroups: ["cert-manager.io"]

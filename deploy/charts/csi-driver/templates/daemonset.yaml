@@ -4,7 +4,7 @@ metadata:
   name: {{ include "cert-manager-csi-driver.name" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-{{ include "cert-manager-csi-driver.labels" . | indent 4 }}
+    {{ include "cert-manager-csi-driver.labels" . | nindent 4 }}
   {{- with .Values.daemonSetAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
