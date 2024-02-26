@@ -16,10 +16,7 @@
 
 set -eu -o pipefail
 
-RULE_COLOR="$(tput setaf 6)"
-CATEGORY_COLOR="$(tput setaf 3)"
-CLEAR_STYLE="$(tput sgr0)"
-PURPLE=$(tput setaf 125)
+## 1. Build set of extracted line items
 
 EMPTYLINE_REGEX="^[[:space:]]*$"
 DOCBLOCK_REGEX="^##[[:space:]]*(.*)$"
@@ -27,7 +24,6 @@ CATEGORY_REGEX="^##[[:space:]]*@category[[:space:]]*(.*)$"
 TARGET_REGEX="^(([a-zA-Z0-9\_\/\%\$\(\)]|-)+):.*$"
 
 EMPTY_ITEM="<start-category><end-category><start-target><end-target><start-comment><end-comment>"
-
 
 # shellcheck disable=SC2086
 raw_lines=$(cat ${MAKEFILE_LIST} | tr '\t' '    ' | grep -E "($TARGET_REGEX|$DOCBLOCK_REGEX|$EMPTYLINE_REGEX)")
@@ -56,6 +52,28 @@ while read -r line; do
     fi
 done <<< "$raw_lines"
 
+## 2. Build mapping for expanding targets
+
+ASSIGNMENT_REGEX="^(([a-zA-Z0-9\_\/\%\$\(\)]|-)+)\s*:=\s*(.*)$"
+
+raw_expansions=$(${MAKE} --dry-run --print-data-base noop | tr '\t' '    ' | grep -E "$ASSIGNMENT_REGEX")
+extracted_expansions=""
+
+while read -r line; do
+    if [[ $line =~ $ASSIGNMENT_REGEX ]]; then
+        target=${BASH_REMATCH[1]}
+        expansion=${BASH_REMATCH[3]// /, }
+        extracted_expansions="$extracted_expansions\n<start-target>$target<end-target><start-expansion>$expansion<end-expansion>"
+    fi
+done <<< "$raw_expansions"
+
+## 3. Sort and print the extracted line items
+
+RULE_COLOR="$(tput setaf 6)"
+CATEGORY_COLOR="$(tput setaf 3)"
+CLEAR_STYLE="$(tput sgr0)"
+PURPLE=$(tput setaf 125)
+
 extracted_lines=$(echo -e "$extracted_lines" | LC_ALL=C sort -r)
 current_category=""
 
@@ -67,11 +85,19 @@ IFS=$'\n'; for line in $extracted_lines; do
     target=$([[ $line =~ \<start-target\>(.*)\<end-target\> ]] && echo "${BASH_REMATCH[1]}")
     comment=$([[ $line =~ \<start-comment\>(.*)\<end-comment\> ]] && echo -e "${BASH_REMATCH[1]//<newline>/\\n}")
 
+    # Print the category header if it's changed
     if [[ "$current_category" != "$category" ]]; then
         current_category=$category
         echo -e "\n${CATEGORY_COLOR}${current_category}${CLEAR_STYLE}"
     fi
 
+    # replace any $(...) with the actual value
+    if [[ $target =~ \$\((.*)\) ]]; then
+        target=$(echo -e "$extracted_expansions" | grep "<start-target>${BASH_REMATCH[1]}<end-target>")
+        target=$([[ $target =~ \<start-expansion\>(.*)\<end-expansion\> ]] && echo -e "${BASH_REMATCH[1]}")
+    fi
+
+    # Print the target and its multiline comment
     is_first_line=true
     while read -r comment_line; do
         if [[ "$is_first_line" == true ]]; then

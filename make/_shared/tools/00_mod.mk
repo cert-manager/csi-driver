@@ -54,6 +54,12 @@ TOOLS += yq=v4.40.5
 TOOLS += ko=0.15.1
 # https://github.com/protocolbuffers/protobuf/releases
 TOOLS += protoc=25.2
+# https://github.com/aquasecurity/trivy/releases
+TOOLS += trivy=v0.45.0
+# https://github.com/vmware-tanzu/carvel-ytt/releases
+TOOLS += ytt=v0.45.4
+# https://github.com/rclone/rclone/releases
+TOOLS += rclone=v1.64.0
 
 ### go packages
 # https://pkg.go.dev/sigs.k8s.io/controller-tools/cmd/controller-gen?tab=versions
@@ -96,9 +102,19 @@ TOOLS += goreleaser=v1.23.0
 TOOLS += syft=v0.100.0
 # https://github.com/cert-manager/helm-tool
 TOOLS += helm-tool=v0.4.1
+# https://github.com/cert-manager/cmctl
+TOOLS += cmctl=2f75014a7c360c319f8c7c8afe8e9ce33fe26dca
+# https://pkg.go.dev/github.com/cert-manager/release/cmd/cmrel?tab=versions
+TOOLS += cmrel=fa10147dadc8c36718b7b08aed6d8c6418eb2
+# https://github.com/golangci/golangci-lint/releases
+TOOLS += golangci-lint=v1.55.2
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.1
+TOOLS += client-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += deepcopy-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += informer-gen=$(K8S_CODEGEN_VERSION)
+TOOLS += lister-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += applyconfiguration-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += openapi-gen=$(K8S_CODEGEN_VERSION)
 TOOLS += defaulter-gen=$(K8S_CODEGEN_VERSION)
@@ -278,11 +294,18 @@ GO_DEPENDENCIES += oras=oras.land/oras/cmd/oras
 GO_DEPENDENCIES += klone=github.com/cert-manager/klone
 GO_DEPENDENCIES += goreleaser=github.com/goreleaser/goreleaser
 GO_DEPENDENCIES += syft=github.com/anchore/syft/cmd/syft
+GO_DEPENDENCIES += client-gen=k8s.io/code-generator/cmd/client-gen
+GO_DEPENDENCIES += deepcopy-gen=k8s.io/code-generator/cmd/deepcopy-gen
+GO_DEPENDENCIES += informer-gen=k8s.io/code-generator/cmd/informer-gen
+GO_DEPENDENCIES += lister-gen=k8s.io/code-generator/cmd/lister-gen
 GO_DEPENDENCIES += applyconfiguration-gen=k8s.io/code-generator/cmd/applyconfiguration-gen
 GO_DEPENDENCIES += openapi-gen=k8s.io/code-generator/cmd/openapi-gen
 GO_DEPENDENCIES += defaulter-gen=k8s.io/code-generator/cmd/defaulter-gen
 GO_DEPENDENCIES += conversion-gen=k8s.io/code-generator/cmd/conversion-gen
 GO_DEPENDENCIES += helm-tool=github.com/cert-manager/helm-tool
+GO_DEPENDENCIES += cmctl=github.com/cert-manager/cmctl/v2
+GO_DEPENDENCIES += cmrel=github.com/cert-manager/release/cmd/cmrel
+GO_DEPENDENCIES += golangci-lint=github.com/golangci/golangci-lint/cmd/golangci-lint
 
 # Additional Go dependencies can be defined to re-use the tooling in this file
 ADDITIONAL_GO_DEPENDENCIES ?=
@@ -456,6 +479,60 @@ $(bin_dir)/downloaded/tools/protoc@$(PROTOC_VERSION)_%: | $(bin_dir)/downloaded/
 	$(CURL) https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(subst darwin,osx,$(subst arm64,aarch_64,$(subst amd64,x86_64,$(subst _,-,$*)))).zip -o $@.zip
 	$(checkhash_script) $@.zip $(PROTOC_$*_SHA256SUM)
 	unzip -qq -c $@.zip bin/protoc > $@
+	chmod +x $@
+	rm -f $@.zip
+
+#########
+# trivy #
+#########
+
+TRIVY_linux_amd64_SHA256SUM=b9785455f711e3116c0a97b01ad6be334895143ed680a405e88a4c4c19830d5d
+TRIVY_linux_arm64_SHA256SUM=a192edfcef8766fa7e3e96a6a5faf50cd861371785891857471548e4af7cb60b
+TRIVY_darwin_amd64_SHA256SUM=997622dee1d07de0764f903b72d16ec4314daaf202d91c957137b4fd1a2f73c3
+TRIVY_darwin_arm64_SHA256SUM=68aa451f395fa5418f5af59ce4081ef71075c857b95a297dc61da49c6a229a45
+
+$(bin_dir)/downloaded/tools/trivy@$(TRIVY_VERSION)_%: | $(bin_dir)/downloaded/tools
+	$(eval OS_AND_ARCH := $(subst darwin,macOS,$*))
+	$(eval OS_AND_ARCH := $(subst linux,Linux,$(OS_AND_ARCH)))
+	$(eval OS_AND_ARCH := $(subst arm64,ARM64,$(OS_AND_ARCH)))
+	$(eval OS_AND_ARCH := $(subst amd64,64bit,$(OS_AND_ARCH)))
+
+	$(CURL) https://github.com/aquasecurity/trivy/releases/download/$(TRIVY_VERSION)/trivy_$(patsubst v%,%,$(TRIVY_VERSION))_$(subst _,-,$(OS_AND_ARCH)).tar.gz -o $@.tar.gz
+	$(checkhash_script) $@.tar.gz $(TRIVY_$*_SHA256SUM)
+	tar xfO $@.tar.gz trivy > $@
+	chmod +x $@
+	rm $@.tar.gz
+
+#######
+# ytt #
+#######
+
+YTT_linux_amd64_SHA256SUM=9bf62175c7cc0b54f9731a5b87ee40250f0457b1fce1b0b36019c2f8d96db8f8
+YTT_linux_arm64_SHA256SUM=cbfc85f11ffd8e61d63accf799b8997caaebe46ee046290cc1c4d05ed1ab145b
+YTT_darwin_amd64_SHA256SUM=2b6d173dec1b6087e22690386474786fd9a2232c4479d8975cc98ae8160eea76
+YTT_darwin_arm64_SHA256SUM=3e6f092bfe7a121d15126a0de6503797818c6b6745fbc97213f519d35fab08f9
+
+$(bin_dir)/downloaded/tools/ytt@$(YTT_VERSION)_%: | $(bin_dir)/downloaded/tools
+	$(CURL) -sSfL https://github.com/vmware-tanzu/carvel-ytt/releases/download/$(YTT_VERSION)/ytt-$(subst _,-,$*) -o $@
+	$(checkhash_script) $@ $(YTT_$*_SHA256SUM)
+	chmod +x $@
+
+##########
+# rclone #
+##########
+
+RCLONE_linux_amd64_SHA256SUM=7ebdb680e615f690bd52c661487379f9df8de648ecf38743e49fe12c6ace6dc7
+RCLONE_linux_arm64_SHA256SUM=b5a6cb3aef4fd1a2165fb8c21b1b1705f3cb754a202adc81931b47cd39c64749
+RCLONE_darwin_amd64_SHA256SUM=9ef83833296876f3182b87030b4f2e851b56621bad4ca4d7a14753553bb8b640
+RCLONE_darwin_arm64_SHA256SUM=9183f495b28acb12c872175c6af1f6ba8ca677650cb9d2774caefea273294c8a
+
+$(bin_dir)/downloaded/tools/rclone@$(RCLONE_VERSION)_%: | $(bin_dir)/downloaded/tools
+	$(eval OS_AND_ARCH := $(subst darwin,osx,$*))
+	$(CURL) https://github.com/rclone/rclone/releases/download/$(RCLONE_VERSION)/rclone-$(RCLONE_VERSION)-$(subst _,-,$(OS_AND_ARCH)).zip -o $@.zip
+	$(checkhash_script) $@.zip $(RCLONE_$*_SHA256SUM)
+	@# -p writes to stdout, the second file arg specifies the sole file we
+	@# want to extract
+	unzip -p $@.zip rclone-$(RCLONE_VERSION)-$(subst _,-,$(OS_AND_ARCH))/rclone > $@
 	chmod +x $@
 	rm -f $@.zip
 
