@@ -23,6 +23,8 @@ $(bin_dir)/scratch/image $(bin_dir)/tools $(bin_dir)/downloaded $(bin_dir)/downl
 
 checkhash_script := $(dir $(lastword $(MAKEFILE_LIST)))/util/checkhash.sh
 
+for_each_kv = $(foreach item,$2,$(eval $(call $1,$(word 1,$(subst =, ,$(item))),$(word 2,$(subst =, ,$(item))))))
+
 # To make sure we use the right version of each tool, we put symlink in
 # $(bin_dir)/tools, and the actual binaries are in $(bin_dir)/downloaded. When bumping
 # the version of the tools, this symlink gets updated.
@@ -101,7 +103,7 @@ TOOLS += goreleaser=v1.23.0
 # https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
 TOOLS += syft=v0.100.0
 # https://github.com/cert-manager/helm-tool
-TOOLS += helm-tool=v0.4.1
+TOOLS += helm-tool=v0.4.2
 # https://github.com/cert-manager/cmctl
 TOOLS += cmctl=2f75014a7c360c319f8c7c8afe8e9ce33fe26dca
 # https://pkg.go.dev/github.com/cert-manager/release/cmd/cmrel?tab=versions
@@ -307,17 +309,30 @@ GO_DEPENDENCIES += cmctl=github.com/cert-manager/cmctl/v2
 GO_DEPENDENCIES += cmrel=github.com/cert-manager/release/cmd/cmrel
 GO_DEPENDENCIES += golangci-lint=github.com/golangci/golangci-lint/cmd/golangci-lint
 
+#################
+# go build tags #
+#################
+
+GO_TAGS :=
+
 # Additional Go dependencies can be defined to re-use the tooling in this file
 ADDITIONAL_GO_DEPENDENCIES ?=
+ADDITIONAL_GO_TAGS ?=
 GO_DEPENDENCIES += $(ADDITIONAL_GO_DEPENDENCIES)
+GO_TAGS += $(ADDITIONAL_GO_TAGS)
+
+go_tags_init = go_tags_$1 :=
+$(call for_each_kv,go_tags_init,$(GO_DEPENDENCIES))
+
+go_tags_defs = go_tags_$1 += $2
+$(call for_each_kv,go_tags_defs,$(GO_TAGS))
 
 define go_dependency
 $$(bin_dir)/downloaded/tools/$1@$($(call UC,$1)_VERSION)_%: | $$(NEEDS_GO) $$(bin_dir)/downloaded/tools
-	GOWORK=off GOBIN=$$(CURDIR)/$$(dir $$@) $$(GO) install $2@$($(call UC,$1)_VERSION)
+	GOWORK=off GOBIN=$$(CURDIR)/$$(dir $$@) $$(GO) install --tags "$(strip $(go_tags_$1))" $2@$($(call UC,$1)_VERSION)
 	@mv $$(CURDIR)/$$(dir $$@)/$1 $$@
 endef
-
-$(foreach GO_DEPENDENCY,$(GO_DEPENDENCIES),$(eval $(call go_dependency,$(word 1,$(subst =, ,$(GO_DEPENDENCY))),$(word 2,$(subst =, ,$(GO_DEPENDENCY))))))
+$(call for_each_kv,go_dependency,$(GO_DEPENDENCIES))
 
 ########
 # Helm #
