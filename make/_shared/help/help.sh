@@ -54,7 +54,7 @@ done <<< "$raw_lines"
 
 ## 2. Build mapping for expanding targets
 
-ASSIGNMENT_REGEX="^(([a-zA-Z0-9\_\/\%\$\(\)]|-)+)\s*:=\s*(.*)$"
+ASSIGNMENT_REGEX="^(([a-zA-Z0-9\_\/\%\$\(\)]|-)+)[[:space:]]*:=[[:space:]]*(.*)$"
 
 raw_expansions=$(${MAKE} --dry-run --print-data-base noop | tr '\t' '    ' | grep -E "$ASSIGNMENT_REGEX")
 extracted_expansions=""

@@ -15,6 +15,9 @@
         "daemonSetAnnotations": {
           "$ref": "#/$defs/helm-values.daemonSetAnnotations"
         },
+        "global": {
+          "$ref": "#/$defs/helm-values.global"
+        },
         "image": {
           "$ref": "#/$defs/helm-values.image"
         },
@@ -134,6 +137,9 @@
       "default": {},
       "description": "Optional additional annotations to add to the csi-driver DaemonSet.",
       "type": "object"
+    },
+    "helm-values.global": {
+      "description": "Global values shared across all (sub)charts"
     },
     "helm-values.image": {
       "additionalProperties": false,
