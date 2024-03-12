@@ -132,7 +132,7 @@ ADDITIONAL_TOOLS ?=
 TOOLS += $(ADDITIONAL_TOOLS)
 
 # https://go.dev/dl/
-VENDORED_GO_VERSION := 1.21.7
+VENDORED_GO_VERSION := 1.21.8
 
 # Print the go version which can be used in GH actions
 .PHONY: print-go-version

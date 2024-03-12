@@ -93,8 +93,10 @@ IFS=$'\n'; for line in $extracted_lines; do
 
     # replace any $(...) with the actual value
     if [[ $target =~ \$\((.*)\) ]]; then
-        target=$(echo -e "$extracted_expansions" | grep "<start-target>${BASH_REMATCH[1]}<end-target>")
-        target=$([[ $target =~ \<start-expansion\>(.*)\<end-expansion\> ]] && echo -e "${BASH_REMATCH[1]}")
+        new_target=$(echo -e "$extracted_expansions" | grep "<start-target>${BASH_REMATCH[1]}<end-target>" || true)
+        if [[ -n "$new_target" ]]; then
+            target=$([[ $new_target =~ \<start-expansion\>(.*)\<end-expansion\> ]] && echo -e "${BASH_REMATCH[1]}")
+        fi
     fi
 
     # Print the target and its multiline comment
