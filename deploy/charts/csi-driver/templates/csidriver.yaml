@@ -1,8 +1,4 @@
-{{- if .Capabilities.APIVersions.Has "storage.k8s.io/v1/CSIDriver" }}
 apiVersion: storage.k8s.io/v1
-{{- else }}
-apiVersion: storage.k8s.io/v1beta1
-{{- end }}
 kind: CSIDriver
 metadata:
   name: {{ .Values.app.driver.name }}
