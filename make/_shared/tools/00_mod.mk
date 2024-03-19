@@ -110,6 +110,8 @@ TOOLS += cmctl=2f75014a7c360c319f8c7c8afe8e9ce33fe26dca
 TOOLS += cmrel=fa10147dadc8c36718b7b08aed6d8c6418eb2
 # https://github.com/golangci/golangci-lint/releases
 TOOLS += golangci-lint=v1.55.2
+# https://pkg.go.dev/golang.org/x/vuln?tab=versions
+TOOLS += govulncheck=v1.0.4
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.1
@@ -308,6 +310,7 @@ GO_DEPENDENCIES += helm-tool=github.com/cert-manager/helm-tool
 GO_DEPENDENCIES += cmctl=github.com/cert-manager/cmctl/v2
 GO_DEPENDENCIES += cmrel=github.com/cert-manager/release/cmd/cmrel
 GO_DEPENDENCIES += golangci-lint=github.com/golangci/golangci-lint/cmd/golangci-lint
+GO_DEPENDENCIES += govulncheck=golang.org/x/vuln/cmd/govulncheck
 
 #################
 # go build tags #
@@ -565,7 +568,7 @@ $(bin_dir)/downloaded/tools/rclone@$(RCLONE_VERSION)_%: | $(bin_dir)/downloaded/
 # That means we need to pass vendor-go at the top level if go is not installed (i.e. "make vendor-go abc")
 
 MISSING=$(shell (command -v curl >/dev/null || echo curl) \
-             && (command -v sha256sum >/dev/null || echo sha256sum) \
+             && (command -v sha256sum >/dev/null || command -v shasum >/dev/null || echo sha256sum) \
              && (command -v git >/dev/null || echo git) \
              && ([ -n "$(findstring vendor-go,$(MAKECMDGOALS),)" ] \
                 || command -v $(GO) >/dev/null || echo "$(GO) (or run 'make vendor-go')") \
