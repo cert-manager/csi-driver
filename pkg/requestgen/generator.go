@@ -32,6 +32,7 @@ import (
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
 
+	"github.com/cert-manager/csi-driver/pkg/apis"
 	"github.com/cert-manager/csi-driver/pkg/apis/defaults"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/apis/validation"
@@ -73,6 +74,19 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
 	}
 
+	annotations := make(map[string]string)
+	for key, val := range attrs {
+		group, _, found := strings.Cut(key, "/")
+		if !found {
+			continue
+		}
+
+		if group != apis.GroupName &&
+			group != "csi.storage.k8s.io" {
+			annotations[key] = val
+		}
+	}
+
 	return &manager.CertificateRequestBundle{
 		Request: &x509.CertificateRequest{
 			Subject: pkix.Name{
@@ -91,7 +105,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 			Kind:  attrs[csiapi.IssuerKindKey],
 			Group: attrs[csiapi.IssuerGroupKey],
 		},
-		Annotations: nil,
+		Annotations: annotations,
 	}, nil
 }
 
