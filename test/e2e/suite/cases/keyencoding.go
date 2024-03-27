@@ -62,7 +62,7 @@ var _ = framework.CasesDescribe("Should set the key encoding correctly", func() 
 		block, rest := pem.Decode(keyData)
 
 		Expect(block).ToNot(BeNil())
-		Expect(rest).Should(HaveLen(0))
+		Expect(rest).Should(BeEmpty())
 
 		return block
 	}

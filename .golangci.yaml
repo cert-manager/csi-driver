@@ -6,7 +6,6 @@ issues:
         - goprintffuncname
         - prealloc
         - gosec
-        - ginkgolinter
         - errcheck
         - gocritic
       text: ".*"
