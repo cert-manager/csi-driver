@@ -29,6 +29,8 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	cmpki "github.com/cert-manager/cert-manager/pkg/util/pki"
+
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
 
@@ -57,21 +59,54 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		}
 	}
 
-	commonName, err := expand(meta, attrs[csiapi.CommonNameKey])
-	if err != nil {
-		return nil, fmt.Errorf("%q: %w", csiapi.CommonNameKey, err)
+	var request = &x509.CertificateRequest{}
+	if lSubjStr, ok := attrs[csiapi.LiteralSubjectKey]; ok && len(lSubjStr) > 0 {
+		lSubjStr, err = expand(meta, lSubjStr)
+		if err != nil {
+			return nil, fmt.Errorf("%q: %w", csiapi.LiteralSubjectKey, err)
+		}
+		request.RawSubject, err = cmpki.ParseSubjectStringToRawDerBytes(lSubjStr)
+		if err != nil {
+			return nil, fmt.Errorf("%q: %w", csiapi.LiteralSubjectKey, err)
+		}
+	} else {
+		request.Subject = pkix.Name{}
+		request.Subject.CommonName, err = expand(meta, attrs[csiapi.CommonNameKey])
+		if err != nil {
+			return nil, fmt.Errorf("%q: %w", csiapi.CommonNameKey, err)
+		}
+		if len(attrs[csiapi.SerialNumberKey]) > 0 {
+			request.Subject.SerialNumber = attrs[csiapi.SerialNumberKey]
+		}
+		for k, v := range map[*[]string]string{
+			&request.Subject.Organization:       csiapi.OrganizationsKey,
+			&request.Subject.OrganizationalUnit: csiapi.OrganizationalUnitsKey,
+			&request.Subject.Country:            csiapi.CountriesKey,
+			&request.Subject.Province:           csiapi.ProvincesKey,
+			&request.Subject.Locality:           csiapi.LocalitiesKey,
+			&request.Subject.StreetAddress:      csiapi.StreetAddressesKey,
+			&request.Subject.PostalCode:         csiapi.PostalCodesKey,
+		} {
+			if len(attrs[v]) > 0 {
+				var e, err = expand(meta, attrs[v])
+				if err != nil {
+					return nil, fmt.Errorf("%q: %w", v, err)
+				}
+				*k = strings.Split(e, ",")
+			}
+		}
 	}
-	dns, err := parseDNSNames(meta, attrs[csiapi.DNSNamesKey])
+	request.DNSNames, err = parseDNSNames(meta, attrs[csiapi.DNSNamesKey])
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.DNSNamesKey, err)
 	}
-	uris, err := parseURIs(meta, attrs[csiapi.URISANsKey])
-	if err != nil {
-		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
-	}
-	ips, err := parseIPAddresses(attrs[csiapi.IPSANsKey])
+	request.IPAddresses, err = parseIPAddresses(attrs[csiapi.IPSANsKey])
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
+	}
+	request.URIs, err = parseURIs(meta, attrs[csiapi.URISANsKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
 	}
 
 	annotations := make(map[string]string)
@@ -88,14 +123,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	}
 
 	return &manager.CertificateRequestBundle{
-		Request: &x509.CertificateRequest{
-			Subject: pkix.Name{
-				CommonName: commonName,
-			},
-			DNSNames:    dns,
-			IPAddresses: ips,
-			URIs:        uris,
-		},
+		Request:   request,
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
 		Namespace: attrs[csiapi.K8sVolumeContextKeyPodNamespace],
 		Duration:  duration,
