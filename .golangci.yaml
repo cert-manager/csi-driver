@@ -3,7 +3,6 @@ issues:
     - linters:
         - errorlint
         - staticcheck
-        - goprintffuncname
         - prealloc
         - gosec
         - errcheck
