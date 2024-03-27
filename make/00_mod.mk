@@ -17,8 +17,6 @@ repo_name := github.com/cert-manager/csi-driver
 kind_cluster_name := csi-driver
 kind_cluster_config := $(bin_dir)/scratch/kind_cluster.yaml
 
-oci_platforms := linux/amd64,linux/arm64
-
 build_names := manager
 
 go_manager_main_dir := ./cmd
@@ -43,6 +41,8 @@ helm_labels_template_name := cert-manager-csi-driver.labels
 helm_docs_use_helm_tool := 1
 helm_generate_schema := 1
 helm_verify_values := 1
+
+golangci_lint_config := .golangci.yaml
 
 define helm_values_mutation_function
 $(YQ) \

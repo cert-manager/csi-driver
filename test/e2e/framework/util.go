@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	. "github.com/cert-manager/csi-driver/test/e2e/framework/log"
+	. "github.com/onsi/ginkgo/v2"
 )
 
 func nowStamp() string {

@@ -17,10 +17,11 @@ limitations under the License.
 package cases
 
 import (
-	"github.com/cert-manager/csi-driver/test/e2e/framework"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+
+	"github.com/cert-manager/csi-driver/test/e2e/framework"
 )
 
 func basePod(f *framework.Framework, csiAttributes map[string]string) (corev1.Volume, *corev1.Pod) {

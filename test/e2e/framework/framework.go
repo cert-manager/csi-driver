@@ -19,9 +19,6 @@ package framework
 import (
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	crclientset "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +32,9 @@ import (
 	"github.com/cert-manager/csi-driver/test/e2e/framework/helper"
 	"github.com/cert-manager/csi-driver/test/e2e/framework/testdata"
 	"github.com/cert-manager/csi-driver/test/e2e/framework/util"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 // DefaultConfig contains the default shared config the is likely parsed from
