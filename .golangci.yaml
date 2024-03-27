@@ -2,7 +2,6 @@ issues:
   exclude-rules:
     - linters:
         - errorlint
-        - staticcheck
         - prealloc
         - gosec
       text: ".*"

@@ -37,7 +37,7 @@ import (
 	"github.com/cert-manager/csi-driver/test/e2e/framework/log"
 )
 
-func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, mountPath string,
+func (h *Helper) CertificateKeyInPodPath(ctx context.Context, namespace, podName, containerName, mountPath string,
 	attr map[string]string) ([]byte, []byte, error) {
 	certPath, ok := attr[csiapi.CertFileKey]
 	if !ok {
@@ -51,12 +51,12 @@ func (h *Helper) CertificateKeyInPodPath(namespace, podName, containerName, moun
 	}
 	keyPath = filepath.Join(mountPath, keyPath)
 
-	certData, err := h.ReadFilePathFromContainer(namespace, podName, containerName, certPath)
+	certData, err := h.ReadFilePathFromContainer(ctx, namespace, podName, containerName, certPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read cert data from pod: %s", err)
 	}
 
-	keyData, err := h.ReadFilePathFromContainer(namespace, podName, containerName, keyPath)
+	keyData, err := h.ReadFilePathFromContainer(ctx, namespace, podName, containerName, keyPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read key data from pod: %s", err)
 	}
@@ -93,7 +93,7 @@ func (h *Helper) CertificateKeyMatch(cr *cmapi.CertificateRequest, certData, key
 	return nil
 }
 
-func (h *Helper) ReadFilePathFromContainer(namespace, podName, containerName, path string) ([]byte, error) {
+func (h *Helper) ReadFilePathFromContainer(ctx context.Context, namespace, podName, containerName, path string) ([]byte, error) {
 	coreclient, err := corev1client.NewForConfig(h.RestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build core client form rest config: %s", err)
@@ -124,7 +124,7 @@ func (h *Helper) ReadFilePathFromContainer(namespace, podName, containerName, pa
 	}
 
 	execOut, execErr := new(bytes.Buffer), new(bytes.Buffer)
-	err = exec.Stream(remotecommand.StreamOptions{
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: execOut,
 		Stderr: execErr,
 		Tty:    false,
@@ -136,11 +136,11 @@ func (h *Helper) ReadFilePathFromContainer(namespace, podName, containerName, pa
 	return execOut.Bytes(), nil
 }
 
-func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) error {
+func (h *Helper) WaitForPodReady(ctx context.Context, namespace, name string, timeout time.Duration) error {
 	log.Logf("Waiting for Pod to become ready %s/%s", namespace, name)
 
-	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
-		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	err := wait.PollUntilContextTimeout(ctx, time.Second/2, timeout, true, func(ctx context.Context) (bool, error) {
+		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -172,10 +172,10 @@ func (h *Helper) WaitForPodReady(namespace, name string, timeout time.Duration) 
 	return nil
 }
 
-func (h *Helper) WaitForPodDeletion(namespace, name string, timeout time.Duration) error {
+func (h *Helper) WaitForPodDeletion(ctx context.Context, namespace, name string, timeout time.Duration) error {
 	log.Logf("Waiting for Pod to be deleted %s/%s", namespace, name)
-	err := wait.PollImmediate(time.Second/2, timeout, func() (bool, error) {
-		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	err := wait.PollUntilContextTimeout(ctx, time.Second/2, timeout, true, func(ctx context.Context) (bool, error) {
+		pod, err := h.KubeClient.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if k8sErrors.IsNotFound(err) {
 			return true, nil
 		}

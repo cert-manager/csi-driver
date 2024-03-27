@@ -19,7 +19,7 @@ package cases
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 )
@@ -30,7 +30,7 @@ func basePod(f *framework.Framework, csiAttributes map[string]string) (corev1.Vo
 		VolumeSource: corev1.VolumeSource{
 			CSI: &corev1.CSIVolumeSource{
 				Driver:           "csi.cert-manager.io",
-				ReadOnly:         pointer.Bool(true),
+				ReadOnly:         ptr.To(true),
 				VolumeAttributes: csiAttributes,
 			},
 		},
