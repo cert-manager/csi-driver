@@ -7,7 +7,6 @@ issues:
         - prealloc
         - gosec
         - errcheck
-        - gocritic
       text: ".*"
 linters:
   # Explicitly define all enabled linters
