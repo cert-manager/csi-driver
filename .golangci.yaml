@@ -9,7 +9,6 @@ issues:
         - gosec
         - ginkgolinter
         - ineffassign
-        - unconvert
         - errcheck
         - gocritic
         - nilerr
