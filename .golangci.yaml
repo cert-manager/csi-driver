@@ -7,7 +7,6 @@ issues:
         - prealloc
         - gosec
         - ginkgolinter
-        - ineffassign
         - errcheck
         - gocritic
         - nilerr
