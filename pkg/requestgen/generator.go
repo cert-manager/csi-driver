@@ -64,7 +64,11 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		if err != nil {
 			return nil, fmt.Errorf("%q: %w", csiapi.LiteralSubjectKey, err)
 		}
-		request.RawSubject, err = cmpki.ParseSubjectStringToRawDerBytes(lSubjStr)
+		rdnSequence, err := cmpki.UnmarshalSubjectStringToRDNSequence(lSubjStr)
+		if err != nil {
+			return nil, fmt.Errorf("%q: %w", csiapi.LiteralSubjectKey, err)
+		}
+		request.RawSubject, err = cmpki.MarshalRDNSequenceToRawDERBytes(rdnSequence)
 		if err != nil {
 			return nil, fmt.Errorf("%q: %w", csiapi.LiteralSubjectKey, err)
 		}
