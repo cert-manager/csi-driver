@@ -49,7 +49,7 @@ func (h *Helper) WaitForCertificateRequestsReady(pod *corev1.Pod, timeout time.D
 			crs, err = h.findCertificateRequests(crList.Items, pod.UID)
 			if err != nil {
 				log.Logf("Cannot find CertificateRequests for pod, waiting...")
-				return false, nil
+				return false, nil // nolint:nilerr // We want to ignore this error and wait for the CRs to be created
 			}
 
 			for _, cr := range crs {

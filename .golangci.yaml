@@ -9,7 +9,6 @@ issues:
         - ginkgolinter
         - errcheck
         - gocritic
-        - nilerr
       text: ".*"
 linters:
   # Explicitly define all enabled linters
