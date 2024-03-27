@@ -13,7 +13,6 @@ issues:
         - errcheck
         - gocritic
         - nilerr
-        - wastedassign
       text: ".*"
 linters:
   # Explicitly define all enabled linters
