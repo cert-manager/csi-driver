@@ -170,11 +170,11 @@ $(oci_push_targets): oci-push-%: oci-build-% | $(NEEDS_CRANE) $(NEEDS_COSIGN) $(
 ifneq ($(RELEASE_DRYRUN),true)
 	if $(CRANE) image digest $(oci_$*_image_name)@$(call oci_digest,$*) >/dev/null 2>&1; then \
 		echo "Digest already exists, will retag without resigning."; \
-		$(call oci_push_command,$*); \
+		$(call oci_push_command,$*) \
 	else \
 		echo "Digest does not yet exist, pushing image and signing."; \
-		$(call oci_push_command,$*); \
-		$(call oci_sign_command,$*); \
+		$(call oci_push_command,$*) \
+		$(call oci_sign_command,$*) \
 	fi
 endif
 
