@@ -32,6 +32,8 @@ func Test_ValidateAttributes(t *testing.T) {
 		expError error
 	}
 
+	var literalSubject = "CN=${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,OU=0:${POD_NAME}\\;1:${POD_NAMESPACE}\\;2:my-region\\;4:unittest,O=foo.bar.com"
+
 	tests := map[string]struct {
 		attr   map[string]string
 		expErr field.ErrorList
@@ -205,6 +207,18 @@ func Test_ValidateAttributes(t *testing.T) {
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "/foobar", "filename must not be an absolute path"),
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/privatekey-file"), "/foobar", "filename must not include '/'"),
 			},
+		},
+		"correct literal-subject should not error": {
+			attr: map[string]string{
+				csiapi.IssuerNameKey:     "test-issuer",
+				csiapi.LiteralSubjectKey: literalSubject,
+				csiapi.CAFileKey:         "ca.crt",
+				csiapi.CertFileKey:       "crt.tls",
+				csiapi.KeyFileKey:        "key.tls",
+				csiapi.DNSNamesKey:       "foo.bar.com",
+				csiapi.KeyEncodingKey:    "PKCS8",
+			},
+			expErr: nil,
 		},
 	}
 
