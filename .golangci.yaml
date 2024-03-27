@@ -5,7 +5,6 @@ issues:
         - staticcheck
         - goprintffuncname
         - prealloc
-        - gofmt
         - gosec
         - ginkgolinter
         - ineffassign

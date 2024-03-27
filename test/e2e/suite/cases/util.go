@@ -43,7 +43,7 @@ func basePod(f *framework.Framework, csiAttributes map[string]string) (corev1.Vo
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
-				corev1.Container{
+				{
 					Name:    "test-container-1",
 					Image:   "busybox",
 					Command: []string{"sleep", "10000"},
