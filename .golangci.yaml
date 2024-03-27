@@ -5,7 +5,6 @@ issues:
         - staticcheck
         - prealloc
         - gosec
-        - errcheck
       text: ".*"
 linters:
   # Explicitly define all enabled linters

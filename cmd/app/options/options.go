@@ -84,7 +84,9 @@ func (o *Options) Prepare(cmd *cobra.Command) *Options {
 func (o *Options) Complete() error {
 	klog.InitFlags(nil)
 	log := klogr.New()
-	flag.Set("v", o.logLevel)
+	if err := flag.Set("v", o.logLevel); err != nil {
+		return fmt.Errorf("failed to set log level: %s", err)
+	}
 	o.Logr = log
 
 	var err error
@@ -107,8 +109,6 @@ func (o *Options) addFlags(cmd *cobra.Command) {
 	o.addAppFlags(nfs.FlagSet("App"))
 	o.kubeConfigFlags = genericclioptions.NewConfigFlags(true)
 	o.kubeConfigFlags.AddFlags(nfs.FlagSet("Kubernetes"))
-	cmd.MarkPersistentFlagRequired("node-id")
-	cmd.MarkPersistentFlagRequired("endpoint")
 
 	usageFmt := "Usage:\n  %s\n"
 	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
@@ -135,9 +135,15 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&o.NodeID, "node-id", "",
 		"The name of the node which is hosting this driver instance.")
+	if err := cobra.MarkFlagRequired(fs, "node-id"); err != nil {
+		panic(err)
+	}
 
 	fs.StringVar(&o.Endpoint, "endpoint", "",
 		"The endpoint that the driver will connect to the Kubelet.")
+	if err := cobra.MarkFlagRequired(fs, "endpoint"); err != nil {
+		panic(err)
+	}
 
 	fs.StringVar(&o.DriverName, "driver-name", "csi.cert-manager.io",
 		"The name of this CSI driver which will be shared with the Kubelet.")
