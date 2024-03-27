@@ -20,14 +20,15 @@ import (
 	"context"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 	"github.com/cert-manager/csi-driver/test/e2e/util"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.CasesDescribe("Should pick-up correct FSGroup on Pods", func() {

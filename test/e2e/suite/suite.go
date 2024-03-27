@@ -19,10 +19,10 @@ package suite
 import (
 	"os"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	"github.com/cert-manager/csi-driver/test/e2e/environment"
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
+
+	. "github.com/onsi/ginkgo/v2"
 )
 
 var (
