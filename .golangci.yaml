@@ -1,20 +1,9 @@
 issues:
   exclude-rules:
     - linters:
-        - unused
         - errorlint
-        - staticcheck
-        - goprintffuncname
         - prealloc
-        - gofmt
         - gosec
-        - ginkgolinter
-        - ineffassign
-        - unconvert
-        - errcheck
-        - gocritic
-        - nilerr
-        - wastedassign
       text: ".*"
 linters:
   # Explicitly define all enabled linters

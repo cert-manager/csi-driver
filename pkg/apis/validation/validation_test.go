@@ -27,11 +27,6 @@ import (
 )
 
 func Test_ValidateAttributes(t *testing.T) {
-	type vaT struct {
-		attr     map[string]string
-		expError error
-	}
-
 	tests := map[string]struct {
 		attr   map[string]string
 		expErr field.ErrorList

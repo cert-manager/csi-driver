@@ -51,14 +51,14 @@ var _ = framework.CasesDescribe("Should set key usages correctly", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
-		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+		err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 		Expect(err).NotTo(HaveOccurred())
 
 		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-		crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+		crs, err := f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = util.CertificateRequestMatchesSpec(crs[0], testVolume.CSI.VolumeAttributes)
@@ -66,7 +66,7 @@ var _ = framework.CasesDescribe("Should set key usages correctly", func() {
 		Expect(crs).To(HaveLen(1))
 
 		By("Ensure the certificate key pair exists in the pod and matches that in the CertificateRequest")
-		certData, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+		certData, keyData, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
 			testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 

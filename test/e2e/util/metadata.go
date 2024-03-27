@@ -33,11 +33,9 @@ func CertificateRequestMatchesSpec(cr *cmapi.CertificateRequest, attr map[string
 	issuerName, ok := attr[csiapi.IssuerNameKey]
 	if !ok {
 		errs = append(errs, fmt.Sprintf("required %q not in volume attributes present", csiapi.IssuerNameKey))
-	} else {
-		if issuerName != cr.Spec.IssuerRef.Name {
-			errs = append(errs, fmt.Sprintf("expected IssuerRef.Name to equal %q, got %q",
-				issuerName, cr.Spec.IssuerRef.Name))
-		}
+	} else if issuerName != cr.Spec.IssuerRef.Name {
+		errs = append(errs, fmt.Sprintf("expected IssuerRef.Name to equal %q, got %q",
+			issuerName, cr.Spec.IssuerRef.Name))
 	}
 
 	issuerKind, ok := attr[csiapi.IssuerKindKey]

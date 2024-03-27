@@ -53,8 +53,8 @@ func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, er
 }
 
 func setDefaultIfEmpty(attr map[string]string, k, v string) {
-	if len(attr[string(k)]) == 0 {
-		attr[string(k)] = v
+	if len(attr[k]) == 0 {
+		attr[k] = v
 	}
 }
 

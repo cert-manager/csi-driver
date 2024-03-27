@@ -40,14 +40,14 @@ var _ = framework.CasesDescribe("Should set the key encoding correctly", func() 
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
-		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+		err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 		Expect(err).NotTo(HaveOccurred())
 
 		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-		crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+		crs, err := f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = util.CertificateRequestMatchesSpec(crs[0], testVolume.CSI.VolumeAttributes)
@@ -55,14 +55,14 @@ var _ = framework.CasesDescribe("Should set the key encoding correctly", func() 
 		Expect(crs).To(HaveLen(1))
 
 		By("Extracting private key data from Pod VolumeMount")
-		_, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+		_, keyData, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
 			testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 
 		block, rest := pem.Decode(keyData)
 
 		Expect(block).ToNot(BeNil())
-		Expect(rest).Should(HaveLen(0))
+		Expect(rest).Should(BeEmpty())
 
 		return block
 	}

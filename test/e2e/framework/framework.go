@@ -17,6 +17,7 @@ limitations under the License.
 package framework
 
 import (
+	"context"
 	"time"
 
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -133,12 +134,16 @@ func (f *Framework) AfterEach() {
 		return
 	}
 
+	cleanupCtx := context.Background()
+	cleanupCtx, cancel := context.WithTimeout(cleanupCtx, 5*time.Minute)
+	defer cancel()
+
 	By("Deleting test namespace")
-	err := f.DeleteKubeNamespace(f.Namespace.Name)
+	err := f.DeleteKubeNamespace(cleanupCtx, f.Namespace.Name)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting for test namespace to no longer exist")
-	err = f.WaitForKubeNamespaceNotExist(f.Namespace.Name)
+	err = f.WaitForKubeNamespaceNotExist(cleanupCtx, f.Namespace.Name)
 	Expect(err).NotTo(HaveOccurred())
 }
 
