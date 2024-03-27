@@ -42,6 +42,8 @@ helm_docs_use_helm_tool := 1
 helm_generate_schema := 1
 helm_verify_values := 1
 
+golangci_lint_config := .golangci.yaml
+
 define helm_values_mutation_function
 $(YQ) \
 	'( .image.repository = "$(oci_manager_image_name)" ) | \
