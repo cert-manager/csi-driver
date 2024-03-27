@@ -1,7 +1,6 @@
 issues:
   exclude-rules:
     - linters:
-        - unused
         - errorlint
         - staticcheck
         - goprintffuncname
