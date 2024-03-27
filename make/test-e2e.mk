@@ -31,8 +31,8 @@ e2e-setup-cert-manager: | kind-cluster $(NEEDS_HELM) $(NEEDS_KUBECTL)
 		--set webhook.image.repository=$(quay.io/jetstack/cert-manager-webhook.REPO) \
 		--set webhook.image.tag=$(quay.io/jetstack/cert-manager-webhook.TAG) \
 		--set webhook.image.pullPolicy=Never \
-		--set startupapicheck.image.repository=$(quay.io/jetstack/cert-manager-ctl.REPO) \
-		--set startupapicheck.image.tag=$(quay.io/jetstack/cert-manager-ctl.TAG) \
+		--set startupapicheck.image.repository=$(quay.io/jetstack/cert-manager-startupapicheck.REPO) \
+		--set startupapicheck.image.tag=$(quay.io/jetstack/cert-manager-startupapicheck.TAG) \
 		--set startupapicheck.image.pullPolicy=Never \
 		cert-manager cert-manager >/dev/null
 

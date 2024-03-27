@@ -109,7 +109,7 @@ TOOLS += cmctl=2f75014a7c360c319f8c7c8afe8e9ce33fe26dca
 # https://pkg.go.dev/github.com/cert-manager/release/cmd/cmrel?tab=versions
 TOOLS += cmrel=fa10147dadc8c36718b7b08aed6d8c6418eb2
 # https://github.com/golangci/golangci-lint/releases
-TOOLS += golangci-lint=v1.55.2
+TOOLS += golangci-lint=v1.57.1
 # https://pkg.go.dev/golang.org/x/vuln?tab=versions
 TOOLS += govulncheck=v1.0.4
 
