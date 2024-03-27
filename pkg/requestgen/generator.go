@@ -29,6 +29,7 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	cmutil "github.com/cert-manager/cert-manager/pkg/util"
 	cmpki "github.com/cert-manager/cert-manager/pkg/util/pki"
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
@@ -95,7 +96,10 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 				if err != nil {
 					return nil, fmt.Errorf("%q: %w", v, err)
 				}
-				*k = strings.Split(e, ",")
+				*k, err = cmutil.SplitWithEscapeCSV(e)
+				if err != nil {
+					return nil, fmt.Errorf("%q: %w", v, err)
+				}
 			}
 		}
 	}
