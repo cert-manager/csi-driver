@@ -40,14 +40,14 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed twice but keep the same private key throughout")
-		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
-				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
 				if !bytes.Equal(cert, newCert) {
@@ -70,14 +70,14 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed and have a new private key")
-		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
-				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
 				if !bytes.Equal(cert, newCert) {
@@ -97,14 +97,14 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		defer deletePod(f, pod)
 
 		By("Wait for certificate to be renewed and have a new private key")
-		cert, key, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
 		for i := 0; i < 2; i++ {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
-				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
+				newCert, newKey, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 				Expect(err).NotTo(HaveOccurred())
 
 				if !bytes.Equal(cert, newCert) {
@@ -140,14 +140,14 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting for Pod to become ready")
-	err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+	err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 	Expect(err).NotTo(HaveOccurred())
 
 	testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-	crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+	crs, err := f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(crs).To(HaveLen(1))
 

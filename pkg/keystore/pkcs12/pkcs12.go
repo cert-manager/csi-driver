@@ -18,7 +18,6 @@ package pkcs12
 
 import (
 	"crypto"
-	"crypto/rand"
 	"errors"
 	"fmt"
 
@@ -60,7 +59,7 @@ func create(password string, pk crypto.PrivateKey, chainPEM []byte) ([]byte, err
 		return nil, errors.New("no certificates decoded in certificate chain")
 	}
 
-	pfx, err := pkcs12.Encode(rand.Reader, pk, chain[0], chain[1:], password)
+	pfx, err := pkcs12.LegacyRC2.Encode(pk, chain[0], chain[1:], password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode the PKCS12 certificate chain file: %v", err)
 	}

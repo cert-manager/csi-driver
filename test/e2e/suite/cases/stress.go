@@ -18,10 +18,8 @@ package cases
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -53,14 +51,14 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
-		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+		err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 		Expect(err).NotTo(HaveOccurred())
 
 		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequests should exist with the correct spec")
-		crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+		crs, err := f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(crs).To(HaveLen(1))
 
@@ -68,7 +66,7 @@ var _ = framework.CasesDescribe("Normal CSI behaviour", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the certificate key pair exists in the pod and matches that in the CertificateRequest")
-		certData, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+		certData, keyData, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
 			testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -84,57 +82,8 @@ func deletePod(f *framework.Framework, pod *corev1.Pod) {
 	err := f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = f.Helper().WaitForPodDeletion(pod.Namespace, pod.Name, time.Second*90)
+	err = f.Helper().WaitForPodDeletion(context.TODO(), pod.Namespace, pod.Name, time.Second*90)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Pod Deleted " + pod.Name)
-}
-
-func testPod(f *framework.Framework, pod *corev1.Pod) {
-	By(fmt.Sprintf("Ensuring corresponding CertificateRequests exists with the correct spec: %s/%s", pod.Namespace, pod.Name))
-
-	attributesMap := make(map[string]*map[string]string)
-
-	// Not all defined volumes will be mounted. This means that the
-	// NodePublishVolume will not be called and therefore no
-	// CertificateRequest will be created. This is by design.
-	for _, vol := range pod.Spec.Volumes {
-		// Ignore non csi volumes
-		if vol.VolumeSource.CSI == nil {
-			continue
-		}
-
-		attributesMap[vol.Name] = &vol.CSI.VolumeAttributes
-	}
-
-	crs, err := f.CertManagerClientSet.CertmanagerV1().CertificateRequests(f.Namespace.Name).List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred())
-
-	for _, container := range pod.Spec.Containers {
-		By(fmt.Sprintf("Ensure the certificate key pairs exists in the pod's container and matches that in the CertificateRequest: %s/%s:%s", pod.Namespace, pod.Name, container.Name))
-		for _, vol := range container.VolumeMounts {
-			// Ignore non csi volumes
-			if _, ok := attributesMap[vol.Name]; !ok {
-				continue
-			}
-
-			crs, err := f.Helper().FindCertificateRequestsReady(crs.Items, pod)
-			Expect(err).NotTo(HaveOccurred())
-
-			var matchedCR *cmapi.CertificateRequest
-			for _, cr := range crs {
-				if err = util.CertificateRequestMatchesSpec(cr, *attributesMap[vol.Name]); err == nil {
-					matchedCR = cr
-					break
-				}
-			}
-			Expect(matchedCR).ShouldNot(BeNil(), "expected one CertificateRequest to match the volume spec")
-
-			certData, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, pod.Name, container.Name, vol.MountPath,
-				*attributesMap[vol.Name])
-
-			err = f.Helper().CertificateKeyMatch(matchedCR, certData, keyData)
-			Expect(err).NotTo(HaveOccurred())
-		}
-	}
 }

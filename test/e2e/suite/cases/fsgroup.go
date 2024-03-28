@@ -22,7 +22,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 	"github.com/cert-manager/csi-driver/test/e2e/util"
@@ -41,7 +41,7 @@ var _ = framework.CasesDescribe("Should pick-up correct FSGroup on Pods", func()
 		})
 
 		testPod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
-			RunAsGroup: pointer.Int64(2000),
+			RunAsGroup: ptr.To(int64(2000)),
 		}
 
 		By("Creating Pod")
@@ -49,11 +49,11 @@ var _ = framework.CasesDescribe("Should pick-up correct FSGroup on Pods", func()
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
-		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+		err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Ensure the corresponding CertificateRequest should exist with the correct spec")
-		crs, err := f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+		crs, err := f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = util.CertificateRequestMatchesSpec(crs[0], testVolume.CSI.VolumeAttributes)
@@ -61,7 +61,7 @@ var _ = framework.CasesDescribe("Should pick-up correct FSGroup on Pods", func()
 		Expect(crs).To(HaveLen(1))
 
 		By("Ensure the certificate key pair exists in the pod and can be read by the pod")
-		certData, keyData, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+		certData, keyData, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
 			testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 

@@ -49,22 +49,22 @@ var _ = framework.CasesDescribe("Should write keystore pkcs12 file correctly", f
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for Pod to become ready")
-		err = f.Helper().WaitForPodReady(f.Namespace.Name, testPod.Name, time.Minute)
+		err = f.Helper().WaitForPodReady(context.TODO(), f.Namespace.Name, testPod.Name, time.Minute)
 		Expect(err).NotTo(HaveOccurred())
 
 		testPod, err = f.KubeClientSet.CoreV1().Pods(f.Namespace.Name).Get(context.TODO(), testPod.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		_, err = f.Helper().WaitForCertificateRequestsReady(testPod, time.Second)
+		_, err = f.Helper().WaitForCertificateRequestsReady(context.TODO(), testPod, time.Second)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Extracting certificate and private key")
-		certPEM, pkPEM, err := f.Helper().CertificateKeyInPodPath(f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
+		certPEM, pkPEM, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls",
 			testVolume.CSI.VolumeAttributes)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Extracting PKCS12 file from Pod VolumeMount")
-		pkcs12File, err := f.Helper().ReadFilePathFromContainer(f.Namespace.Name, testPod.Name, "test-container-1", "/tls/foo.p12")
+		pkcs12File, err := f.Helper().ReadFilePathFromContainer(context.TODO(), f.Namespace.Name, testPod.Name, "test-container-1", "/tls/foo.p12")
 		Expect(err).NotTo(HaveOccurred())
 
 		pkcs12pk, pkcs12cert, _, err := pkcs12.DecodeChain(pkcs12File, "a-random-password")
