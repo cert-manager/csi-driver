@@ -117,7 +117,8 @@ $(call sanitize_target,oci-sign-$2): $(oci_digest_path_$1) | $(NEEDS_CRANE) $(NE
 oci-sign-$1: $(call sanitize_target,oci-sign-$2)
 endef
 
-$(foreach build_name,$(build_names),$(eval $(call oci_sign_target,$(build_name),$(oci_$(build_name)_image_name))))
+oci_sign_target_per_image = $(foreach image_name,$2,$(eval $(call oci_sign_target,$1,$(image_name))))
+$(foreach build_name,$(build_names),$(eval $(call oci_sign_target_per_image,$(build_name),$(oci_$(build_name)_image_name))))
 
 .PHONY: $(oci_sign_targets)
 ## Sign an OCI image.
