@@ -57,12 +57,6 @@ verify-govulncheck: | $(NEEDS_GOVULNCHECK)
 
 ifdef golangci_lint_config
 
-# see https://stackoverflow.com/a/53408233
-sed_inplace := sed -i''
-ifeq ($(HOST_OS),darwin)
-	sed_inplace := sed -i ''
-endif
-
 .PHONY: generate-golangci-lint-config
 ## Generate a golangci-lint configuration file
 ## @category [shared] Generate/ Verify
@@ -70,7 +64,7 @@ generate-golangci-lint-config: | $(NEEDS_YQ) $(bin_dir)/scratch
 	cp $(golangci_lint_config) $(bin_dir)/scratch/golangci-lint.yaml.tmp
 	$(YQ) -i 'del(.linters.enable)' $(bin_dir)/scratch/golangci-lint.yaml.tmp
 	$(YQ) eval-all -i '. as $$item ireduce ({}; . * $$item)' $(bin_dir)/scratch/golangci-lint.yaml.tmp $(golangci_lint_override)
-	$(sed_inplace) 's|{{REPO-NAME}}|$(repo_name)|g' $(bin_dir)/scratch/golangci-lint.yaml.tmp
+	$(YQ) -i '(.. | select(tag == "!!str")) |= sub("{{REPO-NAME}}", "$(repo_name)")' $(bin_dir)/scratch/golangci-lint.yaml.tmp
 	mv $(bin_dir)/scratch/golangci-lint.yaml.tmp $(golangci_lint_config)
 
 shared_generate_targets += generate-golangci-lint-config
