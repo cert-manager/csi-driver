@@ -39,6 +39,7 @@ GOEXPERIMENT ?=  # empty by default
 define default_per_build_variables
 cgo_enabled_$1 ?= $(CGO_ENABLED)
 goexperiment_$1 ?= $(GOEXPERIMENT)
+oci_additional_layers_$1 ?= 
 endef
 
 $(foreach build_name,$(build_names),$(eval $(call default_per_build_variables,$(build_name))))
