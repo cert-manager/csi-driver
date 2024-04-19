@@ -64,6 +64,10 @@ $(oci_build_targets): oci-build-%: ko-config-% | $(NEEDS_KO) $(NEEDS_GO) $(NEEDS
 		--push=false \
 		--bare
 
+	$(IMAGE_TOOL) append-layers \
+		$(CURDIR)/$(oci_layout_path_$*) \
+		$(oci_additional_layers_$*)
+
 	$(IMAGE_TOOL) list-digests \
 		$(CURDIR)/$(oci_layout_path_$*) \
 		> $(oci_digest_path_$*)
