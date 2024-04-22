@@ -116,6 +116,8 @@ TOOLS += govulncheck=v1.0.4
 TOOLS += operator-sdk=v1.34.1
 # https://pkg.go.dev/github.com/cli/cli/v2?tab=versions
 TOOLS += gh=v2.47.0
+# https:///github.com/redhat-openshift-ecosystem/openshift-preflight/releases
+TOOLS += preflight=1.9.1
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 K8S_CODEGEN_VERSION=v0.29.1
@@ -138,7 +140,7 @@ ADDITIONAL_TOOLS ?=
 TOOLS += $(ADDITIONAL_TOOLS)
 
 # https://go.dev/dl/
-VENDORED_GO_VERSION := 1.21.9
+VENDORED_GO_VERSION := 1.22.2
 
 # Print the go version which can be used in GH actions
 .PHONY: print-go-version
@@ -317,6 +319,7 @@ GO_DEPENDENCIES += golangci-lint=github.com/golangci/golangci-lint/cmd/golangci-
 GO_DEPENDENCIES += govulncheck=golang.org/x/vuln/cmd/govulncheck
 GO_DEPENDENCIES += operator-sdk=github.com/operator-framework/operator-sdk/cmd/operator-sdk
 GO_DEPENDENCIES += gh=github.com/cli/cli/v2/cmd/gh
+GO_DEPENDENCIES += preflight=github.com/redhat-openshift-ecosystem/openshift-preflight/cmd/preflight
 
 #################
 # go build tags #
