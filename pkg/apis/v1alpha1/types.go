@@ -40,7 +40,7 @@ const (
 
 	KeyStorePKCS12EnableKey   = "csi.cert-manager.io/pkcs12-enable"
 	KeyStorePKCS12FileKey     = "csi.cert-manager.io/pkcs12-filename"
-	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/pkcs12-password"
+	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/pkcs12-password" // #nosec G101: False positive, gosec thinks this is a credential.
 )
 
 const (

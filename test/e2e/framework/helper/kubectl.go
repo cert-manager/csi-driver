@@ -54,7 +54,7 @@ func (k *Kubectl) Run(args ...string) error {
 		baseArgs = []string{"--namespace", k.namespace}
 	}
 	args = append(baseArgs, args...)
-	cmd := exec.Command(k.kubectl, args...)
+	cmd := exec.Command(k.kubectl, args...) // #nosec G204 -- This function is only used for tests.
 	cmd.Stdout = log.Writer
 	cmd.Stderr = log.Writer
 	return cmd.Run()

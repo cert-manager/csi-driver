@@ -60,6 +60,8 @@ VOodKC004yjh7w9aSbCCbAL0tDEnhm4Jrb8cxt7pDWbdEVUeuk9LZRQtluYBnmJU
 kQ7ALfUfUh/RUpCV4uI6sEI3NDX2YqQbOtsBD/hNaL1F85FA
 -----END CERTIFICATE-----`
 
+	// #nosec G101 -- This is a test PK, ideally we would dynamically
+	// generate this pair, but this should not be a security risk.
 	rootKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEAz5DYA7iEBFq/SrCOTsjiYSHlHbTUdLyzselos5cE2++Huon3
 InPqMupiDoS8/Qr9srnoKnah7aKB3sY7GlXdg85zcIbQIKocymsRy/GPbEEpfTRG
