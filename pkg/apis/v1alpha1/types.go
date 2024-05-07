@@ -21,6 +21,8 @@ const (
 	IssuerKindKey  = "csi.cert-manager.io/issuer-kind"
 	IssuerGroupKey = "csi.cert-manager.io/issuer-group"
 
+	InjectSPIFFEKey = "csi.cert-manager.io/inject-spiffe"
+
 	CommonNameKey  = "csi.cert-manager.io/common-name"
 	DNSNamesKey    = "csi.cert-manager.io/dns-names"
 	IPSANsKey      = "csi.cert-manager.io/ip-sans"
