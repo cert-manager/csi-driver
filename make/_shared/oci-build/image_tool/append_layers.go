@@ -30,6 +30,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/match"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/spf13/cobra"
 )
 
@@ -45,16 +46,33 @@ var CommandAppendLayers = cobra.Command{
 			return
 		}
 
-		layers := []v1.Layer{}
-		for _, path := range extra {
-			layers = append(layers, loadLayerFromDirOrTarball(path))
+		path, err := layout.FromPath(oci)
+		must("could not load oci directory", err)
+
+		index, err := path.ImageIndex()
+		must("could not load oci image index", err)
+
+		indexMediaType, err := index.MediaType()
+		must("could not get image index media type", err)
+
+		layerType := types.DockerLayer
+		if indexMediaType == types.OCIImageIndex {
+			layerType = types.OCILayer
 		}
 
-		appendLayersToAllImages(oci, layers...)
+		layers := []v1.Layer{}
+		for _, path := range extra {
+			layers = append(layers, loadLayerFromDirOrTarball(path, layerType))
+		}
+
+		index = appendLayersToImageIndex(index, layers)
+
+		_, err = layout.Write(oci, index)
+		must("could not write image", err)
 	},
 }
 
-func loadLayerFromDirOrTarball(path string) v1.Layer {
+func loadLayerFromDirOrTarball(path string, mediaType types.MediaType) v1.Layer {
 	stat, err := os.Stat(path)
 	must("could not open directory or tarball", err)
 
@@ -102,29 +120,22 @@ func loadLayerFromDirOrTarball(path string) v1.Layer {
 
 		byts := buf.Bytes()
 
-		layer, err = tarball.LayerFromOpener(func() (io.ReadCloser, error) {
-			return io.NopCloser(bytes.NewReader(byts)), nil
-		})
+		layer, err = tarball.LayerFromOpener(
+			func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewReader(byts)), nil
+			},
+			tarball.WithMediaType(mediaType),
+		)
 
 	} else {
-		layer, err = tarball.LayerFromFile(path)
+		layer, err = tarball.LayerFromFile(
+			path,
+			tarball.WithMediaType(mediaType),
+		)
 	}
 
 	must("could not open directory or tarball", err)
 	return layer
-}
-
-func appendLayersToAllImages(oci string, layers ...v1.Layer) {
-	path, err := layout.FromPath(oci)
-	must("could not load oci directory", err)
-
-	index, err := path.ImageIndex()
-	must("could not load oci image index", err)
-
-	index = appendLayersToImageIndex(index, layers)
-
-	_, err = layout.Write(oci, index)
-	must("could not write image", err)
 }
 
 func appendLayersToImageIndex(index v1.ImageIndex, layers []v1.Layer) v1.ImageIndex {
@@ -145,11 +156,15 @@ func appendLayersToImageIndex(index v1.ImageIndex, layers []v1.Layer) v1.ImageIn
 			digest, err := img.Digest()
 			must("could not get image digest", err)
 
+			size, err := img.Size()
+			must("could not get image size", err)
+
 			slog.Info("appended layers to image", "old_digest", descriptor.Digest, "digest", digest, "platform", descriptor.Platform)
 
 			index = mutate.RemoveManifests(index, match.Digests(descriptor.Digest))
 
 			descriptor.Digest = digest
+			descriptor.Size = size
 			index = mutate.AppendManifests(index, mutate.IndexAddendum{
 				Add:        img,
 				Descriptor: descriptor,
@@ -159,16 +174,20 @@ func appendLayersToImageIndex(index v1.ImageIndex, layers []v1.Layer) v1.ImageIn
 			slog.Info("found image index", "digest", descriptor.Digest)
 
 			child, err := index.ImageIndex(descriptor.Digest)
-			must("could not load oci image manifest", err)
+			must("could not load oci index manifest", err)
 
 			child = appendLayersToImageIndex(child, layers)
 
 			digest, err := child.Digest()
-			must("could not get image digest", err)
+			must("could not get index digest", err)
+
+			size, err := child.Size()
+			must("could not get index size", err)
 
 			index = mutate.RemoveManifests(index, match.Digests(descriptor.Digest))
 
 			descriptor.Digest = digest
+			descriptor.Size = size
 			index = mutate.AppendManifests(index, mutate.IndexAddendum{
 				Add:        child,
 				Descriptor: descriptor,
