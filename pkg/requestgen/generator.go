@@ -161,12 +161,14 @@ func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
 
 	var uris []*url.URL
 	var errs []string
-	for _, uriS := range splitList(csv) {
-		uri, err := url.ParseRequestURI(uriS)
+
+	for _, rawURI := range splitList(csv) {
+		uri, err := url.ParseRequestURI(rawURI)
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
 		}
+
 		uris = append(uris, uri)
 	}
 
