@@ -19,8 +19,8 @@ sanitize_target = $(subst :,-,$1)
 registry_for = $(firstword $(subst /, ,$1))
 
 # Utility variables
-current_makefile = $(lastword $(MAKEFILE_LIST))
-current_makefile_directory = $(dir $(current_makefile))
+current_makefile_directory := $(dir $(lastword $(MAKEFILE_LIST)))
+image_exists_script := $(current_makefile_directory)/image-exists.sh
 
 # Validate globals that are required
 $(call fatal_if_undefined,bin_dir)
@@ -78,10 +78,10 @@ $(call sanitize_target,oci-push-$2): oci-build-$1 | $(NEEDS_CRANE)
 
 .PHONY: $(call sanitize_target,oci-maybe-push-$2)
 $(call sanitize_target,oci-maybe-push-$2): oci-build-$1 | $(NEEDS_CRANE)
-	$$(CRANE) $(crane_flags_$1) manifest $2:$(call oci_image_tag_for,$1) > /dev/null 2>&1 || (\
-		$$(CRANE) $(crane_flags_$1) push "$(oci_layout_path_$1)" "$2:$(call oci_image_tag_for,$1)" && \
-		$(if $(filter true,$(oci_sign_on_push_$1)),$(MAKE) $(call sanitize_target,oci-sign-$2)) \
-	)
+	CRANE="$$(CRANE) $(crane_flags_$1)" \
+	source $(image_exists_script) $2:$(call oci_image_tag_for,$1); \
+		$$(CRANE) $(crane_flags_$1) push "$(oci_layout_path_$1)" "$2:$(call oci_image_tag_for,$1)"; \
+		$(if $(filter true,$(oci_sign_on_push_$1)),$(MAKE) $(call sanitize_target,oci-sign-$2))
 
 oci-push-$1: $(call sanitize_target,oci-push-$2)
 oci-maybe-push-$1: $(call sanitize_target,oci-maybe-push-$2)
