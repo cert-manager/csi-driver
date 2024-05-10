@@ -56,7 +56,12 @@ func Test_RequestForMetadata(t *testing.T) {
 	}
 
 	var literalSubject = "CN=my-pod.my-namespace.svc.cluster.local,OU=0:my-pod\\;1:my-namespace\\;2:my-region\\;4:unittest,O=foo.bar.com"
-	var rawLiteralSubject, err = cmpki.ParseSubjectStringToRawDerBytes(literalSubject)
+	rdnSequence, err := cmpki.UnmarshalSubjectStringToRDNSequence(literalSubject)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	rawLiteralSubject, err := cmpki.MarshalRDNSequenceToRawDERBytes(rdnSequence)
 	if err != nil {
 		assert.NoError(t, err)
 	}
