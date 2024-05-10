@@ -205,6 +205,7 @@ func Test_RequestForMetadata(t *testing.T) {
 					Group: "cert-manager.io",
 				},
 				Duration: cmapi.DefaultCertificateDuration,
+				Annotations: make(map[string]string),
 			},
 			expErr: false,
 		},
