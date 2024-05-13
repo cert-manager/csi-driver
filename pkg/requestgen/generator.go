@@ -57,6 +57,8 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		}
 	}
 
+	var uris []*url.URL
+
 	commonName, err := expand(meta, attrs[csiapi.CommonNameKey])
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.CommonNameKey, err)
@@ -65,13 +67,32 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.DNSNamesKey, err)
 	}
-	uris, err := parseURIs(meta, attrs[csiapi.URISANsKey])
+	uris, err = parseURIs(meta, attrs[csiapi.URISANsKey])
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
 	}
 	ips, err := parseIPAddresses(attrs[csiapi.IPSANsKey])
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", csiapi.IPSANsKey, err)
+	}
+
+	_, shouldInjectSPIFFE := attrs[csiapi.InjectSPIFFEKey]
+	if shouldInjectSPIFFE {
+		if len(uris) > 0 {
+			return nil, fmt.Errorf("cannot inject SPIFFE ID (%q) if custom URIs are given with %q", csiapi.InjectSPIFFEKey, csiapi.URISANsKey)
+		}
+
+		saName := meta.VolumeContext["csi.storage.k8s.io/serviceAccount.name"]
+		saNamespace := meta.VolumeContext["csi.storage.k8s.io/pod.namespace"]
+
+		// TODO: configurable trust domain
+		spiffeID := fmt.Sprintf("spiffe://%s/ns/%s/sa/%s", "example.com", saNamespace, saName)
+		uri, err := url.Parse(spiffeID)
+		if err != nil {
+			return nil, fmt.Errorf("internal error crafting X.509 URI, this is a bug, please report on GitHub: %w", err)
+		}
+
+		uris = []*url.URL{uri}
 	}
 
 	annotations := make(map[string]string)
