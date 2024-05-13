@@ -279,8 +279,10 @@
       "type": "string"
     },
     "helm-values.nodeSelector": {
-      "default": {},
-      "description": "Kubernetes node selector: node labels for pod assignment. For example, use this to allow scheduling of DaemonSet on linux nodes only:\nnodeSelector:\n  kubernetes.io/os: linux",
+      "default": {
+        "kubernetes.io/os": "linux"
+      },
+      "description": "Kubernetes node selector: node labels for pod assignment.",
       "type": "object"
     },
     "helm-values.podAnnotations": {

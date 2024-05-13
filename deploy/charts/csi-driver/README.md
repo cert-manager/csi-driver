@@ -231,15 +231,11 @@ resources:
 #### **nodeSelector** ~ `object`
 > Default value:
 > ```yaml
-> {}
+> kubernetes.io/os: linux
 > ```
 
-Kubernetes node selector: node labels for pod assignment. For example, use this to allow scheduling of DaemonSet on linux nodes only:
+Kubernetes node selector: node labels for pod assignment.
 
-```yaml
-nodeSelector:
-  kubernetes.io/os: linux
-```
 #### **affinity** ~ `object`
 > Default value:
 > ```yaml
