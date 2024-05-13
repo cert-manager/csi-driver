@@ -125,10 +125,9 @@ podLabels: {}
 resources: {}
 
 # Kubernetes node selector: node labels for pod assignment.
-# For example, use this to allow scheduling of DaemonSet on linux nodes only:
-#  nodeSelector:
-#    kubernetes.io/os: linux
-nodeSelector: {}
+# +docs:property=nodeSelector
+nodeSelector:
+  kubernetes.io/os: linux
 
 # Kubernetes affinity: constraints for pod assignment.
 # 
