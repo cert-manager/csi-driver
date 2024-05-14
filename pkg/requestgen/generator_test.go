@@ -22,14 +22,18 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	cmpki "github.com/cert-manager/cert-manager/pkg/util/pki"
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/stretchr/testify/assert"
+
+	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
 
 func Test_RequestForMetadata(t *testing.T) {
@@ -49,6 +53,17 @@ func Test_RequestForMetadata(t *testing.T) {
 		puri, err := url.ParseRequestURI(uri)
 		assert.NoError(t, err)
 		return puri
+	}
+
+	var literalSubject = "CN=my-pod.my-namespace.svc.cluster.local,OU=0:my-pod\\;1:my-namespace\\;2:my-region\\;4:unittest,O=foo.bar.com"
+	rdnSequence, err := cmpki.UnmarshalSubjectStringToRDNSequence(literalSubject)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	rawLiteralSubject, err := cmpki.MarshalRDNSequenceToRawDERBytes(rdnSequence)
+	if err != nil {
+		assert.NoError(t, err)
 	}
 
 	tests := map[string]struct {
@@ -174,6 +189,32 @@ func Test_RequestForMetadata(t *testing.T) {
 				Annotations: make(map[string]string),
 			},
 			expErr: false,
+		},
+		"a metadata with literal subject set should be returned": {
+			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
+				csiapi.IssuerNameKey:     "my-issuer",
+				csiapi.LiteralSubjectKey: literalSubject,
+			}}),
+			expRequest: &manager.CertificateRequestBundle{
+				Request:   &x509.CertificateRequest{RawSubject: rawLiteralSubject},
+				Usages:    cmapi.DefaultKeyUsages(),
+				Namespace: "my-namespace",
+				IssuerRef: cmmeta.ObjectReference{
+					Name:  "my-issuer",
+					Kind:  "Issuer",
+					Group: "cert-manager.io",
+				},
+				Duration:    cmapi.DefaultCertificateDuration,
+				Annotations: make(map[string]string),
+			},
+			expErr: false,
+		},
+		"a metadata with incorrect literal subject set should error": {
+			meta: baseMetadataWith(metadata.Metadata{VolumeContext: map[string]string{
+				csiapi.IssuerNameKey:     "my-issuer",
+				csiapi.LiteralSubjectKey: strings.ReplaceAll(literalSubject, ";", "&"),
+			}}),
+			expErr: true,
 		},
 	}
 
