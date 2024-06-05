@@ -50,7 +50,7 @@ tools += helm=v3.14.4
 # https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
 tools += kubectl=v1.30.0
 # https://github.com/kubernetes-sigs/kind/releases
-tools += kind=v0.22.0
+tools += kind=v0.23.0
 # https://www.vaultproject.io/downloads
 tools += vault=1.16.2
 # https://github.com/Azure/azure-workload-identity/releases
@@ -72,7 +72,7 @@ tools += rclone=v1.66.0
 
 ### go packages
 # https://pkg.go.dev/sigs.k8s.io/controller-tools/cmd/controller-gen?tab=versions
-tools += controller-gen=v0.14.0
+tools += controller-gen=v0.15.0
 # https://pkg.go.dev/golang.org/x/tools/cmd/goimports?tab=versions
 tools += goimports=v0.20.0
 # https://pkg.go.dev/github.com/google/go-licenses/licenses?tab=versions
@@ -111,7 +111,7 @@ tools += goreleaser=v1.25.1
 # https://pkg.go.dev/github.com/anchore/syft/cmd/syft?tab=versions
 tools += syft=v0.100.0
 # https://github.com/cert-manager/helm-tool
-tools += helm-tool=v0.4.2
+tools += helm-tool=v0.5.1
 # https://github.com/cert-manager/cmctl
 tools += cmctl=v2.0.0
 # https://pkg.go.dev/github.com/cert-manager/release/cmd/cmrel?tab=versions
@@ -132,18 +132,19 @@ tools += gci=v0.13.4
 tools += yamlfmt=v0.12.1
 
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
-K8S_CODEGEN_VERSION := v0.29.3
+K8S_CODEGEN_VERSION := v0.30.1
 tools += client-gen=$(K8S_CODEGEN_VERSION)
 tools += deepcopy-gen=$(K8S_CODEGEN_VERSION)
 tools += informer-gen=$(K8S_CODEGEN_VERSION)
 tools += lister-gen=$(K8S_CODEGEN_VERSION)
 tools += applyconfiguration-gen=$(K8S_CODEGEN_VERSION)
-tools += openapi-gen=$(K8S_CODEGEN_VERSION)
 tools += defaulter-gen=$(K8S_CODEGEN_VERSION)
 tools += conversion-gen=$(K8S_CODEGEN_VERSION)
+# https://github.com/kubernetes/kube-openapi
+tools += openapi-gen=f0e62f92d13f418e2732b21c952fd17cab771c75
 
-# https://github.com/kubernetes-sigs/kubebuilder/blob/tools-releases/build/cloudbuild_tools.yaml
-KUBEBUILDER_ASSETS_VERSION := 1.30.0
+# https://raw.githubusercontent.com/kubernetes-sigs/controller-tools/master/envtest-releases.yaml
+KUBEBUILDER_ASSETS_VERSION := v1.30.0
 tools += etcd=$(KUBEBUILDER_ASSETS_VERSION)
 tools += kube-apiserver=$(KUBEBUILDER_ASSETS_VERSION)
 
@@ -152,7 +153,7 @@ ADDITIONAL_TOOLS ?=
 tools += $(ADDITIONAL_TOOLS)
 
 # https://go.dev/dl/
-VENDORED_GO_VERSION := 1.22.3
+VENDORED_GO_VERSION := 1.22.4
 
 # Print the go version which can be used in GH actions
 .PHONY: print-go-version
@@ -317,9 +318,9 @@ go_dependencies += deepcopy-gen=k8s.io/code-generator/cmd/deepcopy-gen
 go_dependencies += informer-gen=k8s.io/code-generator/cmd/informer-gen
 go_dependencies += lister-gen=k8s.io/code-generator/cmd/lister-gen
 go_dependencies += applyconfiguration-gen=k8s.io/code-generator/cmd/applyconfiguration-gen
-go_dependencies += openapi-gen=k8s.io/code-generator/cmd/openapi-gen
 go_dependencies += defaulter-gen=k8s.io/code-generator/cmd/defaulter-gen
 go_dependencies += conversion-gen=k8s.io/code-generator/cmd/conversion-gen
+go_dependencies += openapi-gen=k8s.io/kube-openapi/cmd/openapi-gen
 go_dependencies += helm-tool=github.com/cert-manager/helm-tool
 go_dependencies += cmctl=github.com/cert-manager/cmctl/v2
 go_dependencies += cmrel=github.com/cert-manager/release/cmd/cmrel
@@ -362,10 +363,10 @@ $(call for_each_kv,go_dependency,$(go_dependencies))
 # File downloads #
 ##################
 
-go_linux_amd64_SHA256SUM=8920ea521bad8f6b7bc377b4824982e011c19af27df88a815e3586ea895f1b36
-go_linux_arm64_SHA256SUM=6c33e52a5b26e7aa021b94475587fce80043a727a54ceb0eee2f9fc160646434
-go_darwin_amd64_SHA256SUM=610e48c1df4d2f852de8bc2e7fd2dc1521aac216f0c0026625db12f67f192024
-go_darwin_arm64_SHA256SUM=02abeab3f4b8981232237ebd88f0a9bad933bc9621791cd7720a9ca29eacbe9d
+go_linux_amd64_SHA256SUM=ba79d4526102575196273416239cca418a651e049c2b099f3159db85e7bade7d
+go_linux_arm64_SHA256SUM=a8e177c354d2e4a1b61020aca3562e27ea3e8f8247eca3170e3fa1e0c2f9e771
+go_darwin_amd64_SHA256SUM=c95967f50aa4ace34af0c236cbdb49a9a3e80ee2ad09d85775cb4462a5c19ed3
+go_darwin_arm64_SHA256SUM=242b78dc4c8f3d5435d28a0d2cec9b4c1aa999b601fb8aa59fb4e5a1364bf827
 
 .PRECIOUS: $(DOWNLOAD_DIR)/tools/go@$(VENDORED_GO_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz
 $(DOWNLOAD_DIR)/tools/go@$(VENDORED_GO_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz: | $(DOWNLOAD_DIR)/tools
@@ -399,10 +400,10 @@ $(DOWNLOAD_DIR)/tools/kubectl@$(KUBECTL_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DO
 		$(checkhash_script) $(outfile) $(kubectl_$(HOST_OS)_$(HOST_ARCH)_SHA256SUM); \
 		chmod +x $(outfile)
 
-kind_linux_amd64_SHA256SUM=e4264d7ee07ca642fe52818d7c0ed188b193c214889dd055c929dbcb968d1f62
-kind_linux_arm64_SHA256SUM=4431805115da3b54290e3e976fe2db9a7e703f116177aace6735dfa1d8a4f3fe
-kind_darwin_amd64_SHA256SUM=28a9f7ad7fd77922c639e21c034d0f989b33402693f4f842099cd9185b144d20
-kind_darwin_arm64_SHA256SUM=c8dd3b287965150ae4db668294edc48229116e95d94620c306d8fae932ee633f
+kind_linux_amd64_SHA256SUM=1d86e3069ffbe3da9f1a918618aecbc778e00c75f838882d0dfa2d363bc4a68c
+kind_linux_arm64_SHA256SUM=a416d6c311882337f0e56910e4a2e1f8c106ec70c22cbf0ac1dd8f33c1e284fe
+kind_darwin_amd64_SHA256SUM=81c77f104b4b668812f7930659dc01ad88fa4d1cfc56900863eacdfb2731c457
+kind_darwin_arm64_SHA256SUM=68ec87c1e1ea2a708df883f4b94091150d19552d7b344e80ca59f449b301c2a0
 
 .PRECIOUS: $(DOWNLOAD_DIR)/tools/kind@$(KIND_VERSION)_$(HOST_OS)_$(HOST_ARCH)
 $(DOWNLOAD_DIR)/tools/kind@$(KIND_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWNLOAD_DIR)/tools
@@ -438,24 +439,24 @@ $(DOWNLOAD_DIR)/tools/azwi@$(AZWI_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWNLOAD
 		tar xfO $(outfile).tar.gz azwi > $(outfile) && chmod 775 $(outfile); \
 		rm -f $(outfile).tar.gz
 
-kubebuilder_tools_linux_amd64_SHA256SUM=d51dae845397b7548444157903f2d573493afb6f90ce9417c0f5c61d4b1f908d
-kubebuilder_tools_linux_arm64_SHA256SUM=83123010f603390ee0f417ad1cf2a715f5bff335c5841dcd4221764e52732336
-kubebuilder_tools_darwin_amd64_SHA256SUM=46f5a680f28b6db9fdaaab4659dee68a1f2e04a0d9a39f9b0176562a9e95167b
-kubebuilder_tools_darwin_arm64_SHA256SUM=ce37b6fcd7678d78a610da1ae5e8e68777025b2bf046558820f967fe7a8f0dfd
+kubebuilder_tools_linux_amd64_SHA256SUM=2a9792cb5f1403f524543ce94c3115e3c4a4229f0e86af55fd26c078da448164
+kubebuilder_tools_linux_arm64_SHA256SUM=39cc7274a3075a650a20fcd24b9e2067375732bebaf5356088a8efb35155f068
+kubebuilder_tools_darwin_amd64_SHA256SUM=85890b864330baec88f53aabfc1d5d94a8ca8c17483f34f4823dec0fae7c6e3a
+kubebuilder_tools_darwin_arm64_SHA256SUM=849362d26105b64193b4142982c710306d90248272731a81fb83efac27c5a750
 
 .PRECIOUS: $(DOWNLOAD_DIR)/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz
 $(DOWNLOAD_DIR)/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz: | $(DOWNLOAD_DIR)/tools
 	@source $(lock_script) $@; \
-		$(CURL) https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-$(KUBEBUILDER_ASSETS_VERSION)-$(HOST_OS)-$(HOST_ARCH).tar.gz -o $(outfile); \
+		$(CURL) https://github.com/kubernetes-sigs/controller-tools/releases/download/envtest-$(KUBEBUILDER_ASSETS_VERSION)/envtest-$(KUBEBUILDER_ASSETS_VERSION)-$(HOST_OS)-$(HOST_ARCH).tar.gz -o $(outfile); \
 		$(checkhash_script) $(outfile) $(kubebuilder_tools_$(HOST_OS)_$(HOST_ARCH)_SHA256SUM)
 
 $(DOWNLOAD_DIR)/tools/etcd@$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH): $(DOWNLOAD_DIR)/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz | $(DOWNLOAD_DIR)/tools
 	@source $(lock_script) $@; \
-		tar xfO $< kubebuilder/bin/etcd > $(outfile) && chmod 775 $(outfile)
+		tar xfO $< controller-tools/envtest/etcd > $(outfile) && chmod 775 $(outfile)
 
 $(DOWNLOAD_DIR)/tools/kube-apiserver@$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH): $(DOWNLOAD_DIR)/tools/kubebuilder_tools_$(KUBEBUILDER_ASSETS_VERSION)_$(HOST_OS)_$(HOST_ARCH).tar.gz | $(DOWNLOAD_DIR)/tools
 	@source $(lock_script) $@; \
-		tar xfO $< kubebuilder/bin/kube-apiserver > $(outfile) && chmod 775 $(outfile)
+		tar xfO $< controller-tools/envtest/kube-apiserver > $(outfile) && chmod 775 $(outfile)
 
 kyverno_linux_amd64_SHA256SUM=a5f6e9070c17acc47168c8ce4db78e45258376551b8bf68ad2d5ed27454cf666
 kyverno_linux_arm64_SHA256SUM=007e828d622e73614365f5f7e8e107e36ae686e97e8982b1eeb53511fb2363c3
