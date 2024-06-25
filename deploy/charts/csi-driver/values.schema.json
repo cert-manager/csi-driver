@@ -310,9 +310,8 @@
       "type": "object"
     },
     "helm-values.openshift.securityContextConstraint.enabled": {
-      "default": true,
-      "description": "Include RBAC to allow the DaemonSet to \"use\" the specified\nSecurityContextConstraints.",
-      "type": "boolean"
+      "default": "detect",
+      "description": "Include RBAC to allow the DaemonSet to \"use\" the specified\nSecurityContextConstraints.\n\nThis value can either be a boolean true or false, or the string \"detect\". If set to \"detect\" then the securityContextConstraint is automatically enabled for openshift installs."
     },
     "helm-values.openshift.securityContextConstraint.name": {
       "default": "privileged",

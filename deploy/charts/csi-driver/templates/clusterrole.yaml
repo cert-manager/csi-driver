@@ -8,7 +8,10 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
-{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1") (.Values.openshift.securityContextConstraint.enabled) }}
+{{- $securityContextConstraintImplicitlyEnabled := and (kindIs "string" .Values.openshift.securityContextConstraint.enabled) (eq .Values.openshift.securityContextConstraint.enabled "detect") (.Capabilities.APIVersions.Has "security.openshift.io/v1") }}
+{{- $securityContextConstraintExplicitlyEnabled := and (kindIs "bool" .Values.openshift.securityContextConstraint.enabled) (.Values.openshift.securityContextConstraint.enabled) }}
+{{- $securityContextConstraintEnabled := or $securityContextConstraintImplicitlyEnabled $securityContextConstraintExplicitlyEnabled }}
+{{- if $securityContextConstraintEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
   resourceNames: [{{ .Values.openshift.securityContextConstraint.name | quote }}]
