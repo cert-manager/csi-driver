@@ -23,16 +23,20 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"time"
 
+	"github.com/cert-manager/cert-manager/pkg/server"
 	"github.com/cert-manager/csi-lib/driver"
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/manager/util"
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/clock"
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
+	"github.com/cert-manager/csi-driver/internal/metrics"
 	"github.com/cert-manager/csi-driver/internal/version"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
@@ -96,18 +100,45 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to setup driver: " + err.Error())
 			}
 
-			go func() {
+			// Start metrics server
+			metricsLn, err := server.Listen("tcp", opts.MetricsListenAddress)
+			if err != nil {
+				return fmt.Errorf("failed to listen on prometheus address %s: %v", opts.MetricsListenAddress, err)
+			}
+			metricsServer := metrics.NewServer(metricsLn)
+
+			g, _ := errgroup.WithContext(ctx)
+			g.Go(func() error {
 				<-ctx.Done()
 				log.Info("shutting down driver", "context", ctx.Err())
 				d.Stop()
-			}()
+				return nil
+			})
 
-			log.Info("running driver")
-			if err := d.Run(); err != nil {
-				return fmt.Errorf("failed running driver: " + err.Error())
-			}
+			g.Go(func() error {
+				log.Info("running driver")
+				if err := d.Run(); err != nil {
+					return fmt.Errorf("failed running driver: " + err.Error())
+				}
+				return nil
+			})
 
-			return nil
+			g.Go(func() error {
+				<-ctx.Done()
+				// allow a timeout for graceful shutdown
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
+				// nolint: contextcheck
+				return metricsServer.Shutdown(shutdownCtx)
+			})
+
+			g.Go(func() error {
+				log.V(3).Info("starting metrics server", "address", metricsLn.Addr())
+				return metricsServer.Serve(metricsLn)
+			})
+
+			return g.Wait()
 		},
 	}
 

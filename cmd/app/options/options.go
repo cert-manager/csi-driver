@@ -32,6 +32,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
+const defaultPrometheusMetricsServerAddress = "0.0.0.0:9402"
+
 // Options are the main options for the driver. Populated via processing
 // command line flags.
 type Options struct {
@@ -69,6 +71,9 @@ type Options struct {
 
 	// CMClient is a rest client for interacting with cert-manager resources.
 	CMClient cmclient.Interface
+
+	// The host and port that the metrics endpoint should listen on.
+	MetricsListenAddress string
 }
 
 func New() *Options {
@@ -152,4 +157,6 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 
 	fs.BoolVar(&o.UseTokenRequest, "use-token-request", false,
 		"Use the empty audience token request for creating CertificateRequests. Requires the token request to be defined on the CSIDriver manifest.")
+	fs.StringVar(&o.MetricsListenAddress, "metrics-listen-address", defaultPrometheusMetricsServerAddress,
+		"The host and port that the metrics endpoint should listen on.")
 }
