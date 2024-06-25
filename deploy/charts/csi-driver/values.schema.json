@@ -33,6 +33,9 @@
         "nodeSelector": {
           "$ref": "#/$defs/helm-values.nodeSelector"
         },
+        "openshift": {
+          "$ref": "#/$defs/helm-values.openshift"
+        },
         "podAnnotations": {
           "$ref": "#/$defs/helm-values.podAnnotations"
         },
@@ -284,6 +287,37 @@
       },
       "description": "Kubernetes node selector: node labels for pod assignment.",
       "type": "object"
+    },
+    "helm-values.openshift": {
+      "additionalProperties": false,
+      "properties": {
+        "securityContextConstraint": {
+          "$ref": "#/$defs/helm-values.openshift.securityContextConstraint"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.openshift.securityContextConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.openshift.securityContextConstraint.enabled"
+        },
+        "name": {
+          "$ref": "#/$defs/helm-values.openshift.securityContextConstraint.name"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.openshift.securityContextConstraint.enabled": {
+      "default": true,
+      "description": "Include RBAC to allow the DaemonSet to \"use\" the specified\nSecurityContextConstraints.",
+      "type": "boolean"
+    },
+    "helm-values.openshift.securityContextConstraint.name": {
+      "default": "privileged",
+      "description": "Name if the SecurityContextConstraints to create RBAC for.",
+      "type": "string"
     },
     "helm-values.podAnnotations": {
       "default": {},

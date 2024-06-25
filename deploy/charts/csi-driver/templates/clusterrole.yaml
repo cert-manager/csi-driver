@@ -8,3 +8,9 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
+{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1") (.Values.openshift.securityContextConstraint.enabled) }}
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  resourceNames: [{{ .Values.openshift.securityContextConstraint.name | quote }}]
+  verbs: ["use"]
+{{- end }}
