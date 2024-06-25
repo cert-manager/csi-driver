@@ -46,6 +46,7 @@ endif
 
 test-e2e-deps: INSTALL_OPTIONS :=
 test-e2e-deps: INSTALL_OPTIONS += --set image.repository=$(oci_manager_image_name_development)
+# test-e2e-deps: INSTALL_OPTIONS += --set metrics.enabled=true
 test-e2e-deps: e2e-setup-cert-manager
 test-e2e-deps: install
 
