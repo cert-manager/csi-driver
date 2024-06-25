@@ -315,7 +315,7 @@
     },
     "helm-values.openshift.securityContextConstraint.name": {
       "default": "privileged",
-      "description": "Name if the SecurityContextConstraints to create RBAC for.",
+      "description": "Name of the SecurityContextConstraints to create RBAC for.",
       "type": "string"
     },
     "helm-values.podAnnotations": {

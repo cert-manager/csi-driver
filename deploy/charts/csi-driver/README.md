@@ -295,6 +295,6 @@ This value can either be a boolean true or false, or the string "detect". If set
 > privileged
 > ```
 
-Name if the SecurityContextConstraints to create RBAC for.
+Name of the SecurityContextConstraints to create RBAC for.
 
 <!-- /AUTO-GENERATED -->

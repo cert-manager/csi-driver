@@ -164,5 +164,5 @@ openshift:
     #
     # +docs:type=boolean,string,null
     enabled: detect
-    # Name if the SecurityContextConstraints to create RBAC for.
+    # Name of the SecurityContextConstraints to create RBAC for.
     name: privileged
