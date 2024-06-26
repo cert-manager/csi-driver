@@ -278,5 +278,23 @@ tolerations:
 > ```
 
 Optional priority class to be used for the csi-driver pods.
+#### **openshift.securityContextConstraint.enabled** ~ `boolean,string,null`
+> Default value:
+> ```yaml
+> detect
+> ```
+
+Include RBAC to allow the DaemonSet to "use" the specified  
+SecurityContextConstraints.  
+  
+This value can either be a boolean true or false, or the string "detect". If set to "detect" then the securityContextConstraint is automatically enabled for openshift installs.
+
+#### **openshift.securityContextConstraint.name** ~ `string`
+> Default value:
+> ```yaml
+> privileged
+> ```
+
+Name of the SecurityContextConstraints to create RBAC for.
 
 <!-- /AUTO-GENERATED -->

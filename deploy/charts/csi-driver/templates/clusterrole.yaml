@@ -8,3 +8,23 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
+
+{{- /* If openshift.securityContextConstraint.enabled is set to "detect" then we 
+       need to check if its an OpenShift cluster. If it is an OpenShift cluster
+       then it is "implicitly" enabled */}}
+{{- $securityContextConstraintImplicitlyEnabled := and (kindIs "string" .Values.openshift.securityContextConstraint.enabled) (eq .Values.openshift.securityContextConstraint.enabled "detect") (.Capabilities.APIVersions.Has "security.openshift.io/v1") }}
+
+{{- /* If openshift.securityContextConstraint.enabled is a bool then we just use 
+       the user provided value. This is referred to here as being "explicitly"
+       enabled */}}
+{{- $securityContextConstraintExplicitlyEnabled := and (kindIs "bool" .Values.openshift.securityContextConstraint.enabled) (.Values.openshift.securityContextConstraint.enabled) }}
+
+{{- /* If the SecurityContextConstraint is either "implicitly" or "explicitly"
+       enabled, we add the extra RBAC. */}}
+{{- $securityContextConstraintEnabled := or $securityContextConstraintImplicitlyEnabled $securityContextConstraintExplicitlyEnabled }}
+{{- if $securityContextConstraintEnabled }}
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  resourceNames: [{{ .Values.openshift.securityContextConstraint.name | quote }}]
+  verbs: ["use"]
+{{- end }}
