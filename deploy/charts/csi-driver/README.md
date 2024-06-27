@@ -6,6 +6,88 @@
 
 <!-- AUTO-GENERATED -->
 
+#### **metrics.enabled** ~ `bool`
+> Default value:
+> ```yaml
+> true
+> ```
+
+Enable the metrics server on csi-driver pods.  
+If false, then the other metrics fields below will be ignored.
+#### **metrics.podmonitor.enabled** ~ `bool`
+> Default value:
+> ```yaml
+> false
+> ```
+
+Create a PodMonitor to add csi-driver to Prometheus.
+#### **metrics.podmonitor.namespace** ~ `string`
+
+The namespace that the pod monitor should live in, defaults to the cert-manager-csi-driver namespace.
+
+#### **metrics.podmonitor.prometheusInstance** ~ `string`
+> Default value:
+> ```yaml
+> default
+> ```
+
+Specifies the `prometheus` label on the created PodMonitor. This is used when different Prometheus instances have label selectors matching different PodMonitors.
+#### **metrics.podmonitor.interval** ~ `string`
+> Default value:
+> ```yaml
+> 60s
+> ```
+
+The interval to scrape metrics.
+#### **metrics.podmonitor.scrapeTimeout** ~ `string`
+> Default value:
+> ```yaml
+> 30s
+> ```
+
+The timeout before a metrics scrape fails.
+#### **metrics.podmonitor.labels** ~ `object`
+> Default value:
+> ```yaml
+> {}
+> ```
+
+Additional labels to add to the PodMonitor.
+#### **metrics.podmonitor.annotations** ~ `object`
+> Default value:
+> ```yaml
+> {}
+> ```
+
+Additional annotations to add to the PodMonitor.
+#### **metrics.podmonitor.honorLabels** ~ `bool`
+> Default value:
+> ```yaml
+> false
+> ```
+
+Keep labels from scraped data, overriding server-side labels.
+#### **metrics.podmonitor.endpointAdditionalProperties** ~ `object`
+> Default value:
+> ```yaml
+> {}
+> ```
+
+EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc.  
+  
+For example:
+
+```yaml
+endpointAdditionalProperties:
+ relabelings:
+ - action: replace
+   sourceLabels:
+   - __meta_kubernetes_pod_node_name
+   targetLabel: instance
+```
+
+
+
 #### **image.registry** ~ `string`
 
 Target image registry. This value is prepended to the target image repository, if set.  

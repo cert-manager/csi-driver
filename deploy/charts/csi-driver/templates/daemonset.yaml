@@ -103,6 +103,8 @@ spec:
           ports:
             - containerPort: {{.Values.app.livenessProbe.port}}
               name: healthz
+            - containerPort: 9402
+              name: http-metrics
           livenessProbe:
             httpGet:
               path: /healthz
