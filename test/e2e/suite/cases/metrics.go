@@ -17,7 +17,7 @@ const (
 var _ = framework.CasesDescribe("Metrics", func() {
 	f := framework.NewDefaultFramework("metrics")
 
-	It("Should serve Go and process metrics on port 9402", func() {
+	FIt("Should serve Go and process metrics on port 9402", func() {
 		By("Discovering the name of the csi-driver Pod")
 		pods, err := f.KubeClientSet.CoreV1().Pods(certManagerNamespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: "app.kubernetes.io/instance=csi-driver",

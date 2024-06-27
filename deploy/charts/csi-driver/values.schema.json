@@ -248,13 +248,16 @@
         },
         "podmonitor": {
           "$ref": "#/$defs/helm-values.metrics.podmonitor"
+        },
+        "port": {
+          "$ref": "#/$defs/helm-values.metrics.port"
         }
       },
       "type": "object"
     },
     "helm-values.metrics.enabled": {
       "default": true,
-      "description": "Enable the metrics server on csi-driver pods.\nIf false, then the other metrics fields below will be ignored.",
+      "description": "Enable the metrics server on csi-driver pods.\nIf false, the metrics server will be disabled and the other metrics fields below will be ignored.",
       "type": "boolean"
     },
     "helm-values.metrics.podmonitor": {
@@ -333,6 +336,11 @@
       "default": "30s",
       "description": "The timeout before a metrics scrape fails.",
       "type": "string"
+    },
+    "helm-values.metrics.port": {
+      "default": 9402,
+      "description": "The TCP port on which the metrics server will listen.",
+      "type": "number"
     },
     "helm-values.nodeDriverRegistrarImage": {
       "additionalProperties": false,

@@ -84,6 +84,11 @@ spec:
             - --endpoint=$(CSI_ENDPOINT)
             - --data-root=csi-data-dir
             - --use-token-request={{ .Values.app.driver.useTokenRequest }}
+{{- if .Values.metrics.enabled }}
+            - --metrics-bind-address=:{{ .Values.metrics.port }}
+{{- else }}
+            - --metrics-bind-address=0
+{{- end }}
           env:
             - name: NODE_ID
               valueFrom:
@@ -103,8 +108,10 @@ spec:
           ports:
             - containerPort: {{.Values.app.livenessProbe.port}}
               name: healthz
-            - containerPort: 9402
+{{- if .Values.metrics.enabled }}
+            - containerPort: {{ .Values.metrics.port }}
               name: http-metrics
+{{- end }}
           livenessProbe:
             httpGet:
               path: /healthz

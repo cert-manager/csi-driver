@@ -1,7 +1,9 @@
 metrics:
   # Enable the metrics server on csi-driver pods.
-  # If false, then the other metrics fields below will be ignored.
+  # If false, the metrics server will be disabled and the other metrics fields below will be ignored.
   enabled: true
+  # The TCP port on which the metrics server will listen.
+  port: 9402
   podmonitor:
     # Create a PodMonitor to add csi-driver to Prometheus.
     enabled: false

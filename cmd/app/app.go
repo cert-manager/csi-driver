@@ -23,9 +23,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"time"
+	"net/http"
 
-	"github.com/cert-manager/cert-manager/pkg/server"
 	"github.com/cert-manager/csi-lib/driver"
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/manager/util"
@@ -34,9 +33,10 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/clock"
+	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
-	"github.com/cert-manager/csi-driver/internal/metrics"
 	"github.com/cert-manager/csi-driver/internal/version"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
@@ -61,8 +61,11 @@ func NewCommand(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log := opts.Logr.WithName("main")
-			log.Info("Starting driver", "version", version.VersionInfo())
+			// Set the controller-runtime logger so that we get the
+			// controller-runtime metricsserver logs.
+			ctrl.SetLogger(log)
 
+			log.Info("Starting driver", "version", version.VersionInfo())
 			store, err := storage.NewFilesystem(opts.Logr.WithName("storage"), opts.DataRoot)
 			if err != nil {
 				return fmt.Errorf("failed to setup filesystem: %w", err)
@@ -100,14 +103,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to setup driver: " + err.Error())
 			}
 
-			// Start metrics server
-			metricsLn, err := server.Listen("tcp", opts.MetricsListenAddress)
-			if err != nil {
-				return fmt.Errorf("failed to listen on prometheus address %s: %v", opts.MetricsListenAddress, err)
-			}
-			metricsServer := metrics.NewServer(metricsLn)
-
-			g, _ := errgroup.WithContext(ctx)
+			g, gCTX := errgroup.WithContext(ctx)
 			g.Go(func() error {
 				<-ctx.Done()
 				log.Info("shutting down driver", "context", ctx.Err())
@@ -123,21 +119,51 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				return nil
 			})
 
-			g.Go(func() error {
-				<-ctx.Done()
-				// allow a timeout for graceful shutdown
-				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer cancel()
-
-				// nolint: contextcheck
-				return metricsServer.Shutdown(shutdownCtx)
-			})
-
-			g.Go(func() error {
-				log.V(3).Info("starting metrics server", "address", metricsLn.Addr())
-				return metricsServer.Serve(metricsLn)
-			})
-
+			// Start a metrics server if the --metrics-bind-address is not "0".
+			//
+			// By default this will serve all the metrics that are registered by
+			// controller-runtime to its global metrics registry. Including:
+			// * Go Runtime metrics
+			// * Process metrics
+			// * Various controller-runtime controller metrics
+			//   (not updated by csi-driver because it doesn't use controller-runtime)
+			// * Leader election metrics
+			//   (not updated by csi-driver because it doesn't use leader-election)
+			//
+			// The full list is here:
+			// https://github.com/kubernetes-sigs/controller-runtime/blob/700befecdffa803d19830a6a43adc5779ed01e26/pkg/internal/controller/metrics/metrics.go#L73-L86
+			//
+			// The advantages of using the controller-runtime metricsserver are:
+			// * It already exists and is actively maintained.
+			// * Provides optional features for securing the metrics endpoint by
+			//   TLS and by authentication with a K8S service account token,
+			//   should that be requested by users in the future.
+			// * Consistency with cert-manager/approver-policy, which also uses
+			//   this library and therefore publishes the same set of
+			//   controller-runtime base metrics.
+			// Disadvantages:
+			// * It introduces a dependency on controller-runtime, which often
+			//   introduces breaking changes.
+			// * It uses a global metrics registry, which has the usual risks
+			//   associated with globals and makes it difficult for us to control
+			//   which metrics are published for csi-driver.
+			//   https://github.com/kubernetes-sigs/controller-runtime/issues/210
+			var unusedHttpClient *http.Client
+			metricsServer, err := metricsserver.NewServer(
+				metricsserver.Options{
+					BindAddress: opts.MetricsBindAddress,
+				},
+				opts.RestConfig,
+				unusedHttpClient,
+			)
+			if err != nil {
+				return err
+			}
+			if metricsServer != nil {
+				g.Go(func() error {
+					return metricsServer.Start(gCTX)
+				})
+			}
 			return g.Wait()
 		},
 	}

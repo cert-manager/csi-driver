@@ -13,7 +13,14 @@
 > ```
 
 Enable the metrics server on csi-driver pods.  
-If false, then the other metrics fields below will be ignored.
+If false, the metrics server will be disabled and the other metrics fields below will be ignored.
+#### **metrics.port** ~ `number`
+> Default value:
+> ```yaml
+> 9402
+> ```
+
+The TCP port on which the metrics server will listen.
 #### **metrics.podmonitor.enabled** ~ `bool`
 > Default value:
 > ```yaml
