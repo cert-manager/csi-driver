@@ -1,3 +1,53 @@
+metrics:
+  # Enable the metrics server on csi-driver pods.
+  # If false, the metrics server will be disabled and the other metrics fields below will be ignored.
+  enabled: true
+  # The TCP port on which the metrics server will listen.
+  port: 9402
+  podmonitor:
+    # Create a PodMonitor to add csi-driver to Prometheus if you are using Prometheus Operator.
+    # See https://prometheus-operator.dev/docs/operator/api/#monitoring.coreos.com/v1.PodMonitor
+    enabled: false
+
+    # The namespace that the pod monitor should live in, defaults
+    # to the cert-manager-csi-driver namespace.
+    # +docs:property
+    # namespace: cert-manager
+
+    # Specifies the `prometheus` label on the created PodMonitor. This is
+    # used when different Prometheus instances have label selectors matching
+    # different PodMonitors.
+    prometheusInstance: default
+
+    # The interval to scrape metrics.
+    interval: 60s
+
+    # The timeout before a metrics scrape fails.
+    scrapeTimeout: 30s
+
+    # Additional labels to add to the PodMonitor.
+    labels: {}
+
+    # Additional annotations to add to the PodMonitor.
+    annotations: {}
+
+    # Keep labels from scraped data, overriding server-side labels.
+    honorLabels: false
+
+    # EndpointAdditionalProperties allows setting additional properties on the
+    # endpoint such as relabelings, metricRelabelings etc.
+    #
+    # For example:
+    #  endpointAdditionalProperties:
+    #   relabelings:
+    #   - action: replace
+    #     sourceLabels:
+    #     - __meta_kubernetes_pod_node_name
+    #     targetLabel: instance
+    #
+    # +docs:property
+    endpointAdditionalProperties: {}
+
 image:
   # Target image registry. This value is prepended to the target image repository, if set.
   # For example:
@@ -130,7 +180,7 @@ nodeSelector:
   kubernetes.io/os: linux
 
 # Kubernetes affinity: constraints for pod assignment.
-# 
+#
 # For example:
 #  affinity:
 #    nodeAffinity:
@@ -154,12 +204,12 @@ tolerations: []
 priorityClassName: ""
 
 openshift:
-  securityContextConstraint: 
+  securityContextConstraint:
     # Include RBAC to allow the DaemonSet to "use" the specified
     # SecurityContextConstraints.
     #
     # This value can either be a boolean true or false, or the string "detect".
-    # If set to "detect" then the securityContextConstraint is automatically 
+    # If set to "detect" then the securityContextConstraint is automatically
     # enabled for openshift installs.
     #
     # +docs:type=boolean,string,null

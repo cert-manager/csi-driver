@@ -27,6 +27,9 @@
         "livenessProbeImage": {
           "$ref": "#/$defs/helm-values.livenessProbeImage"
         },
+        "metrics": {
+          "$ref": "#/$defs/helm-values.metrics"
+        },
         "nodeDriverRegistrarImage": {
           "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage"
         },
@@ -236,6 +239,108 @@
       "default": "v2.12.0",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
+    },
+    "helm-values.metrics": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.metrics.enabled"
+        },
+        "podmonitor": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor"
+        },
+        "port": {
+          "$ref": "#/$defs/helm-values.metrics.port"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.metrics.enabled": {
+      "default": true,
+      "description": "Enable the metrics server on csi-driver pods.\nIf false, the metrics server will be disabled and the other metrics fields below will be ignored.",
+      "type": "boolean"
+    },
+    "helm-values.metrics.podmonitor": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.annotations"
+        },
+        "enabled": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.enabled"
+        },
+        "endpointAdditionalProperties": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.endpointAdditionalProperties"
+        },
+        "honorLabels": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.honorLabels"
+        },
+        "interval": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.interval"
+        },
+        "labels": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.labels"
+        },
+        "namespace": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.namespace"
+        },
+        "prometheusInstance": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.prometheusInstance"
+        },
+        "scrapeTimeout": {
+          "$ref": "#/$defs/helm-values.metrics.podmonitor.scrapeTimeout"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.metrics.podmonitor.annotations": {
+      "default": {},
+      "description": "Additional annotations to add to the PodMonitor.",
+      "type": "object"
+    },
+    "helm-values.metrics.podmonitor.enabled": {
+      "default": false,
+      "description": "Create a PodMonitor to add csi-driver to Prometheus if you are using Prometheus Operator. See https://prometheus-operator.dev/docs/operator/api/#monitoring.coreos.com/v1.PodMonitor",
+      "type": "boolean"
+    },
+    "helm-values.metrics.podmonitor.endpointAdditionalProperties": {
+      "default": {},
+      "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc.\n\nFor example:\nendpointAdditionalProperties:\n relabelings:\n - action: replace\n   sourceLabels:\n   - __meta_kubernetes_pod_node_name\n   targetLabel: instance",
+      "type": "object"
+    },
+    "helm-values.metrics.podmonitor.honorLabels": {
+      "default": false,
+      "description": "Keep labels from scraped data, overriding server-side labels.",
+      "type": "boolean"
+    },
+    "helm-values.metrics.podmonitor.interval": {
+      "default": "60s",
+      "description": "The interval to scrape metrics.",
+      "type": "string"
+    },
+    "helm-values.metrics.podmonitor.labels": {
+      "default": {},
+      "description": "Additional labels to add to the PodMonitor.",
+      "type": "object"
+    },
+    "helm-values.metrics.podmonitor.namespace": {
+      "description": "The namespace that the pod monitor should live in, defaults to the cert-manager-csi-driver namespace.",
+      "type": "string"
+    },
+    "helm-values.metrics.podmonitor.prometheusInstance": {
+      "default": "default",
+      "description": "Specifies the `prometheus` label on the created PodMonitor. This is used when different Prometheus instances have label selectors matching different PodMonitors.",
+      "type": "string"
+    },
+    "helm-values.metrics.podmonitor.scrapeTimeout": {
+      "default": "30s",
+      "description": "The timeout before a metrics scrape fails.",
+      "type": "string"
+    },
+    "helm-values.metrics.port": {
+      "default": 9402,
+      "description": "The TCP port on which the metrics server will listen.",
+      "type": "number"
     },
     "helm-values.nodeDriverRegistrarImage": {
       "additionalProperties": false,
