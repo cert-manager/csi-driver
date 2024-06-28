@@ -18,6 +18,7 @@ package cases
 
 import (
 	"context"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -49,10 +50,12 @@ var _ = framework.CasesDescribe("Metrics", func() {
 			ProxyGet("http", p.Name, "9402", "/metrics", map[string]string{}).
 			DoRaw(context.TODO())
 		Expect(err).NotTo(HaveOccurred())
-		resp := string(respBytes)
-		Expect(resp).To(ContainSubstring("# HELP go_threads Number of OS threads created."),
+		resp := strings.Split(string(respBytes), "\n")
+		Expect(resp).To(ContainElement(`# TYPE go_threads gauge`),
 			"go_collector metrics should be available")
-		Expect(resp).To(ContainSubstring("# HELP process_open_fds Number of open file descriptors."),
+		Expect(resp).To(ContainElement(`# TYPE process_open_fds gauge`),
 			"process_collector metrics should be available")
+		Expect(resp).To(ContainElement(`# TYPE rest_client_requests_total counter`),
+			"controller-runtime metrics should be available")
 	})
 })
