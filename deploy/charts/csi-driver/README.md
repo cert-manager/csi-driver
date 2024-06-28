@@ -27,7 +27,7 @@ The TCP port on which the metrics server will listen.
 > false
 > ```
 
-Create a PodMonitor to add csi-driver to Prometheus.
+Create a PodMonitor to add csi-driver to Prometheus if you are using Prometheus Operator. See https://prometheus-operator.dev/docs/operator/api/#monitoring.coreos.com/v1.PodMonitor
 #### **metrics.podmonitor.namespace** ~ `string`
 
 The namespace that the pod monitor should live in, defaults to the cert-manager-csi-driver namespace.

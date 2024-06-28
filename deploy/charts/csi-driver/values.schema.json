@@ -300,7 +300,7 @@
     },
     "helm-values.metrics.podmonitor.enabled": {
       "default": false,
-      "description": "Create a PodMonitor to add csi-driver to Prometheus.",
+      "description": "Create a PodMonitor to add csi-driver to Prometheus if you are using Prometheus Operator. See https://prometheus-operator.dev/docs/operator/api/#monitoring.coreos.com/v1.PodMonitor",
       "type": "boolean"
     },
     "helm-values.metrics.podmonitor.endpointAdditionalProperties": {

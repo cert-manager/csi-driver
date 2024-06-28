@@ -34,7 +34,6 @@ e2e-setup-cert-manager: | kind-cluster $(NEEDS_HELM) $(NEEDS_KUBECTL)
 		--set startupapicheck.image.repository=$(quay.io/jetstack/cert-manager-startupapicheck.REPO) \
 		--set startupapicheck.image.tag=$(quay.io/jetstack/cert-manager-startupapicheck.TAG) \
 		--set startupapicheck.image.pullPolicy=Never \
-		--set prometheus.podmonitor.enabled=true \
 		cert-manager cert-manager >/dev/null
 
 # The "install" target can be run on its own with any currently active cluster,
@@ -47,7 +46,6 @@ endif
 
 test-e2e-deps: INSTALL_OPTIONS :=
 test-e2e-deps: INSTALL_OPTIONS += --set image.repository=$(oci_manager_image_name_development)
-test-e2e-deps: INSTALL_OPTIONS += --set metrics.podmonitor.enabled=true
 test-e2e-deps: e2e-setup-cert-manager
 test-e2e-deps: install
 

@@ -70,7 +70,9 @@ type Options struct {
 	// CMClient is a rest client for interacting with cert-manager resources.
 	CMClient cmclient.Interface
 
-	// The host and port that the metrics endpoint should listen on.
+	// MetricsBindAddress is the TCP address for exposing HTTP Prometheus metrics
+	// which will be served on the HTTP path '/metrics'. The value "0" will
+	// disable exposing metrics.
 	MetricsBindAddress string
 }
 
@@ -156,6 +158,6 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&o.UseTokenRequest, "use-token-request", false,
 		"Use the empty audience token request for creating CertificateRequests. Requires the token request to be defined on the CSIDriver manifest.")
 	fs.StringVar(&o.MetricsBindAddress, "metrics-bind-address", "0",
-		"The host and port that the metrics endpoint should listen on (for example ::9402). "+
-			"If 0, the metrics server will be disabled. (default).")
+		"TCP address for exposing HTTP Prometheus metrics which will be served on the HTTP path '/metrics'. "+
+			`The value "0" will disable exposing metrics.`)
 }

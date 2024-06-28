@@ -5,7 +5,8 @@ metrics:
   # The TCP port on which the metrics server will listen.
   port: 9402
   podmonitor:
-    # Create a PodMonitor to add csi-driver to Prometheus.
+    # Create a PodMonitor to add csi-driver to Prometheus if you are using Prometheus Operator.
+    # See https://prometheus-operator.dev/docs/operator/api/#monitoring.coreos.com/v1.PodMonitor
     enabled: false
 
     # The namespace that the pod monitor should live in, defaults
