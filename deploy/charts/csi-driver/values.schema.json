@@ -382,7 +382,7 @@
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.tag": {
-      "default": "v2.10.0",
+      "default": "v2.11.1",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
