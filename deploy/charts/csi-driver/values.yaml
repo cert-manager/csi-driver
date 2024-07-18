@@ -97,7 +97,7 @@ nodeDriverRegistrarImage:
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
   # +docs:property
-  tag: v2.10.0
+  tag: v2.11.1
 
   # Target image digest. Override any tag, if set.
   # For example:
