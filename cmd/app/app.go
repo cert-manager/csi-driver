@@ -100,7 +100,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				}),
 			})
 			if err != nil {
-				return fmt.Errorf("failed to setup driver: " + err.Error())
+				return fmt.Errorf("failed to setup driver: %w", err)
 			}
 
 			g, gCTX := errgroup.WithContext(ctx)
@@ -114,7 +114,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			g.Go(func() error {
 				log.Info("running driver")
 				if err := d.Run(); err != nil {
-					return fmt.Errorf("failed running driver: " + err.Error())
+					return fmt.Errorf("failed running driver: %w", err)
 				}
 				return nil
 			})
