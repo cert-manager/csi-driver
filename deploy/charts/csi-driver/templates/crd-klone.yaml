@@ -1,0 +1,12 @@
+{{- if .Values.crds.enabled }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ""
+  {{- if .Values.crds.keep }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
+  labels:
+    {{- include "cert-manager-csi-driver.labels" . | nindent 4 }}
+{{- end }}
