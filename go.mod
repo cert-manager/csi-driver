@@ -3,7 +3,7 @@ module github.com/cert-manager/csi-driver
 go 1.23.0
 
 require (
-	github.com/cert-manager/cert-manager v1.16.2
+	github.com/cert-manager/cert-manager v1.16.3
 	github.com/cert-manager/csi-lib v0.8.1
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.22.2
@@ -12,15 +12,15 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.10.0
-	k8s.io/api v0.32.0
-	k8s.io/apimachinery v0.32.0
-	k8s.io/cli-runtime v0.32.0
-	k8s.io/client-go v0.32.0
-	k8s.io/component-base v0.32.0
+	k8s.io/api v0.32.1
+	k8s.io/apimachinery v0.32.1
+	k8s.io/cli-runtime v0.32.1
+	k8s.io/client-go v0.32.1
+	k8s.io/component-base v0.32.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.32.0
+	k8s.io/kubectl v0.32.1
 	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/controller-runtime v0.19.4
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
@@ -35,6 +35,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.7 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
