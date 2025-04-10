@@ -27,6 +27,10 @@ spec:
           {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
+      securityContext:
+        readOnlyRootFilesystem: true
+        seccompProfile: { type: RuntimeDefault }
+
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -38,6 +42,10 @@ spec:
       containers:
 
         - name: node-driver-registrar
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ "ALL" ] }
           image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.nodeDriverRegistrarImage.pullPolicy }}
           args:
@@ -56,6 +64,10 @@ spec:
               mountPath: /registration
 
         - name: liveness-probe
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ "ALL" ] }
           image: "{{ template "image" (tuple .Values.livenessProbeImage $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           args:
@@ -69,12 +81,9 @@ spec:
 
         - name: cert-manager-csi-driver
           securityContext:
-            readOnlyRootFilesystem: true
-            privileged: true
-            capabilities:
-              add: ["SYS_ADMIN"]
-            allowPrivilegeEscalation: true
             runAsUser: 0
+            privileged: true
+            capabilities: { drop: [ "ALL" ] }
           image: "{{ template "image" (tuple .Values.image $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
