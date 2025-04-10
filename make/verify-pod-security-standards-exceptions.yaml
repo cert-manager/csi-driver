@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: ignore
+spec:
+  exceptions:
+  - policyName: disallow-host-path
+    ruleNames: [ autogen-host-path ]
+  - policyName: disallow-privilege-escalation
+    ruleNames: [ autogen-privilege-escalation ]
+  - policyName: disallow-privileged-containers
+    ruleNames: [ autogen-privileged-containers ]
+  - policyName: require-run-as-non-root-user
+    ruleNames: [ autogen-run-as-non-root-user ]
+  - policyName: require-run-as-nonroot
+    ruleNames: [ autogen-run-as-non-root ]
+  - policyName: restrict-volume-types
+    ruleNames: [ autogen-restricted-volumes ]
+  match:
+    any:
+    - resources:
+        kinds:
+        - DaemonSet
