@@ -177,7 +177,7 @@ func (f *Framework) RandomPod() *corev1.Pod {
 
 		// Set a random number of volumes taken from the pool of volume. Can and
 		// will mount the same volume multiple times.
-		for j := 0; j < (f.testdata.Int(len(volumes)) + 1); j++ {
+		for range f.testdata.Int(len(volumes)) + 1 {
 			containers[i].VolumeMounts = append(containers[i].VolumeMounts,
 				corev1.VolumeMount{
 					Name:      volumes[f.testdata.Int(len(volumes))].Name,
