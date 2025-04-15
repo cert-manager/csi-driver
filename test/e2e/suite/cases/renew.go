@@ -43,7 +43,7 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
@@ -73,7 +73,7 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
@@ -100,7 +100,7 @@ var _ = framework.CasesDescribe("Normal certificate renew behaviour", func() {
 		cert, key, err := f.Helper().CertificateKeyInPodPath(context.TODO(), f.Namespace.Name, pod.Name, pod.Spec.Containers[0].Name, "/tls", attr)
 		Expect(err).NotTo(HaveOccurred())
 
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			By(fmt.Sprintf("Wait for certificate to be renewed %d", i+1))
 			Eventually(func() bool {
 				By("Testing pod for new certificate file")
