@@ -124,8 +124,8 @@ tools += image-tool=v0.0.2
 tools += cmctl=v2.1.1
 # https://pkg.go.dev/github.com/cert-manager/release/cmd/cmrel?tab=versions
 tools += cmrel=e3cbe5171488deda000145003e22567bdce622ea
-# https://pkg.go.dev/github.com/golangci/golangci-lint/cmd/golangci-lint?tab=versions
-tools += golangci-lint=v1.64.8
+# https://pkg.go.dev/github.com/golangci/golangci-lint/v2/cmd/golangci-lint?tab=versions
+tools += golangci-lint=v2.1.1
 # https://pkg.go.dev/golang.org/x/vuln?tab=versions
 tools += govulncheck=v1.1.4
 # https://pkg.go.dev/github.com/operator-framework/operator-sdk/cmd/operator-sdk?tab=versions
@@ -339,7 +339,7 @@ go_dependencies += helm-tool=github.com/cert-manager/helm-tool
 go_dependencies += image-tool=github.com/cert-manager/image-tool
 go_dependencies += cmctl=github.com/cert-manager/cmctl/v2
 go_dependencies += cmrel=github.com/cert-manager/release/cmd/cmrel
-go_dependencies += golangci-lint=github.com/golangci/golangci-lint/cmd/golangci-lint
+go_dependencies += golangci-lint=github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 go_dependencies += govulncheck=golang.org/x/vuln/cmd/govulncheck
 go_dependencies += operator-sdk=github.com/operator-framework/operator-sdk/cmd/operator-sdk
 go_dependencies += gh=github.com/cli/cli/v2/cmd/gh
