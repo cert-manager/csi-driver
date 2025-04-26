@@ -178,3 +178,11 @@ verify-helm-lint: $(helm_chart_archive) | $(NEEDS_HELM)
 	$(HELM) lint $(helm_chart_archive)
 
 shared_verify_targets_dirty += verify-helm-lint
+
+.PHONY: verify-helm-kubeconform
+## Verify that the Helm chart passes a strict check using kubeconform
+## @category [shared] Generate/ Verify
+verify-helm-kubeconform: $(helm_chart_archive) | $(NEEDS_KUBECONFORM)
+	$(HELM) template kubeconform-template-do-not-use $< | $(KUBECONFORM) -strict
+
+shared_verify_targets_dirty += verify-helm-kubeconform

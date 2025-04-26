@@ -28,7 +28,6 @@ spec:
         {{- end }}
     spec:
       securityContext:
-        readOnlyRootFilesystem: true
         seccompProfile: { type: RuntimeDefault }
 
       {{- with .Values.imagePullSecrets }}
@@ -46,6 +45,7 @@ spec:
             runAsUser: 0
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
+            readOnlyRootFilesystem: true
           image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.nodeDriverRegistrarImage.pullPolicy }}
           args:
@@ -68,6 +68,7 @@ spec:
             runAsUser: 0
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
+            readOnlyRootFilesystem: true
           image: "{{ template "image" (tuple .Values.livenessProbeImage $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           args:
@@ -84,6 +85,7 @@ spec:
             runAsUser: 0
             privileged: true
             capabilities: { drop: [ "ALL" ] }
+            readOnlyRootFilesystem: true
           image: "{{ template "image" (tuple .Values.image $.Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
