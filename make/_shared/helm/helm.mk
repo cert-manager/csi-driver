@@ -183,6 +183,11 @@ shared_verify_targets_dirty += verify-helm-lint
 ## Verify that the Helm chart passes a strict check using kubeconform
 ## @category [shared] Generate/ Verify
 verify-helm-kubeconform: $(helm_chart_archive) | $(NEEDS_KUBECONFORM)
-	$(HELM) template kubeconform-template-do-not-use $< | $(KUBECONFORM) -strict
+	@$(HELM) template $(helm_chart_archive) $(INSTALL_OPTIONS) \
+	| $(KUBECONFORM) \
+		-schema-location default \
+		-schema-location "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{.NormalizedKubernetesVersion}}/{{.ResourceKind}}.json" \
+		-schema-location "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+		-strict
 
 shared_verify_targets_dirty += verify-helm-kubeconform
