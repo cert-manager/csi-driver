@@ -17,9 +17,11 @@ limitations under the License.
 package validation
 
 import (
+	"strconv"
 	"testing"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/cert-manager/cert-manager/pkg/util/pki"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -35,11 +37,13 @@ func Test_ValidateAttributes(t *testing.T) {
 	}{
 		"attributes with no issuer name but DNS names should error": {
 			attr: map[string]string{
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -47,11 +51,13 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"attributes with common name but no issuer name or DNS names should error": {
 			attr: map[string]string{
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.CommonNameKey:  "foo.bar",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.CommonNameKey:   "foo.bar",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: field.ErrorList{
 				field.Required(field.NewPath("volumeAttributes", "csi.cert-manager.io/issuer-name"), "issuer-name is a required field"),
@@ -59,59 +65,69 @@ func Test_ValidateAttributes(t *testing.T) {
 		},
 		"valid attributes with common name should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.CommonNameKey:  "foo.bar",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.CommonNameKey:   "foo.bar",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: nil,
 		},
 		"valid attributes with DNS names should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: nil,
 		},
 		"valid attributes with one key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:   "client auth",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:    "client auth",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: nil,
 		},
 		"valid attributes with key usages extended key usages should return no error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:   "code signing  ,      email protection,    s/mime,ipsec end system",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:    "code signing  ,      email protection,    s/mime,ipsec end system",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: nil,
 		},
 		"attributes with wrong key usages should error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.CAFileKey:      "ca.crt",
-				csiapi.CertFileKey:    "crt.tls",
-				csiapi.KeyFileKey:     "key.tls",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.KeyUsagesKey:   "foo,bar,hello world",
-				csiapi.KeyEncodingKey: "PKCS1",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.CAFileKey:       "ca.crt",
+				csiapi.CertFileKey:     "crt.tls",
+				csiapi.KeyFileKey:      "key.tls",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.KeyUsagesKey:    "foo,bar,hello world",
+				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/key-usages"), "foo", "not a valid key usage"),
@@ -128,6 +144,8 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.DurationKey:     "bad-duration",
 				csiapi.ReusePrivateKey: "FOO",
 				csiapi.KeyEncodingKey:  "PKCS1",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/duration"), "bad-duration", `must be a valid duration string: time: invalid duration "bad-duration"`),
@@ -143,6 +161,8 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.KeyFileKey:                "key.tls",
 				csiapi.KeyStorePKCS12FileKey:     "../crt.p12",
 				csiapi.KeyStorePKCS12PasswordKey: "password",
+				csiapi.KeyAlgorithmKey:           "RSA",
+				csiapi.KeySizeKey:                "2048",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/pkcs12-filename"), "../crt.p12",
@@ -165,6 +185,8 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.KeyStorePKCS12FileKey:     "crt.tls",
 				csiapi.KeyStorePKCS12EnableKey:   "true",
 				csiapi.KeyStorePKCS12PasswordKey: "password",
+				csiapi.KeyAlgorithmKey:           "RSA",
+				csiapi.KeySizeKey:                "2048",
 			},
 			expErr: field.ErrorList{
 				field.Duplicate(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "ca.crt"),
@@ -183,17 +205,21 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.KeyStorePKCS12EnableKey:   "true",
 				csiapi.KeyStorePKCS12FileKey:     "crt.p12",
 				csiapi.KeyStorePKCS12PasswordKey: "password",
+				csiapi.KeyAlgorithmKey:           "RSA",
+				csiapi.KeySizeKey:                "2048",
 			},
 			expErr: nil,
 		},
 		"bad filenames for the certificate, key, and ca files should error": {
 			attr: map[string]string{
-				csiapi.IssuerNameKey:  "test-issuer",
-				csiapi.DNSNamesKey:    "foo.bar.com,car.bar.com",
-				csiapi.CAFileKey:      "../foo/../bar",
-				csiapi.KeyEncodingKey: "PKCS8",
-				csiapi.CertFileKey:    "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo",
-				csiapi.KeyFileKey:     "/foobar",
+				csiapi.IssuerNameKey:   "test-issuer",
+				csiapi.DNSNamesKey:     "foo.bar.com,car.bar.com",
+				csiapi.CAFileKey:       "../foo/../bar",
+				csiapi.KeyEncodingKey:  "PKCS8",
+				csiapi.CertFileKey:     "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo",
+				csiapi.KeyFileKey:      "/foobar",
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
 			},
 			expErr: field.ErrorList{
 				field.Invalid(field.NewPath("volumeAttributes", "csi.cert-manager.io/ca-file"), "../foo/../bar", "filename must not start with '..'"),
@@ -212,6 +238,8 @@ func Test_ValidateAttributes(t *testing.T) {
 				csiapi.KeyFileKey:        "key.tls",
 				csiapi.DNSNamesKey:       "foo.bar.com",
 				csiapi.KeyEncodingKey:    "PKCS8",
+				csiapi.KeyAlgorithmKey:   "RSA",
+				csiapi.KeySizeKey:        "2048",
 			},
 			expErr: nil,
 		},
@@ -284,26 +312,164 @@ func Test_boolValue(t *testing.T) {
 	}
 }
 
-func Test_keyEncodingValue(t *testing.T) {
+func Test_keyValue(t *testing.T) {
 	for name, test := range map[string]struct {
-		s      string
+		attrs  map[string]string
 		expErr field.ErrorList
 	}{
-		"PKCS1 should not error": {
-			s:      "PKCS1",
+		"RSA with PKCS1 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeySizeKey:      "2048",
+			},
 			expErr: nil,
 		},
-		"PKCS8 should not error": {
-			s:      "PKCS8",
+		"RSA with PKCS8 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "2048",
+			},
 			expErr: nil,
 		},
-		"an unknown value should error": {
-			s:      "foo",
-			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs"), "foo", []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})},
+		"RSA with key size of 1024 should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeySizeKey:      "1024",
+			},
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-pkcs.csi.cert-manager.io/key-size"), "1024", "key size must be at least 2048 when using the RSA key algorithm")},
+		},
+		"RSA with key size of 2048 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeySizeKey:      "2048",
+			},
+			expErr: nil,
+		},
+		"RSA with key size of 8192 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeySizeKey:      "8192",
+			},
+			expErr: nil,
+		},
+		"RSA with key size of 8193 should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.RSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeySizeKey:      "8193",
+			},
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-pkcs.csi.cert-manager.io/key-size"), "8193", "key size must not exceed 8192 when using the RSA key algorithm")},
+		},
+
+		"ECDSA with PKCS1 should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+			},
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-pkcs.csi.cert-manager.io/key-encoding"), "PKCS1", "pkcs1 cannot be used with ecdsa. use pkcs8 or pkcs12 instead")},
+		},
+		"ECDSA with PKCS8 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "256",
+			},
+			expErr: nil,
+		},
+		"ECDSA with invalid key size should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "255",
+			},
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs.csi.cert-manager.io/key-size"), "255", []string{strconv.Itoa(pki.ECCurve256), strconv.Itoa(pki.ECCurve384), strconv.Itoa(pki.ECCurve521)})},
+		},
+		"ECDSA with key size of 256 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "256",
+			},
+			expErr: nil,
+		},
+		"ECDSA with key size of 384 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "384",
+			},
+			expErr: nil,
+		},
+		"ECDSA with key size of 521 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.ECDSAKeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "521",
+			},
+			expErr: nil,
+		},
+
+		"Ed25519 with PKCS1 should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.Ed25519KeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+			},
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-pkcs.csi.cert-manager.io/key-encoding"), "PKCS1", "pkcs1 cannot be used with ed25519. use pkcs8 or pkcs12 instead")},
+		},
+		"Ed25519 with PKCS8 should not error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.Ed25519KeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "",
+			},
+			expErr: nil,
+		},
+		"Ed25519 with invalid key size should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: string(cmapi.Ed25519KeyAlgorithm),
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS8),
+				csiapi.KeySizeKey:      "1", // Ed25519 doesn't take a key size, so this should be empty
+			},
+			expErr: field.ErrorList{field.Invalid(field.NewPath("my-pkcs.csi.cert-manager.io/key-size"), "1", "size must be empty when using Ed25519 as the key algorithm")},
+		},
+
+		"missing encoding should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
+			},
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs.csi.cert-manager.io/key-encoding"), "", []cmapi.PrivateKeyEncoding{cmapi.PKCS1, cmapi.PKCS8})},
+		},
+		"invalid encoding should error": {
+			attrs: map[string]string{
+				csiapi.KeyAlgorithmKey: "RSA",
+				csiapi.KeySizeKey:      "2048",
+				csiapi.KeyEncodingKey:  "foo",
+			},
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs.csi.cert-manager.io/key-encoding"), "foo", []cmapi.PrivateKeyEncoding{cmapi.PKCS1, cmapi.PKCS8})},
+		},
+
+		"missing algorithm should error": {
+			attrs: map[string]string{
+				csiapi.KeyEncodingKey: string(cmapi.PKCS1),
+			},
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs.csi.cert-manager.io/key-algorithm"), "", []cmapi.PrivateKeyAlgorithm{cmapi.RSAKeyAlgorithm, cmapi.ECDSAKeyAlgorithm, cmapi.Ed25519KeyAlgorithm})},
+		},
+		"invalid algorithm should error": {
+			attrs: map[string]string{
+				csiapi.KeyEncodingKey:  string(cmapi.PKCS1),
+				csiapi.KeyAlgorithmKey: "bar",
+			},
+			expErr: field.ErrorList{field.NotSupported(field.NewPath("my-pkcs.csi.cert-manager.io/key-algorithm"), "bar", []cmapi.PrivateKeyAlgorithm{cmapi.RSAKeyAlgorithm, cmapi.ECDSAKeyAlgorithm, cmapi.Ed25519KeyAlgorithm})},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expErr, keyEncodingValue(field.NewPath("my-pkcs"), test.s))
+			assert.Equal(t, test.expErr, keyValue(field.NewPath("my-pkcs"), test.attrs))
 		})
 	}
 }

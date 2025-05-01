@@ -21,6 +21,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -52,19 +53,21 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 	}
 
 	var pemBlock *pem.Block
-
 	switch keyEncodingFormat := attrs[csiapi.KeyEncodingKey]; keyEncodingFormat {
 	case string(cmapi.PKCS1):
+		rsaKey, ok := key.(*rsa.PrivateKey)
+		if !ok {
+			return errors.New("only rsa keys can use the pkcs1 encoding format")
+		}
 		pemBlock = &pem.Block{
 			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(key.(*rsa.PrivateKey)),
+			Bytes: x509.MarshalPKCS1PrivateKey(rsaKey),
 		}
 	case string(cmapi.PKCS8):
-		bytes, err := x509.MarshalPKCS8PrivateKey(key.(*rsa.PrivateKey))
+		bytes, err := x509.MarshalPKCS8PrivateKey(key)
 		if err != nil {
 			return fmt.Errorf("marshalling pkcs8 private key: %w", err)
 		}
-
 		pemBlock = &pem.Block{
 			Type:  "PRIVATE KEY",
 			Bytes: bytes,

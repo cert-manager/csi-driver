@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	cmapiutil "github.com/cert-manager/cert-manager/pkg/api/util"
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/cert-manager/cert-manager/pkg/util/pki"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
@@ -54,7 +56,7 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 	el = append(el, durationParse(path.Child(csiapi.RenewBeforeKey), attr[csiapi.RenewBeforeKey])...)
 	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
 
-	el = append(el, keyEncodingValue(path.Child(csiapi.KeyEncodingKey), attr[csiapi.KeyEncodingKey])...)
+	el = append(el, keyValue(path, attr)...)
 
 	el = append(el, pkcs12Values(path, attr)...)
 
@@ -113,10 +115,57 @@ func boolValue(path *field.Path, s string) field.ErrorList {
 	return nil
 }
 
-func keyEncodingValue(path *field.Path, s string) field.ErrorList {
-	if s != string(cmapi.PKCS1) && s != string(cmapi.PKCS8) {
-		return field.ErrorList{field.NotSupported(path, s, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
+func keyValue(path *field.Path, attr map[string]string) field.ErrorList {
+	algPath := path.Child(csiapi.KeyAlgorithmKey)
+	encodingPath := path.Child(csiapi.KeyEncodingKey)
+	sizePath := path.Child(csiapi.KeySizeKey)
+
+	alg := attr[csiapi.KeyAlgorithmKey]
+	encoding := attr[csiapi.KeyEncodingKey]
+	size := attr[csiapi.KeySizeKey]
+
+	switch alg {
+	case string(cmapi.RSAKeyAlgorithm):
+		s, err := strconv.Atoi(size)
+		if err != nil {
+			return field.ErrorList{field.Invalid(sizePath, size, err.Error())}
+		}
+		if s < pki.MinRSAKeySize {
+			return field.ErrorList{field.Invalid(sizePath, size, fmt.Sprintf("key size must be at least %d when using the RSA key algorithm", pki.MinRSAKeySize))}
+		}
+		if s > pki.MaxRSAKeySize {
+			return field.ErrorList{field.Invalid(sizePath, size, fmt.Sprintf("key size must not exceed %d when using the RSA key algorithm", pki.MaxRSAKeySize))}
+		}
+	case string(cmapi.ECDSAKeyAlgorithm):
+		if encoding == string(cmapi.PKCS1) {
+			return field.ErrorList{field.Invalid(encodingPath, encoding, "pkcs1 cannot be used with ecdsa. use pkcs8 or pkcs12 instead")}
+		}
+		s, err := strconv.Atoi(size)
+		if err != nil {
+			return field.ErrorList{field.Invalid(sizePath, size, err.Error())}
+		}
+		switch s {
+		case pki.ECCurve256:
+		case pki.ECCurve384:
+		case pki.ECCurve521:
+		default:
+			return field.ErrorList{field.NotSupported(sizePath, size, []string{strconv.Itoa(pki.ECCurve256), strconv.Itoa(pki.ECCurve384), strconv.Itoa(pki.ECCurve521)})}
+		}
+	case string(cmapi.Ed25519KeyAlgorithm):
+		if encoding == string(cmapi.PKCS1) {
+			return field.ErrorList{field.Invalid(encodingPath, encoding, "pkcs1 cannot be used with ed25519. use pkcs8 or pkcs12 instead")}
+		}
+		if size != "" {
+			return field.ErrorList{field.Invalid(sizePath, size, "size must be empty when using Ed25519 as the key algorithm")}
+		}
+	default:
+		return field.ErrorList{field.NotSupported(algPath, alg, []cmapi.PrivateKeyAlgorithm{cmapi.RSAKeyAlgorithm, cmapi.ECDSAKeyAlgorithm, cmapi.Ed25519KeyAlgorithm})}
 	}
+
+	if encoding != string(cmapi.PKCS1) && encoding != string(cmapi.PKCS8) {
+		return field.ErrorList{field.NotSupported(encodingPath, encoding, []string{string(cmapi.PKCS1), string(cmapi.PKCS8)})}
+	}
+
 	return nil
 }
 
