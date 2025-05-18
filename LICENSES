@@ -9,7 +9,7 @@ github.com/container-storage-interface/spec/lib/go/csi,https://github.com/contai
 github.com/coreos/go-systemd/v22/dbus,https://github.com/coreos/go-systemd/blob/v22.5.0/LICENSE,Apache-2.0
 github.com/davecgh/go-spew/spew,https://github.com/davecgh/go-spew/blob/d8f796af33cc/LICENSE,ISC
 github.com/emicklei/go-restful/v3,https://github.com/emicklei/go-restful/blob/v3.12.1/LICENSE,MIT
-github.com/evanphx/json-patch/v5,https://github.com/evanphx/json-patch/blob/v5.9.11/v5/LICENSE,BSD-3-Clause
+github.com/evanphx/json-patch/v5,Unknown,BSD-3-Clause
 github.com/fsnotify/fsnotify,https://github.com/fsnotify/fsnotify/blob/v1.8.0/LICENSE,BSD-3-Clause
 github.com/fxamacker/cbor/v2,https://github.com/fxamacker/cbor/blob/v2.7.0/LICENSE,MIT
 github.com/go-asn1-ber/asn1-ber,https://github.com/go-asn1-ber/asn1-ber/blob/v1.5.7/LICENSE,MIT
