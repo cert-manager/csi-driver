@@ -43,7 +43,20 @@ func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, er
 	setDefaultIfEmpty(attr, csiapi.CertFileKey, "tls.crt")
 	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "tls.key")
 
-	setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS1")
+	setDefaultIfEmpty(attr, csiapi.KeyAlgorithmKey, "RSA")
+
+	// Set defaults for key encoding and size based off of the algorithm used.
+	switch attr[csiapi.KeyAlgorithmKey] {
+	case string(cmapi.RSAKeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS1")
+		setDefaultIfEmpty(attr, csiapi.KeySizeKey, "2048")
+	case string(cmapi.ECDSAKeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS8")
+		setDefaultIfEmpty(attr, csiapi.KeySizeKey, "256")
+	case string(cmapi.Ed25519KeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS8")
+		// No size is needed for Ed25519
+	}
 
 	setDefaultIfEmpty(attr, csiapi.KeyUsagesKey, strings.Join([]string{string(cmapi.UsageDigitalSignature), string(cmapi.UsageKeyEncipherment)}, ","))
 
