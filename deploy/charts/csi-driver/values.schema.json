@@ -236,7 +236,7 @@
       "type": "string"
     },
     "helm-values.livenessProbeImage.tag": {
-      "default": "v2.15.0",
+      "default": "v2.16.0",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
@@ -382,7 +382,7 @@
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.tag": {
-      "default": "v2.13.0",
+      "default": "v2.14.0",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
