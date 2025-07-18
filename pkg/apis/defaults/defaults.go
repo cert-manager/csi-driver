@@ -17,6 +17,7 @@ limitations under the License.
 package defaults
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/cert-manager/cert-manager/pkg/apis/certmanager"
@@ -29,9 +30,7 @@ import (
 // It will not modify the attributes in-place, and instead will return a copy.
 func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, error) {
 	attr := make(map[string]string)
-	for k, v := range attrOriginal {
-		attr[k] = v
-	}
+	maps.Copy(attr, attrOriginal)
 
 	setDefaultIfEmpty(attr, csiapi.IssuerKindKey, cmapi.IssuerKind)
 	setDefaultIfEmpty(attr, csiapi.IssuerGroupKey, certmanager.GroupName)
@@ -43,7 +42,51 @@ func SetDefaultAttributes(attrOriginal map[string]string) (map[string]string, er
 	setDefaultIfEmpty(attr, csiapi.CertFileKey, "tls.crt")
 	setDefaultIfEmpty(attr, csiapi.KeyFileKey, "tls.key")
 
-	setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS1")
+	if alg := attr[csiapi.KeyAlgorithmKey]; alg != "" {
+		// If an algorithm was supplied by the user, normalize it's casing to
+		// match the constants, no matter what form it was in.
+		//
+		// This allows users to use lower, upper, and mixed case values instead
+		// of needing to match the constants (RSA, ECDSA, Ed25519) exactly.
+		switch {
+		case strings.EqualFold(alg, "rsa"):
+			attr[csiapi.KeyAlgorithmKey] = string(cmapi.RSAKeyAlgorithm)
+		case strings.EqualFold(alg, "ecdsa"):
+			attr[csiapi.KeyAlgorithmKey] = string(cmapi.ECDSAKeyAlgorithm)
+		case strings.EqualFold(alg, "ed25519"):
+			attr[csiapi.KeyAlgorithmKey] = string(cmapi.Ed25519KeyAlgorithm)
+		}
+	} else {
+		// Default the algorithm since it is unset.
+		attr[csiapi.KeyAlgorithmKey] = string(cmapi.RSAKeyAlgorithm)
+	}
+
+	if enc := attr[csiapi.KeyEncodingKey]; enc != "" {
+		// If an encoding was supplied by the user, normalize it's casing to
+		// match the constants, no matter what form it was in.
+		//
+		// This allows users to use lower, upper, and mixed case values instead
+		// of needing to match the constants (PKCS1 and PKCS8) exactly.
+		switch {
+		case strings.EqualFold(enc, "pkcs1"):
+			attr[csiapi.KeyEncodingKey] = string(cmapi.PKCS1)
+		case strings.EqualFold(enc, "pkcs8"):
+			attr[csiapi.KeyEncodingKey] = string(cmapi.PKCS8)
+		}
+	}
+
+	// Set defaults for key encoding and size based off of the algorithm used.
+	switch attr[csiapi.KeyAlgorithmKey] {
+	case string(cmapi.RSAKeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS1")
+		setDefaultIfEmpty(attr, csiapi.KeySizeKey, "2048")
+	case string(cmapi.ECDSAKeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS8")
+		setDefaultIfEmpty(attr, csiapi.KeySizeKey, "256")
+	case string(cmapi.Ed25519KeyAlgorithm):
+		setDefaultIfEmpty(attr, csiapi.KeyEncodingKey, "PKCS8")
+		// No size is needed for Ed25519
+	}
 
 	setDefaultIfEmpty(attr, csiapi.KeyUsagesKey, strings.Join([]string{string(cmapi.UsageDigitalSignature), string(cmapi.UsageKeyEncipherment)}, ","))
 
