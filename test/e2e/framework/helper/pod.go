@@ -163,7 +163,7 @@ func (h *Helper) WaitForPodReady(ctx context.Context, namespace, name string, ti
 		return true, nil
 	})
 	if err != nil {
-		if err := h.Kubectl(namespace).DescribeResource("pod", name); err != nil {
+		if err := h.Kubectl(namespace).DescribeResource(ctx, "pod", name); err != nil {
 			log.Logf("helper: failed to describe Pod %s/%s: %v", namespace, name, err)
 		}
 		return err
@@ -190,7 +190,7 @@ func (h *Helper) WaitForPodDeletion(ctx context.Context, namespace, name string,
 		return false, nil
 	})
 	if err != nil {
-		if err := h.Kubectl(namespace).DescribeResource("pod", name); err != nil {
+		if err := h.Kubectl(namespace).DescribeResource(ctx, "pod", name); err != nil {
 			log.Logf("helper: failed to describe Pod %s/%s: %v", namespace, name, err)
 		}
 		return err

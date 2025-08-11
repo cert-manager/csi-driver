@@ -105,7 +105,7 @@ func (h *Helper) WaitForCertificateRequestDeletion(ctx context.Context, namespac
 		return false, nil
 	})
 	if err != nil {
-		if err := h.Kubectl(namespace).DescribeResource("certificaterequest", name); err != nil {
+		if err := h.Kubectl(namespace).DescribeResource(ctx, "certificaterequest", name); err != nil {
 			log.Logf("helper: failed to describe CertificateRequest %s/%s: %v", namespace, name, err)
 		}
 		return err
