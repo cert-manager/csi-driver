@@ -17,6 +17,7 @@ limitations under the License.
 package helper
 
 import (
+	"context"
 	"os/exec"
 	"strings"
 
@@ -29,13 +30,13 @@ type Kubectl struct {
 	kubeconfig string
 }
 
-func (k *Kubectl) Describe(resources ...string) error {
+func (k *Kubectl) Describe(ctx context.Context, resources ...string) error {
 	resourceNames := strings.Join(resources, ",")
-	return k.Run("describe", resourceNames)
+	return k.Run(ctx, "describe", resourceNames)
 }
 
-func (k *Kubectl) DescribeResource(resource, name string) error {
-	return k.Run("describe", resource, name)
+func (k *Kubectl) DescribeResource(ctx context.Context, resource, name string) error {
+	return k.Run(ctx, "describe", resource, name)
 }
 
 func (h *Helper) Kubectl(ns string) *Kubectl {
@@ -46,7 +47,7 @@ func (h *Helper) Kubectl(ns string) *Kubectl {
 	}
 }
 
-func (k *Kubectl) Run(args ...string) error {
+func (k *Kubectl) Run(ctx context.Context, args ...string) error {
 	baseArgs := []string{"--kubeconfig", k.kubeconfig}
 	if k.namespace == "" {
 		baseArgs = append(baseArgs, "--all-namespaces")
@@ -54,7 +55,7 @@ func (k *Kubectl) Run(args ...string) error {
 		baseArgs = []string{"--namespace", k.namespace}
 	}
 	args = append(baseArgs, args...)
-	cmd := exec.Command(k.kubectl, args...) // #nosec G204 -- This function is only used for tests.
+	cmd := exec.CommandContext(ctx, k.kubectl, args...) // #nosec G204 -- This function is only used for tests.
 	cmd.Stdout = log.Writer
 	cmd.Stderr = log.Writer
 	return cmd.Run()
