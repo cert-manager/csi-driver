@@ -37,6 +37,7 @@ You can retrieve the actual license text by following these steps:
 ---
 
 github.com/Azure/go-ntlmssp,MIT
+github.com/Masterminds/semver/v3,MIT
 github.com/beorn7/perks/quantile,MIT
 github.com/blang/semver/v4,MIT
 github.com/cert-manager/cert-manager,Apache-2.0
@@ -103,6 +104,7 @@ go.opentelemetry.io/otel,Apache-2.0
 go.opentelemetry.io/otel/trace,Apache-2.0
 go.uber.org/multierr,MIT
 go.uber.org/zap,MIT
+go.yaml.in/yaml/v3,MIT
 golang.org/x/crypto,BSD-3-Clause
 golang.org/x/net,BSD-3-Clause
 golang.org/x/oauth2,BSD-3-Clause
