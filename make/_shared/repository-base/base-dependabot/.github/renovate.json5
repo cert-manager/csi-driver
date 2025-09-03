@@ -4,7 +4,8 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   enabled: true,
-  gitAuthor: 'cert-manager-bot <cert-manager-bot@users.noreply.github.com>',
+  gitAuthor: 'Renovate Bot <renovate-bot@users.noreply.github.com>',
+  recreateWhen: 'always', // TODO: Remove; temporary fix to force Renovate to ignore "foreign" commits
   enabledManagers: [
     'gomod',
   ],
@@ -36,8 +37,9 @@
       matchManagers: [
         'gomod',
       ],
-      matchPackageNames: [
-        '*',
+      matchUpdateTypes: [
+        'minor',
+        'patch',
       ],
     },
     {
@@ -50,6 +52,10 @@
         'github.com/onsi/gomega',
         'github.com/stretchr/testify',
       ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ]
     },
     {
       groupName: 'Cloud Go deps',
@@ -65,6 +71,10 @@
         'github.com/digitalocean/**',
         'google.golang.org/api',
       ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ]
     },
     {
       groupName: 'Kubernetes Go deps',
@@ -75,6 +85,10 @@
         'sigs.k8s.io/**',
         'k8s.io/**',
       ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ]
     },
     {
       groupName: 'Kubernetes Go patches',
@@ -104,12 +118,22 @@
       ],
     },
     {
-      description: 'Disable Go pseudo-version updates',
+      matchManagers: [
+        'gomod',
+      ],
+      matchUpdateTypes: [
+        'major',
+        'digest',
+      ],
+      dependencyDashboardApproval: true
+    },
+    {
+      description: 'Disable (internal) cert-manager pseudo-version updates',
       matchManagers: [
         'gomod',
       ],
       matchPackageNames: [
-        '*',
+        'github.com/cert-manager/**',
       ],
       matchCurrentValue: 'v0.0.0*',
       enabled: false,
