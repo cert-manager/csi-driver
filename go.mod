@@ -6,11 +6,11 @@ require (
 	github.com/cert-manager/cert-manager v1.18.2
 	github.com/cert-manager/csi-lib v0.9.0
 	github.com/go-logr/logr v1.4.3
-	github.com/onsi/ginkgo/v2 v2.25.1
-	github.com/onsi/gomega v1.38.1
+	github.com/onsi/ginkgo/v2 v2.25.3
+	github.com/onsi/gomega v1.38.2
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.16.0
 	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0
