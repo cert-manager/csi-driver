@@ -173,7 +173,7 @@ Target image repository.
 #### **nodeDriverRegistrarImage.tag** ~ `string`
 > Default value:
 > ```yaml
-> v2.14.0
+> v2.14.0@sha256:5244abbe87e01b35adeb8bb13882a74785df0c0619f8325c9e950395c3f72a97
 > ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
@@ -214,7 +214,7 @@ Target image repository.
 #### **livenessProbeImage.tag** ~ `string`
 > Default value:
 > ```yaml
-> v2.16.0
+> v2.16.0@sha256:88092d100909918ae0a768956cf78c88bc59cd7232720f7cdbdfb5d2e235001e
 > ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
