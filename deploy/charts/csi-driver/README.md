@@ -173,7 +173,7 @@ Target image repository.
 #### **nodeDriverRegistrarImage.tag** ~ `string`
 > Default value:
 > ```yaml
-> v2.14.0@sha256:5244abbe87e01b35adeb8bb13882a74785df0c0619f8325c9e950395c3f72a97
+> v2.15.0@sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a
 > ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
