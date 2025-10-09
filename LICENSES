@@ -59,6 +59,7 @@ github.com/go-logr/zapr,Apache-2.0
 github.com/go-openapi/jsonpointer,Apache-2.0
 github.com/go-openapi/jsonreference,Apache-2.0
 github.com/go-openapi/swag,Apache-2.0
+github.com/go-openapi/swag/jsonname,Apache-2.0
 github.com/godbus/dbus/v5,BSD-2-Clause
 github.com/gogo/protobuf,BSD-3-Clause
 github.com/golang/protobuf,BSD-3-Clause
@@ -86,7 +87,6 @@ github.com/onsi/gomega,MIT
 github.com/opencontainers/runc/libcontainer,Apache-2.0
 github.com/opencontainers/runtime-spec/specs-go,Apache-2.0
 github.com/peterbourgon/diskv,MIT
-github.com/pkg/errors,BSD-2-Clause
 github.com/pmezard/go-difflib/difflib,BSD-3-Clause
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil,BSD-3-Clause
 github.com/prometheus/client_golang/prometheus,Apache-2.0
