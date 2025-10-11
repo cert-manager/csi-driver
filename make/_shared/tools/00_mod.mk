@@ -89,7 +89,7 @@ tools += ko=0.18.0
 tools += protoc=v32.1
 # https://github.com/aquasecurity/trivy/releases
 # renovate: datasource=github-releases packageName=aquasecurity/trivy
-tools += trivy=v0.67.0
+tools += trivy=v0.67.1
 # https://github.com/vmware-tanzu/carvel-ytt/releases
 # renovate: datasource=github-releases packageName=vmware-tanzu/carvel-ytt
 tools += ytt=v0.52.1
@@ -106,7 +106,7 @@ tools += istioctl=1.27.1
 tools += controller-gen=v0.19.0
 # https://pkg.go.dev/golang.org/x/tools/cmd/goimports?tab=versions
 # renovate: datasource=go packageName=golang.org/x/tools
-tools += goimports=v0.37.0
+tools += goimports=v0.38.0
 # https://pkg.go.dev/github.com/google/go-licenses/v2?tab=versions
 # renovate: datasource=go packageName=github.com/inteon/go-licenses/v2
 tools += go-licenses=v2.0.0-20250821024731-e4be79958780
@@ -597,10 +597,10 @@ $(DOWNLOAD_DIR)/tools/protoc@$(PROTOC_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWN
 		chmod +x $(outfile); \
 		rm -f $(outfile).zip
 
-trivy_linux_amd64_SHA256SUM=5b10e9bba00a508b0f3bcb98e78f1039f7eee26b57c9266961a415642a9208ab
-trivy_linux_arm64_SHA256SUM=0f3ac33954dd918cad708bdf06731b4aa8cc14b12e879932b4ceef2f22640a9e
-trivy_darwin_amd64_SHA256SUM=ae8a13d8c3abf7f7e7981ac1a5f5ec094d68835f2aac67da102d4ba36e820c3c
-trivy_darwin_arm64_SHA256SUM=feea8727b501f654683774fe0f98a9c1a128c7d8bcd7c942a8e6f6d05b33bd4b
+trivy_linux_amd64_SHA256SUM=945c004188970dddb634db8bbac332b00f477858918a2026866367268a810678
+trivy_linux_arm64_SHA256SUM=dbc17ea23d75c9f93d3e781468cf0fd82d46e2e772353a4ff9da6d88919a1052
+trivy_darwin_amd64_SHA256SUM=36001046e4a52885b664b7a5f40da5f0e1883c07a72763dee57c7d5b9676d901
+trivy_darwin_arm64_SHA256SUM=81e24fd39ddecda180cc9abefaea184e0c22c331d7b683993a9bc89e67d07bb9
 
 .PRECIOUS: $(DOWNLOAD_DIR)/tools/trivy@$(TRIVY_VERSION)_$(HOST_OS)_$(HOST_ARCH)
 $(DOWNLOAD_DIR)/tools/trivy@$(TRIVY_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWNLOAD_DIR)/tools
