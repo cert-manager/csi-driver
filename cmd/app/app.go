@@ -24,16 +24,21 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/cert-manager/cert-manager/pkg/client/informers/externalversions"
 	"github.com/cert-manager/csi-lib/driver"
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/manager/util"
 	"github.com/cert-manager/csi-lib/metadata"
+	csimetrics "github.com/cert-manager/csi-lib/metrics"
 	"github.com/cert-manager/csi-lib/storage"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
+	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
@@ -45,7 +50,8 @@ import (
 )
 
 const (
-	helpOutput = "Container Storage Interface driver to issue certificates from cert-manager"
+	helpOutput                            = "Container Storage Interface driver to issue certificates from cert-manager"
+	certRequestSharedInformerResyncPeriod = 5 * time.Second // TODO add to config if needed
 )
 
 // NewCommand will return a new command instance for the cert-manager CSI driver.
@@ -80,6 +86,18 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				clientForMeta = util.ClientForMetadataTokenRequestEmptyAud(opts.RestConfig)
 			}
 
+			// Setup metrics handler to track metrics for cert-manager CertificateRequests
+			// Note, it won't be started if the --metrics-bind-address is "0".
+			certRequestInformerFactory := externalversions.NewSharedInformerFactory(opts.CMClient, certRequestSharedInformerResyncPeriod)
+			certRequestInformer := certRequestInformerFactory.Certmanager().V1().CertificateRequests()
+			metricsHandler := csimetrics.New(
+				opts.NodeID,
+				&opts.Logr,
+				ctrlmetrics.Registry.(*prometheus.Registry),
+				store,
+				certRequestInformer.Lister(),
+			)
+
 			mngrlog := opts.Logr.WithName("manager")
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:    opts.DriverName,
@@ -97,6 +115,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 					GenerateRequest:    requestgen.RequestForMetadata,
 					SignRequest:        signRequest,
 					WriteKeypair:       writer.WriteKeypair,
+					Metrics:            metricsHandler,
 				}),
 			})
 			if err != nil {
@@ -162,6 +181,12 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			if metricsServer != nil {
 				g.Go(func() error {
 					return metricsServer.Start(gCTX)
+				})
+
+				g.Go(func() error {
+					certRequestInformerFactory.Start(gCTX.Done())
+					certRequestInformerFactory.WaitForCacheSync(gCTX.Done())
+					return nil
 				})
 			}
 			return g.Wait()
