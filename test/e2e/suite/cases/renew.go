@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -129,9 +130,7 @@ func newRenewingTestPod(f *framework.Framework, extraAttributes map[string]strin
 		"csi.cert-manager.io/duration":     "10s",
 	}
 
-	for k, v := range extraAttributes {
-		attributes[k] = v
-	}
+	maps.Copy(attributes, extraAttributes)
 
 	testVolume, testPod := basePod(f, attributes)
 

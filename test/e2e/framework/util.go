@@ -21,6 +21,7 @@ import (
 	"time"
 
 	. "github.com/cert-manager/csi-driver/test/e2e/framework/log"
+
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -28,13 +29,13 @@ func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-func Failf(format string, args ...interface{}) {
+func Failf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	Logf(msg)
 	Fail(nowStamp()+": "+msg, 1)
 }
 
-func Skipf(format string, args ...interface{}) {
+func Skipf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	Logf("INFO", msg)
 	Skip(nowStamp() + ": " + msg)

@@ -29,10 +29,10 @@ func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-func logf(level string, format string, args ...interface{}) {
+func logf(level string, format string, args ...any) {
 	fmt.Fprintf(Writer, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
-func Logf(format string, args ...interface{}) {
+func Logf(format string, args ...any) {
 	logf("INFO", format, args...)
 }

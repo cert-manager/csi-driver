@@ -20,6 +20,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
+	"maps"
 	"net"
 	"net/url"
 	"strings"
@@ -43,9 +44,7 @@ func Test_RequestForMetadata(t *testing.T) {
 		if meta.VolumeContext == nil {
 			meta.VolumeContext = make(map[string]string)
 		}
-		for k, v := range baseMetadata().VolumeContext {
-			meta.VolumeContext[k] = v
-		}
+		maps.Copy(meta.VolumeContext, baseMetadata().VolumeContext)
 		return meta
 	}
 

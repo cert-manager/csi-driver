@@ -260,7 +260,7 @@ func expand(meta metadata.Metadata, csv string) (string, error) {
 // splitList returns the given csv as a slice. Trims space of each element.
 func splitList(csv string) []string {
 	var list []string
-	for _, s := range strings.Split(csv, ",") {
+	for s := range strings.SplitSeq(csv, ",") {
 		list = append(list, strings.TrimSpace(s))
 	}
 	return list
