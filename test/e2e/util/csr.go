@@ -48,7 +48,7 @@ func KeyUsagesFromAttributes(attr map[string]string) []cmapi.KeyUsage {
 	}
 
 	var keyUsages []cmapi.KeyUsage
-	for _, usage := range strings.Split(usageCSV, ",") {
+	for usage := range strings.SplitSeq(usageCSV, ",") {
 		keyUsages = append(keyUsages, cmapi.KeyUsage(strings.TrimSpace(usage)))
 	}
 
