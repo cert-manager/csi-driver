@@ -2,31 +2,12 @@
 
 ## Schedule
 
-The release schedule for this project is ad-hoc. Given the pre-1.0 status of the project we do not have a fixed release cadence. However if a vulnerability is discovered we will respond in accordance with our [security policy](https://github.com/cert-manager/community/blob/main/SECURITY.md) and this response may include a release.
+The release schedule for this project is ad-hoc. Given the pre-1.0 status of the project we do not have a fixed release cadence.
+However, if a vulnerability is discovered we will respond in accordance with our [security policy](https://github.com/cert-manager/community/blob/main/SECURITY.md) and this response may include a release.
 
 ## Process
 
-There is a semi-automated release process for this project. When you create a Git tag with a tagname that has a `v` prefix and push it to GitHub it will trigger the [release workflow].
-
-### Preparing for a Release
-
-**BEFORE** doing a release, check if the other images in the csi-driver Helm
-chart need to be updated.
-
-These are:
-
-- registry.k8s.io/sig-storage/livenessprobe (`.Values.livenessProbeImage.tag`)
-- registry.k8s.io/sig-storage/csi-node-driver-registrar (`.Values.nodeDriverRegistrarImage.tag`)
-
-The latest image can be checked using `crane`:
-
-```console
-$ crane ls registry.k8s.io/sig-storage/livenessprobe | sort -V
-
-$ crane ls registry.k8s.io/sig-storage/csi-node-driver-registrar | sort -V
-```
-
-### Doing a Release
+There is a semi-automated release process for this project. When you create a Git tag with a tag name that has a `v` prefix and push it to GitHub it will trigger the [release workflow].
 
 The release process for this repo is documented below:
 
@@ -38,21 +19,22 @@ The release process for this repo is documented below:
    ```
 2. A GitHub action will see the new tag and do the following:
     - Build and publish any container images
-    - Build and publish the Helm chart
+    - Build and publish the OCI Helm chart
     - Create a draft GitHub release
-3. Wait for the PR to be merged and wait for OCI Helm chart to propagate and become available from https://charts.jetstack.io (this might take a few hours).
-4. Visit the [releases page], edit the draft release, click "Generate release notes", then edit the notes to add the following to the top
+3. Visit the [releases page], edit the draft release, click "Generate release notes", then edit the notes to add the following to the top
     ```
     cert-manager-csi-driver enables issuing secretless X.509 certificates for pods using cert-manager!
     ```
-5. Publish the release.
+4. Publish the release.
 
 ## Artifacts
 
 This repo will produce the following artifacts each release. For documentation on how those artifacts are produced see the "Process" section.
 
-- *Container Images* - Container images for the are published to `quay.io/jetstack`.
-- *Helm chart* - An official Helm chart is maintained within this repo and published to `quay.io/jetstack` and `charts.jetstack.io` on each release.
+- *Container Images* - Container images for the project are published to `quay.io/jetstack`.
+- *Helm chart* - An official Helm chart is maintained within this repo and published to `quay.io/jetstack` on each release.
+    - The chart is also published to the legacy HTTP Helm repository at `https://charts.jetstack.io` (maintained by Venafi).
+      Publishing to the legacy repo depends on a PR to be merged in a closed Venafi repo, and might be delayed.
 
 [release workflow]: https://github.com/cert-manager/csi-driver/actions/workflows/release.yaml
 [releases page]: https://github.com/cert-manager/csi-driver/releases

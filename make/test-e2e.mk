@@ -15,13 +15,13 @@
 .PHONY: e2e-setup-cert-manager
 e2e-setup-cert-manager: | kind-cluster $(NEEDS_HELM) $(NEEDS_KUBECTL)
 	$(HELM) upgrade \
+		cert-manager oci://quay.io/jetstack/charts/cert-manager \
 		--install \
 		--create-namespace \
 		--wait \
-		--version $(quay.io/jetstack/cert-manager-controller.TAG) \
+		--version $(cert_manager_version) \
 		--namespace cert-manager \
-		--repo https://charts.jetstack.io \
-		--set installCRDs=true \
+		--set crds.enabled=true \
 		--set image.repository=$(quay.io/jetstack/cert-manager-controller.REPO) \
 		--set image.tag=$(quay.io/jetstack/cert-manager-controller.TAG) \
 		--set image.pullPolicy=Never \
@@ -34,7 +34,7 @@ e2e-setup-cert-manager: | kind-cluster $(NEEDS_HELM) $(NEEDS_KUBECTL)
 		--set startupapicheck.image.repository=$(quay.io/jetstack/cert-manager-startupapicheck.REPO) \
 		--set startupapicheck.image.tag=$(quay.io/jetstack/cert-manager-startupapicheck.TAG) \
 		--set startupapicheck.image.pullPolicy=Never \
-		cert-manager cert-manager >/dev/null
+		>/dev/null
 
 # The "install" target can be run on its own with any currently active cluster,
 # we can't use any other cluster then a target containing "test-e2e" is run.
