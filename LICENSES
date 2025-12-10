@@ -60,7 +60,6 @@ github.com/go-openapi/jsonreference,Apache-2.0
 github.com/go-openapi/swag,Apache-2.0
 github.com/go-openapi/swag/jsonname,Apache-2.0
 github.com/gogo/protobuf,BSD-3-Clause
-github.com/golang/protobuf,BSD-3-Clause
 github.com/google/btree,Apache-2.0
 github.com/google/gnostic-models,Apache-2.0
 github.com/google/go-cmp/cmp,BSD-3-Clause
@@ -74,7 +73,6 @@ github.com/liggitt/tabwriter,BSD-3-Clause
 github.com/mailru/easyjson,MIT
 github.com/moby/spdystream,Apache-2.0
 github.com/moby/sys/mountinfo,Apache-2.0
-github.com/moby/sys/userns,Apache-2.0
 github.com/moby/term,Apache-2.0
 github.com/modern-go/concurrent,Apache-2.0
 github.com/modern-go/reflect2,Apache-2.0
@@ -83,7 +81,6 @@ github.com/munnerz/goautoneg,BSD-3-Clause
 github.com/mxk/go-flowrate/flowrate,BSD-3-Clause
 github.com/onsi/ginkgo/v2,MIT
 github.com/onsi/gomega,MIT
-github.com/opencontainers/runc/libcontainer/userns,Apache-2.0
 github.com/peterbourgon/diskv,MIT
 github.com/pmezard/go-difflib/difflib,BSD-3-Clause
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil,BSD-3-Clause
@@ -97,7 +94,9 @@ github.com/stretchr/testify/assert,MIT
 github.com/x448/float16,MIT
 github.com/xlab/treeprint,MIT
 go.opentelemetry.io/otel,Apache-2.0
+go.opentelemetry.io/otel,BSD-3-Clause
 go.opentelemetry.io/otel/trace,Apache-2.0
+go.opentelemetry.io/otel/trace,BSD-3-Clause
 go.uber.org/multierr,MIT
 go.uber.org/zap,MIT
 go.yaml.in/yaml/v2,Apache-2.0
