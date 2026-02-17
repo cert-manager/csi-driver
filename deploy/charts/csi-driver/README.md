@@ -214,7 +214,7 @@ Target image repository.
 #### **livenessProbeImage.tag** ~ `string`
 > Default value:
 > ```yaml
-> v2.17.0@sha256:9b75b9ade162136291d5e8f13a1dfc3dec71ee61419b1bfc112e0796ff8a6aa9
+> v2.18.0@sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570
 > ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
