@@ -48,16 +48,45 @@ metrics:
     # +docs:property
     endpointAdditionalProperties: {}
 
+# The container registry used for csi-driver images by default.
+# This can include path prefixes (e.g. "artifactory.example.com/docker").
+# +docs:property
+imageRegistry: quay.io
+# The repository namespace used for csi-driver images by default.
+# Examples:
+# - jetstack
+# - cert-manager
+# +docs:property
+imageNamespace: jetstack
+
 image:
   # Target image registry. This value is prepended to the target image repository, if set.
   # For example:
   #   registry: quay.io
   #   repository: jetstack/cert-manager-csi-driver
+  # Deprecated: per-component registry prefix.
+  #
+  # If set, this value is *prepended* to the image repository that the chart would otherwise render.
+  # This applies both when `image.repository` is set and when the repository is computed from
+  # `imageRegistry` + `imageNamespace` + `image.name`.
+  #
+  # This can produce "double registry" style references such as
+  # `legacy.example.io/quay.io/jetstack/...`. Prefer using the global
+  # `imageRegistry`/`imageNamespace` values.
   # +docs:property
   # registry: quay.io
 
-  # Target image repository.
-  repository: quay.io/jetstack/cert-manager-csi-driver
+  # Full repository override (takes precedence over `imageRegistry`, `imageNamespace`,
+  # and `image.name`).
+  # Example: quay.io/jetstack/cert-manager-csi-driver
+  # +docs:property
+  repository: ""
+
+  # The image name for the csi-driver.
+  # This is used (together with `imageRegistry` and `imageNamespace`) to construct the full
+  # image reference.
+  # +docs:property
+  name: cert-manager-csi-driver
 
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
@@ -94,6 +123,11 @@ nodeDriverRegistrarImage:
   # Target image repository.
   repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
 
+  # The image name for the node-driver-registrar.
+  # This is used to construct the full image reference if `repository` is empty.
+  # +docs:property
+  name: csi-node-driver-registrar
+
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
   # +docs:property
@@ -118,6 +152,11 @@ livenessProbeImage:
 
   # Target image repository.
   repository: registry.k8s.io/sig-storage/livenessprobe
+
+  # The image name for the liveness probe.
+  # This is used to construct the full image reference if `repository` is empty.
+  # +docs:property
+  name: livenessprobe
 
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.

@@ -21,8 +21,14 @@
         "image": {
           "$ref": "#/$defs/helm-values.image"
         },
+        "imageNamespace": {
+          "$ref": "#/$defs/helm-values.imageNamespace"
+        },
         "imagePullSecrets": {
           "$ref": "#/$defs/helm-values.imagePullSecrets"
+        },
+        "imageRegistry": {
+          "$ref": "#/$defs/helm-values.imageRegistry"
         },
         "livenessProbeImage": {
           "$ref": "#/$defs/helm-values.livenessProbeImage"
@@ -153,6 +159,9 @@
         "digest": {
           "$ref": "#/$defs/helm-values.image.digest"
         },
+        "name": {
+          "$ref": "#/$defs/helm-values.image.name"
+        },
         "pullPolicy": {
           "$ref": "#/$defs/helm-values.image.pullPolicy"
         },
@@ -172,18 +181,23 @@
       "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
       "type": "string"
     },
+    "helm-values.image.name": {
+      "default": "cert-manager-csi-driver",
+      "description": "The image name for the csi-driver.\nThis is used (together with `imageRegistry` and `imageNamespace`) to construct the full image reference.",
+      "type": "string"
+    },
     "helm-values.image.pullPolicy": {
       "default": "IfNotPresent",
       "description": "Kubernetes imagePullPolicy on Deployment.",
       "type": "string"
     },
     "helm-values.image.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: quay.io\nrepository: jetstack/cert-manager-csi-driver",
+      "description": "Deprecated: per-component registry prefix.\n\nIf set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from\n`imageRegistry` + `imageNamespace` + `image.name`.\n\nThis can produce \"double registry\" style references such as\n`legacy.example.io/quay.io/jetstack/...`. Prefer using the global\n`imageRegistry`/`imageNamespace` values.",
       "type": "string"
     },
     "helm-values.image.repository": {
-      "default": "quay.io/jetstack/cert-manager-csi-driver",
-      "description": "Target image repository.",
+      "default": "",
+      "description": "Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).\nExample: quay.io/jetstack/cert-manager-csi-driver",
       "type": "string"
     },
     "helm-values.image.tag": {
@@ -196,11 +210,24 @@
       "items": {},
       "type": "array"
     },
+    "helm-values.imageNamespace": {
+      "default": "jetstack",
+      "description": "The repository namespace used for csi-driver images by default.\nExamples:\n- jetstack\n- cert-manager",
+      "type": "string"
+    },
+    "helm-values.imageRegistry": {
+      "default": "quay.io",
+      "description": "The container registry used for csi-driver images by default. This can include path prefixes (e.g. \"artifactory.example.com/docker\").",
+      "type": "string"
+    },
     "helm-values.livenessProbeImage": {
       "additionalProperties": false,
       "properties": {
         "digest": {
           "$ref": "#/$defs/helm-values.livenessProbeImage.digest"
+        },
+        "name": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage.name"
         },
         "pullPolicy": {
           "$ref": "#/$defs/helm-values.livenessProbeImage.pullPolicy"
@@ -219,6 +246,11 @@
     },
     "helm-values.livenessProbeImage.digest": {
       "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.livenessProbeImage.name": {
+      "default": "livenessprobe",
+      "description": "The image name for the liveness probe.\nThis is used to construct the full image reference if `repository` is empty.",
       "type": "string"
     },
     "helm-values.livenessProbeImage.pullPolicy": {
@@ -348,6 +380,9 @@
         "digest": {
           "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.digest"
         },
+        "name": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.name"
+        },
         "pullPolicy": {
           "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.pullPolicy"
         },
@@ -365,6 +400,11 @@
     },
     "helm-values.nodeDriverRegistrarImage.digest": {
       "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.nodeDriverRegistrarImage.name": {
+      "default": "csi-node-driver-registrar",
+      "description": "The image name for the node-driver-registrar.\nThis is used to construct the full image reference if `repository` is empty.",
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.pullPolicy": {

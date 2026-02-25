@@ -46,7 +46,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
             readOnlyRootFilesystem: true
-          image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage $.Chart.AppVersion) }}"
+          image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage "" "" (printf ":%s" $.Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.nodeDriverRegistrarImage.pullPolicy }}
           args:
             - -v={{ .Values.app.logLevel }}
@@ -69,7 +69,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
             readOnlyRootFilesystem: true
-          image: "{{ template "image" (tuple .Values.livenessProbeImage $.Chart.AppVersion) }}"
+          image: "{{ template "image" (tuple .Values.livenessProbeImage "" "" (printf ":%s" $.Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           args:
             - --csi-address=/plugin/csi.sock
@@ -86,7 +86,7 @@ spec:
             privileged: true
             capabilities: { drop: [ "ALL" ] }
             readOnlyRootFilesystem: true
-          image: "{{ template "image" (tuple .Values.image $.Chart.AppVersion) }}"
+          image: "{{ template "image" (tuple .Values.image .Values.imageRegistry .Values.imageNamespace (printf ":%s" $.Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :
             - --log-level={{ .Values.app.logLevel }}
