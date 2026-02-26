@@ -48,16 +48,45 @@ metrics:
     # +docs:property
     endpointAdditionalProperties: {}
 
+# The container registry used for csi-driver images by default.
+# This can include path prefixes (e.g. "artifactory.example.com/docker").
+# +docs:property
+imageRegistry: quay.io
+# The repository namespace used for csi-driver images by default.
+# Examples:
+# - jetstack
+# - cert-manager
+# +docs:property
+imageNamespace: jetstack
+
 image:
   # Target image registry. This value is prepended to the target image repository, if set.
   # For example:
   #   registry: quay.io
   #   repository: jetstack/cert-manager-csi-driver
+  # Deprecated: per-component registry prefix.
+  #
+  # If set, this value is *prepended* to the image repository that the chart would otherwise render.
+  # This applies both when `image.repository` is set and when the repository is computed from
+  # `imageRegistry` + `imageNamespace` + `image.name`.
+  #
+  # This can produce "double registry" style references such as
+  # `legacy.example.io/quay.io/jetstack/...`. Prefer using the global
+  # `imageRegistry`/`imageNamespace` values.
   # +docs:property
   # registry: quay.io
 
-  # Target image repository.
-  repository: quay.io/jetstack/cert-manager-csi-driver
+  # Full repository override (takes precedence over `imageRegistry`, `imageNamespace`,
+  # and `image.name`).
+  # Example: quay.io/jetstack/cert-manager-csi-driver
+  # +docs:property
+  repository: ""
+
+  # The image name for the csi-driver.
+  # This is used (together with `imageRegistry` and `imageNamespace`) to construct the full
+  # image reference.
+  # +docs:property
+  name: cert-manager-csi-driver
 
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
@@ -88,22 +117,43 @@ nodeDriverRegistrarImage:
   # For example:
   #   registry: registry.k8s.io
   #   repository: sig-storage/csi-node-driver-registrar
+  # Deprecated: per-component registry prefix.
+  #
+  # If set, this value is *prepended* to the image repository that the chart would otherwise render.
+  # This applies both when `image.repository` is set and when the repository is computed from
+  # `imageRegistry` + `imageNamespace` + `image.name`.
+  #
+  # This can produce "double registry" style references such as
+  # `legacy.example.io/quay.io/jetstack/...`. Prefer using the global
+  # `imageRegistry`/`imageNamespace` values.
   # +docs:property
   # registry: registry.k8s.io
 
-  # Target image repository.
-  repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
+  # Full repository override (takes precedence over `imageRegistry`, `imageNamespace`,
+  # and `image.name`).
+  # Example: quay.io/jetstack/cert-manager-csi-driver
+  # +docs:property
+  repository: ""
+
+  # The image name for the node-driver-registrar.
+  # This is used to construct the full image reference if `repository` is empty.
+  # +docs:property
+  name: csi-node-driver-registrar
 
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
   # +docs:property
-  tag: v2.16.0@sha256:ab482308a4921e28a6df09a16ab99a457e9af9641ff44fb1be1a690d07ce8b70
+  # tag: vX.Y.Z
 
   # Target image digest. Override any tag, if set.
   # For example:
   #   digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
   # +docs:property
   # digest: sha256:...
+
+  # WARNING: For internal use only, is overwritten before releasing the chart.
+  # +docs:hidden
+  _defaultReference: :v0.0.0
 
   # Kubernetes imagePullPolicy on Deployment.
   pullPolicy: IfNotPresent
@@ -113,22 +163,44 @@ livenessProbeImage:
   # For example:
   #   registry: registry.k8s.io
   #   repository: sig-storage/livenessprobe
+  # Deprecated: per-component registry prefix.
+  #
+  # If set, this value is *prepended* to the image repository that the chart would otherwise render.
+  # This applies both when `image.repository` is set and when the repository is computed from
+  # `imageRegistry` + `imageNamespace` + `image.name`.
+  #
+  # This can produce "double registry" style references such as
+  # `legacy.example.io/quay.io/jetstack/...`. Prefer using the global
+  # `imageRegistry`/`imageNamespace` values.
   # +docs:property
   # registry: registry.k8s.io
 
-  # Target image repository.
-  repository: registry.k8s.io/sig-storage/livenessprobe
+  # Full repository override (takes precedence over `imageRegistry`, `imageNamespace`,
+  # and `image.name`).
+  # Example: quay.io/jetstack/cert-manager-csi-driver
+  # +docs:property
+  repository: ""
+
+  # The image name for the liveness probe.
+  # This is used (together with `imageRegistry` and `imageNamespace`) to construct the full
+  # image reference.
+  # +docs:property
+  name: livenessprobe
 
   # Override the image tag to deploy by setting this variable.
   # If no value is set, the chart's appVersion is used.
   # +docs:property
-  tag: v2.18.0@sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570
+  # tag: vX.Y.Z
 
   # Target image digest. Override any tag, if set.
   # For example:
   #   digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
   # +docs:property
   # digest: sha256:...
+
+  # WARNING: For internal use only, is overwritten before releasing the chart.
+  # +docs:hidden
+  _defaultReference: :v0.0.0
 
   # Kubernetes imagePullPolicy on Deployment.
   pullPolicy: IfNotPresent
