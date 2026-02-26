@@ -102,6 +102,7 @@ endpointAdditionalProperties:
 > ```
 
 The container registry used for csi-driver images by default. This can include path prefixes (e.g. "artifactory.example.com/docker").
+
 #### **imageNamespace** ~ `string`
 > Default value:
 > ```yaml
@@ -109,19 +110,29 @@ The container registry used for csi-driver images by default. This can include p
 > ```
 
 The repository namespace used for csi-driver images by default.  
-Examples:
-- jetstack
+Examples:  
+- jetstack  
 - cert-manager
+
 #### **image.registry** ~ `string`
 
-Deprecated: per-component registry prefix.
+Target image registry. This value is prepended to the target image repository, if set.  
+For example:
 
+```yaml
+registry: quay.io
+repository: jetstack/cert-manager-csi-driver
+```
+
+Deprecated: per-component registry prefix.  
+  
 If set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from  
-`imageRegistry` + `imageNamespace` + `image.name`.
-
+`imageRegistry` + `imageNamespace` + `image.name`.  
+  
 This can produce "double registry" style references such as  
 `legacy.example.io/quay.io/jetstack/...`. Prefer using the global  
 `imageRegistry`/`imageNamespace` values.
+
 #### **image.repository** ~ `string`
 > Default value:
 > ```yaml
@@ -130,6 +141,7 @@ This can produce "double registry" style references such as
 
 Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).  
 Example: quay.io/jetstack/cert-manager-csi-driver
+
 #### **image.name** ~ `string`
 > Default value:
 > ```yaml
@@ -138,6 +150,7 @@ Example: quay.io/jetstack/cert-manager-csi-driver
 
 The image name for the csi-driver.  
 This is used (together with `imageRegistry` and `imageNamespace`) to construct the full image reference.
+
 #### **image.tag** ~ `string`
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
@@ -204,6 +217,7 @@ Target image repository.
 
 The image name for the node-driver-registrar.  
 This is used to construct the full image reference if `repository` is empty.
+
 #### **nodeDriverRegistrarImage.tag** ~ `string`
 > Default value:
 > ```yaml
@@ -253,6 +267,7 @@ Target image repository.
 
 The image name for the liveness probe.  
 This is used to construct the full image reference if `repository` is empty.
+
 #### **livenessProbeImage.tag** ~ `string`
 > Default value:
 > ```yaml

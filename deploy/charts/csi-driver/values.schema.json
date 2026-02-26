@@ -192,7 +192,7 @@
       "type": "string"
     },
     "helm-values.image.registry": {
-      "description": "Deprecated: per-component registry prefix.\n\nIf set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from\n`imageRegistry` + `imageNamespace` + `image.name`.\n\nThis can produce \"double registry\" style references such as\n`legacy.example.io/quay.io/jetstack/...`. Prefer using the global\n`imageRegistry`/`imageNamespace` values.",
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: quay.io\nrepository: jetstack/cert-manager-csi-driver\nDeprecated: per-component registry prefix.\n\nIf set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from\n`imageRegistry` + `imageNamespace` + `image.name`.\n\nThis can produce \"double registry\" style references such as\n`legacy.example.io/quay.io/jetstack/...`. Prefer using the global\n`imageRegistry`/`imageNamespace` values.",
       "type": "string"
     },
     "helm-values.image.repository": {
@@ -204,16 +204,16 @@
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
+    "helm-values.imageNamespace": {
+      "default": "jetstack",
+      "description": "The repository namespace used for csi-driver images by default.\nExamples:\n- jetstack\n- cert-manager",
+      "type": "string"
+    },
     "helm-values.imagePullSecrets": {
       "default": [],
       "description": "Optional secrets used for pulling the csi-driver container image.\n\nFor example:\nimagePullSecrets:\n- name: secret-name",
       "items": {},
       "type": "array"
-    },
-    "helm-values.imageNamespace": {
-      "default": "jetstack",
-      "description": "The repository namespace used for csi-driver images by default.\nExamples:\n- jetstack\n- cert-manager",
-      "type": "string"
     },
     "helm-values.imageRegistry": {
       "default": "quay.io",
