@@ -223,6 +223,9 @@
     "helm-values.livenessProbeImage": {
       "additionalProperties": false,
       "properties": {
+        "_defaultReference": {
+          "$ref": "#/$defs/helm-values.livenessProbeImage._defaultReference"
+        },
         "digest": {
           "$ref": "#/$defs/helm-values.livenessProbeImage.digest"
         },
@@ -244,13 +247,18 @@
       },
       "type": "object"
     },
+    "helm-values.livenessProbeImage._defaultReference": {
+      "default": ":v0.0.0",
+      "description": "WARNING: For internal use only, is overwritten before releasing the chart.",
+      "type": "string"
+    },
     "helm-values.livenessProbeImage.digest": {
       "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
       "type": "string"
     },
     "helm-values.livenessProbeImage.name": {
       "default": "livenessprobe",
-      "description": "The image name for the liveness probe.\nThis is used to construct the full image reference if `repository` is empty.",
+      "description": "The image name for the liveness probe.\nThis is used (together with `imageRegistry` and `imageNamespace`) to construct the full image reference.",
       "type": "string"
     },
     "helm-values.livenessProbeImage.pullPolicy": {
@@ -259,16 +267,15 @@
       "type": "string"
     },
     "helm-values.livenessProbeImage.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/livenessprobe",
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/livenessprobe\nDeprecated: per-component registry prefix.\n\nIf set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from\n`imageRegistry` + `imageNamespace` + `image.name`.\n\nThis can produce \"double registry\" style references such as\n`legacy.example.io/quay.io/jetstack/...`. Prefer using the global\n`imageRegistry`/`imageNamespace` values.",
       "type": "string"
     },
     "helm-values.livenessProbeImage.repository": {
-      "default": "registry.k8s.io/sig-storage/livenessprobe",
-      "description": "Target image repository.",
+      "default": "",
+      "description": "Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).\nExample: quay.io/jetstack/cert-manager-csi-driver",
       "type": "string"
     },
     "helm-values.livenessProbeImage.tag": {
-      "default": "v2.18.0@sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
@@ -377,6 +384,9 @@
     "helm-values.nodeDriverRegistrarImage": {
       "additionalProperties": false,
       "properties": {
+        "_defaultReference": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage._defaultReference"
+        },
         "digest": {
           "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage.digest"
         },
@@ -398,6 +408,11 @@
       },
       "type": "object"
     },
+    "helm-values.nodeDriverRegistrarImage._defaultReference": {
+      "default": ":v0.0.0",
+      "description": "WARNING: For internal use only, is overwritten before releasing the chart.",
+      "type": "string"
+    },
     "helm-values.nodeDriverRegistrarImage.digest": {
       "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
       "type": "string"
@@ -413,16 +428,15 @@
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.registry": {
-      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/csi-node-driver-registrar",
+      "description": "Target image registry. This value is prepended to the target image repository, if set.\nFor example:\nregistry: registry.k8s.io\nrepository: sig-storage/csi-node-driver-registrar\nDeprecated: per-component registry prefix.\n\nIf set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from\n`imageRegistry` + `imageNamespace` + `image.name`.\n\nThis can produce \"double registry\" style references such as\n`legacy.example.io/quay.io/jetstack/...`. Prefer using the global\n`imageRegistry`/`imageNamespace` values.",
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.repository": {
-      "default": "registry.k8s.io/sig-storage/csi-node-driver-registrar",
-      "description": "Target image repository.",
+      "default": "",
+      "description": "Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).\nExample: quay.io/jetstack/cert-manager-csi-driver",
       "type": "string"
     },
     "helm-values.nodeDriverRegistrarImage.tag": {
-      "default": "v2.16.0@sha256:ab482308a4921e28a6df09a16ab99a457e9af9641ff44fb1be1a690d07ce8b70",
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },

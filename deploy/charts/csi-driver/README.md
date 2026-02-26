@@ -202,13 +202,24 @@ registry: registry.k8s.io
 repository: sig-storage/csi-node-driver-registrar
 ```
 
+Deprecated: per-component registry prefix.  
+  
+If set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from  
+`imageRegistry` + `imageNamespace` + `image.name`.  
+  
+This can produce "double registry" style references such as  
+`legacy.example.io/quay.io/jetstack/...`. Prefer using the global  
+`imageRegistry`/`imageNamespace` values.
+
 #### **nodeDriverRegistrarImage.repository** ~ `string`
 > Default value:
 > ```yaml
-> registry.k8s.io/sig-storage/csi-node-driver-registrar
+> ""
 > ```
 
-Target image repository.
+Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).  
+Example: quay.io/jetstack/cert-manager-csi-driver
+
 #### **nodeDriverRegistrarImage.name** ~ `string`
 > Default value:
 > ```yaml
@@ -219,10 +230,6 @@ The image name for the node-driver-registrar.
 This is used to construct the full image reference if `repository` is empty.
 
 #### **nodeDriverRegistrarImage.tag** ~ `string`
-> Default value:
-> ```yaml
-> v2.16.0@sha256:ab482308a4921e28a6df09a16ab99a457e9af9641ff44fb1be1a690d07ce8b70
-> ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
 
@@ -252,13 +259,24 @@ registry: registry.k8s.io
 repository: sig-storage/livenessprobe
 ```
 
+Deprecated: per-component registry prefix.  
+  
+If set, this value is *prepended* to the image repository that the chart would otherwise render. This applies both when `image.repository` is set and when the repository is computed from  
+`imageRegistry` + `imageNamespace` + `image.name`.  
+  
+This can produce "double registry" style references such as  
+`legacy.example.io/quay.io/jetstack/...`. Prefer using the global  
+`imageRegistry`/`imageNamespace` values.
+
 #### **livenessProbeImage.repository** ~ `string`
 > Default value:
 > ```yaml
-> registry.k8s.io/sig-storage/livenessprobe
+> ""
 > ```
 
-Target image repository.
+Full repository override (takes precedence over `imageRegistry`, `imageNamespace`, and `image.name`).  
+Example: quay.io/jetstack/cert-manager-csi-driver
+
 #### **livenessProbeImage.name** ~ `string`
 > Default value:
 > ```yaml
@@ -266,13 +284,9 @@ Target image repository.
 > ```
 
 The image name for the liveness probe.  
-This is used to construct the full image reference if `repository` is empty.
+This is used (together with `imageRegistry` and `imageNamespace`) to construct the full image reference.
 
 #### **livenessProbeImage.tag** ~ `string`
-> Default value:
-> ```yaml
-> v2.18.0@sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570
-> ```
 
 Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.
 

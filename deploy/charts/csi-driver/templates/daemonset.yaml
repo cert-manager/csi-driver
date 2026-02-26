@@ -46,7 +46,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
             readOnlyRootFilesystem: true
-          image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage "" "" (printf ":%s" $.Chart.AppVersion)) }}"
+          image: "{{ template "image" (tuple .Values.nodeDriverRegistrarImage .Values.imageRegistry .Values.imageNamespace .Values.nodeDriverRegistrarImage._defaultReference) }}"
           imagePullPolicy: {{ .Values.nodeDriverRegistrarImage.pullPolicy }}
           args:
             - -v={{ .Values.app.logLevel }}
@@ -69,7 +69,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: [ "ALL" ] }
             readOnlyRootFilesystem: true
-          image: "{{ template "image" (tuple .Values.livenessProbeImage "" "" (printf ":%s" $.Chart.AppVersion)) }}"
+          image: "{{ template "image" (tuple .Values.livenessProbeImage .Values.imageRegistry .Values.imageNamespace .Values.livenessProbeImage._defaultReference) }}"
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           args:
             - --csi-address=/plugin/csi.sock
