@@ -5,6 +5,23 @@
 The release schedule for this project is ad-hoc. Given the pre-1.0 status of the project we do not have a fixed release cadence.
 However, if a vulnerability is discovered we will respond in accordance with our [security policy](https://github.com/cert-manager/community/blob/main/SECURITY.md) and this response may include a release.
 
+### Preparing for a Release
+
+**BEFORE** doing a release, check if the other images in the csi-driver-spiffe Helm
+chart need to be updated. These images are copied to `quay.io/jetstack` as part of our
+release process.
+
+These are:
+
+- `registry.k8s.io/sig-storage/livenessprobe` copied to `quay.io/jetstack/livenessprobe`
+    - find the latest version using crane:  
+    `crane ls --omit-digest-tags registry.k8s.io/sig-storage/livenessprobe | sort -V | tail -1`
+    - update `livenessprobe_image_tag` in `make/00_mod.mk`
+- `registry.k8s.io/sig-storage/csi-node-driver-registrar` copied to `quay.io/jetstack/csi-node-driver-registrar`
+    - find the latest version using crane:  
+    `crane ls --omit-digest-tags registry.k8s.io/sig-storage/csi-node-driver-registrar | sort -V | tail -1`
+    - update `nodedriverregistrar_image_tag` in `make/00_mod.mk`
+
 ## Process
 
 There is a semi-automated release process for this project. When you create a Git tag with a tag name that has a `v` prefix and push it to GitHub it will trigger the [release workflow].
