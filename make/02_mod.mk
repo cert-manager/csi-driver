@@ -25,8 +25,8 @@ include make/test-unit.mk
 ## @category [shared] Release
 release: | $(NEEDS_CRANE)
 	$(MAKE) oci-push-manager
-	$(CRANE) "$(livenessprobe_image_name_source):$(livenessprobe_image_tag)" "$(livenessprobe_image_name):$(livenessprobe_image_tag)"
-	$(CRANE) "$(nodedriverregistrar_image_name_source):$(nodedriverregistrar_image_tag)" "$(nodedriverregistrar_image_name):$(nodedriverregistrar_image_tag)"
+	$(CRANE) cp "$(livenessprobe_image_name_source):$(livenessprobe_image_tag)" "$(livenessprobe_image_name):$(livenessprobe_image_tag)"
+	$(CRANE) cp "$(nodedriverregistrar_image_name_source):$(nodedriverregistrar_image_tag)" "$(nodedriverregistrar_image_name):$(nodedriverregistrar_image_tag)"
 	$(MAKE) helm-chart-oci-push
 
 	@echo "RELEASE_OCI_MANAGER_IMAGE=$(oci_manager_image_name)" >> "$(GITHUB_OUTPUT)"
