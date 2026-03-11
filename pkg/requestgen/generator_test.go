@@ -87,7 +87,7 @@ func Test_RequestForMetadata(t *testing.T) {
 					cmapi.KeyUsage("key encipherment"),
 				},
 				Namespace: "my-namespace",
-				IssuerRef: cmmeta.ObjectReference{
+				IssuerRef: cmmeta.IssuerReference{
 					Name:  "my-issuer",
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
@@ -179,7 +179,7 @@ func Test_RequestForMetadata(t *testing.T) {
 					cmapi.KeyUsage("client auth"),
 				},
 				Namespace: "my-namespace",
-				IssuerRef: cmmeta.ObjectReference{
+				IssuerRef: cmmeta.IssuerReference{
 					Name:  "my-issuer",
 					Kind:  "FooBar",
 					Group: "joshvanl.com",
@@ -198,7 +198,7 @@ func Test_RequestForMetadata(t *testing.T) {
 				Request:   &x509.CertificateRequest{RawSubject: rawLiteralSubject},
 				Usages:    cmapi.DefaultKeyUsages(),
 				Namespace: "my-namespace",
-				IssuerRef: cmmeta.ObjectReference{
+				IssuerRef: cmmeta.IssuerReference{
 					Name:  "my-issuer",
 					Kind:  "Issuer",
 					Group: "cert-manager.io",

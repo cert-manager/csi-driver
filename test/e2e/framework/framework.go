@@ -63,7 +63,7 @@ type Framework struct {
 	testdata *testdata.TestData
 
 	// The CA Issuer and ClusterIssuer to reference
-	Issuer, ClusterIssuer cmmeta.ObjectReference
+	Issuer, ClusterIssuer cmmeta.IssuerReference
 
 	helper *helper.Helper
 }
