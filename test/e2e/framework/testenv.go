@@ -103,7 +103,7 @@ func (f *Framework) CreateKubeNamespace(baseName string) (*corev1.Namespace, err
 }
 
 // CreateCAIssuer creates a CA issuer used for creating certificates
-func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectReference, error) {
+func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.IssuerReference, error) {
 	sec, err := f.KubeClientSet.CoreV1().Secrets(namespace).Create(context.TODO(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: baseName + "-",
@@ -115,7 +115,7 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return cmmeta.ObjectReference{}, err
+		return cmmeta.IssuerReference{}, err
 	}
 
 	issuer, err := f.CertManagerClientSet.CertmanagerV1().Issuers(namespace).Create(context.TODO(), &cmapi.Issuer{
@@ -132,10 +132,10 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return cmmeta.ObjectReference{}, err
+		return cmmeta.IssuerReference{}, err
 	}
 
-	return cmmeta.ObjectReference{
+	return cmmeta.IssuerReference{
 		Name:  issuer.Name,
 		Kind:  issuer.Kind,
 		Group: cm.GroupName,
@@ -143,7 +143,7 @@ func (f *Framework) CreateCAIssuer(namespace, baseName string) (cmmeta.ObjectRef
 }
 
 // CreateCAClusterIssuer creates a CA cluster issuer used for creating certificates
-func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReference, error) {
+func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.IssuerReference, error) {
 	sec, err := f.KubeClientSet.CoreV1().Secrets("cert-manager").Create(context.TODO(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: baseName + "-",
@@ -155,7 +155,7 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return cmmeta.ObjectReference{}, err
+		return cmmeta.IssuerReference{}, err
 	}
 
 	issuer, err := f.CertManagerClientSet.CertmanagerV1().ClusterIssuers().Create(context.TODO(), &cmapi.ClusterIssuer{
@@ -171,10 +171,10 @@ func (f *Framework) CreateCAClusterIssuer(baseName string) (cmmeta.ObjectReferen
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return cmmeta.ObjectReference{}, err
+		return cmmeta.IssuerReference{}, err
 	}
 
-	return cmmeta.ObjectReference{
+	return cmmeta.IssuerReference{
 		Name:  issuer.Name,
 		Kind:  issuer.Kind,
 		Group: cm.GroupName,

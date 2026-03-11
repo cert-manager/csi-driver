@@ -135,7 +135,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		Namespace: attrs[csiapi.K8sVolumeContextKeyPodNamespace],
 		Duration:  duration,
 		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
-		IssuerRef: cmmeta.ObjectReference{
+		IssuerRef: cmmeta.IssuerReference{
 			Name:  attrs[csiapi.IssuerNameKey],
 			Kind:  attrs[csiapi.IssuerKindKey],
 			Group: attrs[csiapi.IssuerGroupKey],
