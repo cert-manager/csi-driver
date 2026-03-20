@@ -69,7 +69,7 @@ tools :=
 tools += helm=v4.1.3
 # https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
 # renovate: datasource=github-releases packageName=kubernetes/kubernetes
-tools += kubectl=v1.35.2
+tools += kubectl=v1.35.3
 # https://github.com/kubernetes-sigs/kind/releases
 # renovate: datasource=github-releases packageName=kubernetes-sigs/kind
 tools += kind=v0.31.0
@@ -125,7 +125,7 @@ tools += kustomize=v5.8.1
 tools += gojq=v0.12.18
 # https://pkg.go.dev/github.com/google/go-containerregistry/pkg/crane?tab=versions
 # renovate: datasource=go packageName=github.com/google/go-containerregistry
-tools += crane=v0.21.2
+tools += crane=v0.21.3
 # https://pkg.go.dev/google.golang.org/protobuf/cmd/protoc-gen-go?tab=versions
 # renovate: datasource=go packageName=google.golang.org/protobuf
 tools += protoc-gen-go=v1.36.11
@@ -197,7 +197,7 @@ tools += kubeconform=v0.7.0
 # FIXME(erikgb): cert-manager needs the ability to override the version set here
 # https://pkg.go.dev/k8s.io/code-generator/cmd?tab=versions
 # renovate: datasource=go packageName=k8s.io/code-generator
-K8S_CODEGEN_VERSION ?= v0.35.2
+K8S_CODEGEN_VERSION ?= v0.35.3
 tools += client-gen=$(K8S_CODEGEN_VERSION)
 tools += deepcopy-gen=$(K8S_CODEGEN_VERSION)
 tools += informer-gen=$(K8S_CODEGEN_VERSION)
@@ -207,7 +207,7 @@ tools += defaulter-gen=$(K8S_CODEGEN_VERSION)
 tools += conversion-gen=$(K8S_CODEGEN_VERSION)
 # https://github.com/kubernetes/kube-openapi
 # renovate: datasource=go packageName=k8s.io/kube-openapi
-tools += openapi-gen=v0.0.0-20260304202019-5b3e3fdb0acf
+tools += openapi-gen=v0.0.0-20260319004828-5883c5ee87b9
 
 # https://raw.githubusercontent.com/kubernetes-sigs/controller-tools/master/envtest-releases.yaml
 # FIXME: Find a way to configure Renovate to suggest upgrades
@@ -493,10 +493,10 @@ $(DOWNLOAD_DIR)/tools/helm@$(HELM_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWNLOAD
 		chmod +x $(outfile); \
 		rm -f $(outfile).tar.gz
 
-kubectl_linux_amd64_SHA256SUM=924eb50779153f20cb668117d141440b95df2f325a64452d78dff9469145e277
-kubectl_linux_arm64_SHA256SUM=cd859449f54ad2cb05b491c490c13bb836cdd0886ae013c0aed3dd67ff747467
-kubectl_darwin_amd64_SHA256SUM=163955964d4ed9e66656eab45c0114f5c1110d1b430ace432b20ddc430023df5
-kubectl_darwin_arm64_SHA256SUM=b0b59cdd7ba20ca20b85214943100e578dd50ddd85242fcddf277a87c2249706
+kubectl_linux_amd64_SHA256SUM=fd31c7d7129260e608f6faf92d5984c3267ad0b5ead3bced2fe125686e286ad6
+kubectl_linux_arm64_SHA256SUM=6f0cd088a82dde5d5807122056069e2fac4ed447cc518efc055547ae46525f14
+kubectl_darwin_amd64_SHA256SUM=2f339b1eae2e1792ec08da281b37afbeee94f70bed6b7398e7efd81ba08f8d37
+kubectl_darwin_arm64_SHA256SUM=280651239d84bab214ba83403666bf6976a5fa0dbdb41404f26eb6f276d34963
 
 .PRECIOUS: $(DOWNLOAD_DIR)/tools/kubectl@$(KUBECTL_VERSION)_$(HOST_OS)_$(HOST_ARCH)
 $(DOWNLOAD_DIR)/tools/kubectl@$(KUBECTL_VERSION)_$(HOST_OS)_$(HOST_ARCH): | $(DOWNLOAD_DIR)/tools
