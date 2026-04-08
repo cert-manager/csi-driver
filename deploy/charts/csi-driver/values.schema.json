@@ -18,6 +18,9 @@
         "global": {
           "$ref": "#/$defs/helm-values.global"
         },
+        "hostNetwork": {
+          "$ref": "#/$defs/helm-values.hostNetwork"
+        },
         "image": {
           "$ref": "#/$defs/helm-values.image"
         },
@@ -152,6 +155,11 @@
     },
     "helm-values.global": {
       "description": "Global values shared across all (sub)charts"
+    },
+    "helm-values.hostNetwork": {
+      "default": false,
+      "description": "Configure the host network setting for the csi-driver pods.\nIf set to true, the pod will use the host network namespace.",
+      "type": "boolean"
     },
     "helm-values.image": {
       "additionalProperties": false,
