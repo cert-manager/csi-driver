@@ -53,6 +53,10 @@ const (
 	KeyStorePKCS12EnableKey   = "csi.cert-manager.io/pkcs12-enable"
 	KeyStorePKCS12FileKey     = "csi.cert-manager.io/pkcs12-filename"
 	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/pkcs12-password" // #nosec G101: False positive, gosec thinks this is a credential.
+	// KeyStorePKCS12PasswordFileKey is an optional filename that, when set,
+	// will cause the driver to write the PKCS12 password to a separate file
+	// within the volume. The value is the filename to write (e.g. "pkcs12.pw").
+	KeyStorePKCS12PasswordFileKey = "csi.cert-manager.io/pkcs12-password-file"
 )
 
 const (
