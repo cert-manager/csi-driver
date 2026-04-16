@@ -82,10 +82,11 @@ func NewCommand(ctx context.Context) *cobra.Command {
 
 			mngrlog := opts.Logr.WithName("manager")
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
-				DriverName:    opts.DriverName,
-				DriverVersion: version.AppVersion,
-				NodeID:        opts.NodeID,
-				Store:         store,
+				DriverName:         opts.DriverName,
+				DriverVersion:      version.AppVersion,
+				NodeID:             opts.NodeID,
+				Store:              store,
+				ContinueOnNotReady: opts.ContinueOnNotReady,
 				Manager: manager.NewManagerOrDie(manager.Options{
 					Client:             opts.CMClient,
 					ClientForMetadata:  clientForMeta,

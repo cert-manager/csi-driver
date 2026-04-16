@@ -95,6 +95,7 @@ spec:
             - --endpoint=$(CSI_ENDPOINT)
             - --data-root=csi-data-dir
             - --use-token-request={{ .Values.app.driver.useTokenRequest }}
+            - --continue-on-not-ready={{ .Values.app.driver.continueOnNotReady }}
 {{- if .Values.metrics.enabled }}
             - --metrics-bind-address=:{{ .Values.metrics.port }}
 {{- else }}

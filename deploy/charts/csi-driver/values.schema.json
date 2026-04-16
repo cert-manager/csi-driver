@@ -89,6 +89,9 @@
     "helm-values.app.driver": {
       "additionalProperties": false,
       "properties": {
+        "continueOnNotReady": {
+          "$ref": "#/$defs/helm-values.app.driver.continueOnNotReady"
+        },
         "csiDataDir": {
           "$ref": "#/$defs/helm-values.app.driver.csiDataDir"
         },
@@ -100,6 +103,11 @@
         }
       },
       "type": "object"
+    },
+    "helm-values.app.driver.continueOnNotReady": {
+      "default": false,
+      "description": "If enabled, allows NodePublishVolume to succeed even when the driver is not yet ready to create certificate request. The volume is mounted immediately and certificate issuance is retried asynchronously.",
+      "type": "boolean"
     },
     "helm-values.app.driver.csiDataDir": {
       "default": "/tmp/cert-manager-csi-driver",
