@@ -71,6 +71,7 @@ github.com/kubernetes-csi/csi-lib-utils/protosanitizer,Apache-2.0
 github.com/liggitt/tabwriter,BSD-3-Clause
 github.com/mailru/easyjson,MIT
 github.com/moby/spdystream,Apache-2.0
+github.com/moby/spdystream/spdy,BSD-3-Clause
 github.com/moby/sys/mountinfo,Apache-2.0
 github.com/moby/term,Apache-2.0
 github.com/modern-go/concurrent,Apache-2.0
