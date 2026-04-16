@@ -60,6 +60,12 @@ type Options struct {
 	// to be defined on the CSIDriver manifest.
 	UseTokenRequest bool
 
+	// ContinueOnNotReady allows NodePublishVolume to succeed even when the
+	// driver is not yet ready to create certificate requests. The volume is mounted
+	// immediately and certificate issuance is retried asynchronously. Pods MUST
+	// tolerate the absence of certificate data at startup (e.g. via init container).
+	ContinueOnNotReady bool
+
 	// Logr is the shared base logger.
 	Logr logr.Logger
 
@@ -160,4 +166,9 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.MetricsBindAddress, "metrics-bind-address", "0",
 		"TCP address for exposing HTTP Prometheus metrics which will be served on the HTTP path '/metrics'. "+
 			`The value "0" will disable exposing metrics.`)
+
+	fs.BoolVar(&o.ContinueOnNotReady, "continue-on-not-ready", false,
+		"Continue mounting the volume even if driver is not ready to create certificate request yet. "+
+			"Useful in deferring certificate issuance until after pod initialization or until after sandbox creation. "+
+			"Pods MUST handle the absence of certificate data at startup (e.g. via init container).")
 }

@@ -216,6 +216,10 @@ app:
     # CertificateRequests. CertificateRequests are created by mounting the
     # pod's service accounts.
     useTokenRequest: false
+    # If enabled, allows NodePublishVolume to succeed even when the
+    # driver is not yet ready to create certificate request. The volume is mounted
+    # immediately and certificate issuance is retried asynchronously.
+    continueOnNotReady: false
     # Configures the hostPath directory that the driver writes and mounts volumes from.
     csiDataDir: /tmp/cert-manager-csi-driver
   # Options for the liveness container.

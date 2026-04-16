@@ -327,6 +327,13 @@ Name of the driver to be registered with Kubernetes.
 > ```
 
 If enabled, this uses a CSI token request for creating. CertificateRequests. CertificateRequests are created by mounting the pod's service accounts.
+#### **app.driver.continueOnNotReady** ~ `bool`
+> Default value:
+> ```yaml
+> false
+> ```
+
+If enabled, allows NodePublishVolume to succeed even when the driver is not yet ready to create certificate request. The volume is mounted immediately and certificate issuance is retried asynchronously.
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml
