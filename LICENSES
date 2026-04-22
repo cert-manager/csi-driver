@@ -64,7 +64,6 @@ github.com/google/gnostic-models,Apache-2.0
 github.com/google/go-cmp/cmp,BSD-3-Clause
 github.com/google/uuid,BSD-3-Clause
 github.com/gorilla/websocket,BSD-2-Clause
-github.com/gregjones/httpcache,MIT
 github.com/josharian/intern,MIT
 github.com/json-iterator/go,MIT
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer,Apache-2.0
@@ -78,7 +77,6 @@ github.com/modern-go/concurrent,Apache-2.0
 github.com/modern-go/reflect2,Apache-2.0
 github.com/monochromegane/go-gitignore,MIT
 github.com/munnerz/goautoneg,BSD-3-Clause
-github.com/mxk/go-flowrate/flowrate,BSD-3-Clause
 github.com/onsi/ginkgo/v2,MIT
 github.com/onsi/gomega,MIT
 github.com/peterbourgon/diskv,MIT
@@ -125,6 +123,7 @@ k8s.io/apimachinery/third_party/forked/golang,BSD-3-Clause
 k8s.io/cli-runtime/pkg,Apache-2.0
 k8s.io/client-go,Apache-2.0
 k8s.io/client-go/third_party/forked/golang/template,BSD-3-Clause
+k8s.io/client-go/third_party/forked/httpcache,MIT
 k8s.io/component-base,Apache-2.0
 k8s.io/klog/v2,Apache-2.0
 k8s.io/kube-openapi/pkg,Apache-2.0
@@ -132,6 +131,7 @@ k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json,BSD-3-Claus
 k8s.io/kube-openapi/pkg/validation/spec,Apache-2.0
 k8s.io/kubectl/pkg/scheme,Apache-2.0
 k8s.io/mount-utils,Apache-2.0
+k8s.io/streaming/pkg,Apache-2.0
 k8s.io/utils,Apache-2.0
 k8s.io/utils/internal/third_party/forked/golang,BSD-3-Clause
 sigs.k8s.io/controller-runtime,Apache-2.0
