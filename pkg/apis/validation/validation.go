@@ -52,6 +52,7 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 	el = append(el, filename(path.Child(csiapi.CertFileKey), attr[csiapi.CertFileKey])...)
 	el = append(el, filename(path.Child(csiapi.KeyFileKey), attr[csiapi.KeyFileKey])...)
 	el = append(el, filename(path.Child(csiapi.KeyStorePKCS12FileKey), attr[csiapi.KeyStorePKCS12FileKey])...)
+	el = append(el, filename(path.Child(csiapi.KeyStorePKCS12PasswordFileKey), attr[csiapi.KeyStorePKCS12PasswordFileKey])...)
 
 	el = append(el, durationParse(path.Child(csiapi.RenewBeforeKey), attr[csiapi.RenewBeforeKey])...)
 	el = append(el, boolValue(path.Child(csiapi.ReusePrivateKey), attr[csiapi.ReusePrivateKey])...)
@@ -61,10 +62,11 @@ func ValidateAttributes(attr map[string]string) field.ErrorList {
 	el = append(el, pkcs12Values(path, attr)...)
 
 	el = append(el, uniqueFilePaths(path, map[string]string{
-		csiapi.CAFileKey:             attr[csiapi.CAFileKey],
-		csiapi.CertFileKey:           attr[csiapi.CertFileKey],
-		csiapi.KeyFileKey:            attr[csiapi.KeyFileKey],
-		csiapi.KeyStorePKCS12FileKey: attr[csiapi.KeyStorePKCS12FileKey],
+		csiapi.CAFileKey:                         attr[csiapi.CAFileKey],
+		csiapi.CertFileKey:                       attr[csiapi.CertFileKey],
+		csiapi.KeyFileKey:                        attr[csiapi.KeyFileKey],
+		csiapi.KeyStorePKCS12FileKey:             attr[csiapi.KeyStorePKCS12FileKey],
+		csiapi.KeyStorePKCS12PasswordFileKey:     attr[csiapi.KeyStorePKCS12PasswordFileKey],
 	})...)
 
 	// If there are errors, then return not approved and the aggregated errors.
@@ -188,7 +190,7 @@ func filename(path *field.Path, filename string) field.ErrorList {
 	}
 
 	if strings.Contains(filename, "/") {
-		el = append(el, field.Invalid(path, filename, "filename must not include '/'"))
+		el = append(el, field.Invalid(path, filename, "filename must not include '/'") )
 	}
 
 	if len(filename) > 255 {
@@ -236,11 +238,26 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 	var el field.ErrorList
 
 	if enable := attr[csiapi.KeyStorePKCS12EnableKey]; len(enable) > 0 {
+		// When PKCS12 is enabled, a PKCS12 file must be written. An explicit
+		// password via csi.cert-manager.io/pkcs12-password is required. Optionally
+		// csi.cert-manager.io/pkcs12-password-file may be provided to write that
+		// password to a separate file within the volume. The attributes are
+		// mutually exclusive: the user must provide exactly one of the password or
+		// password-file attributes.
 		if file := attr[csiapi.KeyStorePKCS12FileKey]; len(file) == 0 {
 			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
 		}
-		if password := attr[csiapi.KeyStorePKCS12PasswordKey]; len(password) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
+
+		password := attr[csiapi.KeyStorePKCS12PasswordKey]
+		passwordFile := attr[csiapi.KeyStorePKCS12PasswordFileKey]
+
+		// Require exactly one of password or password-file when PKCS12 is enabled.
+		if len(password) == 0 && len(passwordFile) == 0 {
+			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "one of pkcs12-password or pkcs12-password-file is required when PKCS12 KeyStore is enabled"))
+		}
+
+		if len(password) > 0 && len(passwordFile) > 0 {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordFileKey), passwordFile, "cannot specify both pkcs12-password and pkcs12-password-file"))
 		}
 
 		switch enable {
@@ -259,6 +276,11 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 
 		if password, ok := attr[csiapi.KeyStorePKCS12PasswordKey]; ok {
 			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordKey), password,
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
+		}
+
+		if passwordFile := attr[csiapi.KeyStorePKCS12PasswordFileKey]; len(passwordFile) > 0 {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordFileKey), passwordFile,
 				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
 		}
 	}

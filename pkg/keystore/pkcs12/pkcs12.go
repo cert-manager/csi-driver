@@ -44,6 +44,22 @@ func Handle(attributes map[string]string, files map[string][]byte, pk crypto.Pri
 	// Write PKCS12 file to the file store.
 	files[attributes[csiapi.KeyStorePKCS12FileKey]] = pfx
 
+	// If a separate password filename is requested, write the password to that
+	// filename so consumers can read the password from the volume.
+	// The password-file attribute is optional. Validation requires that the
+	// password attribute itself is present when PKCS12 is enabled; when a
+	// filename is requested we write the provided password into that file.
+	passwordFile := attributes[csiapi.KeyStorePKCS12PasswordFileKey]
+	if len(passwordFile) > 0 {
+		// Only write the password file when a filename is requested. Validation
+		// will prevent an empty password when PKCS12 is enabled; still perform a
+		// defensive check to avoid writing an empty file at runtime.
+		pwd := attributes[csiapi.KeyStorePKCS12PasswordKey]
+		if len(pwd) > 0 {
+			files[passwordFile] = []byte(pwd)
+		}
+	}
+
 	return nil
 }
 
