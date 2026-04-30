@@ -40,7 +40,3 @@ func Skipf(format string, args ...any) {
 	Logf("INFO", msg)
 	Skip(nowStamp() + ": " + msg)
 }
-
-func boolPtr(b bool) *bool {
-	return &b
-}
