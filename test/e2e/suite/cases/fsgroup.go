@@ -22,7 +22,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	"github.com/cert-manager/csi-driver/test/e2e/framework"
 	"github.com/cert-manager/csi-driver/test/e2e/util"
@@ -41,7 +40,7 @@ var _ = framework.CasesDescribe("Should pick-up correct FSGroup on Pods", func()
 		})
 
 		testPod.Spec.Containers[0].SecurityContext = &corev1.SecurityContext{
-			RunAsGroup: ptr.To(int64(2000)),
+			RunAsGroup: new(int64(2000)),
 		}
 
 		By("Creating Pod")
