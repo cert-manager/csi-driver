@@ -334,6 +334,21 @@ If enabled, this uses a CSI token request for creating. CertificateRequests. Cer
 > ```
 
 If enabled, allows NodePublishVolume to succeed even when the driver is not yet ready to create certificate request. The volume is mounted immediately and certificate issuance is retried asynchronously.
+#### **app.driver.podReadinessGates** ~ `array`
+> Default value:
+> ```yaml
+> []
+> ```
+
+Defer certificate issuance until all specified pod readiness gates pass. Each entry has the form "<type>:<value>". Supported types:  
+  pod-ip:<family>                   family: any | ipv4 | ipv6  
+  pod-condition:<Type>[=<Status>]   Status defaults to True  
+  pod-annotation:<key>              annotation key must be present  
+All gates must pass (AND semantics). Must be combined with continueOnNotReady: true to avoid blocking NodePublishVolume.  
+Examples:  
+  - "pod-ip:ipv6"  
+  - "pod-condition:NetworkAttached=True"  
+  - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml

@@ -66,6 +66,16 @@ type Options struct {
 	// tolerate the absence of certificate data at startup (e.g. via init container).
 	ContinueOnNotReady bool
 
+	// PodReadinessGates is an ordered list of gate specs that must all pass
+	// before a CertificateRequest is created for a volume. Each spec has the
+	// form "<type>:<value>". Supported types:
+	//   pod-ip:<family>               family: any | ipv4 | ipv6
+	//   pod-condition:<Type>[=<Status>]  Status defaults to "True"
+	//   pod-annotation:<key>          annotation key must be present
+	// Must be used together with --continue-on-not-ready=true; without it the
+	// driver will still block NodePublishVolume while waiting for the gates.
+	PodReadinessGates []string
+
 	// Logr is the shared base logger.
 	Logr logr.Logger
 
@@ -171,4 +181,13 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 		"Continue mounting the volume even if driver is not ready to create certificate request yet. "+
 			"Useful in deferring certificate issuance until after pod initialization or until after sandbox creation. "+
 			"Pods MUST handle the absence of certificate data at startup (e.g. via init container).")
+
+	fs.StringArrayVar(&o.PodReadinessGates, "pod-readiness-gate", nil,
+		"Defer certificate issuance until the pod satisfies all specified gates. "+
+			"Repeat the flag to require multiple conditions (all must pass). "+
+			"Each gate has the form <type>:<value>. Supported types:\n"+
+			"  pod-ip:<family>                    family: any | ipv4 | ipv6\n"+
+			"  pod-condition:<Type>[=<Status>]    Status defaults to True\n"+
+			"  pod-annotation:<key>               annotation key must be present\n"+
+			"Must be combined with --continue-on-not-ready=true to avoid blocking NodePublishVolume.")
 }
