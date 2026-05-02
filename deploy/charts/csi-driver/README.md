@@ -350,6 +350,21 @@ A value of 0 uses client-go's default.
 
 The maximum burst queries-per-second of requests sent to the Kubernetes apiserver.  
 A value of 0 uses client-go's default.
+#### **app.driver.podReadinessGates** ~ `array`
+> Default value:
+> ```yaml
+> []
+> ```
+
+Defer certificate issuance until all specified pod readiness gates pass. Each entry has the form "<type>:<value>". Supported types:  
+  pod-ip:<family>                   family: any | ipv4 | ipv6  
+  pod-condition:<Type>[=<Status>]   Status defaults to True  
+  pod-annotation:<key>              annotation key must be present  
+All gates must pass (AND semantics). Must be combined with continueOnNotReady: true to avoid blocking NodePublishVolume.  
+Examples:  
+  - "pod-ip:ipv6"  
+  - "pod-condition:NetworkAttached=True"  
+  - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml
