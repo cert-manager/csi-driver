@@ -96,6 +96,9 @@ spec:
             - --data-root=csi-data-dir
             - --use-token-request={{ .Values.app.driver.useTokenRequest }}
             - --continue-on-not-ready={{ .Values.app.driver.continueOnNotReady }}
+{{- range .Values.app.driver.podReadinessGates }}
+            - --pod-readiness-gate={{ . }}
+{{- end }}
 {{- if .Values.metrics.enabled }}
             - --metrics-bind-address=:{{ .Values.metrics.port }}
 {{- else }}
