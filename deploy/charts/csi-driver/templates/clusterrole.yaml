@@ -8,6 +8,9 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get"]
 
 {{- /* If openshift.securityContextConstraint.enabled is set to "detect" then we 
        need to check if its an OpenShift cluster. If it is an OpenShift cluster
