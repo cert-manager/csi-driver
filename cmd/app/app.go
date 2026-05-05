@@ -91,6 +91,9 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if len(gates) > 0 && !opts.ContinueOnNotReady {
+				return fmt.Errorf("--pod-readiness-gate requires --continue-on-not-ready=true")
+			}
 
 			mngrlog := opts.Logr.WithName("manager")
 			mgrOpts := manager.Options{

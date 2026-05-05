@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
@@ -78,7 +79,9 @@ func NewReadyToRequestFunc(client kubernetes.Interface, gates []Gate) manager.Re
 			return false, "pod name or namespace not present in volume context"
 		}
 
-		pod, err := client.CoreV1().Pods(podNamespace).Get(context.Background(), podName, metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil {
 			return false, fmt.Sprintf("failed to get pod %s/%s: %v", podNamespace, podName, err)
 		}
