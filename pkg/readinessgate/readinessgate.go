@@ -79,6 +79,11 @@ func NewReadyToRequestFunc(client kubernetes.Interface, gates []Gate) manager.Re
 			return false, "pod name or namespace not present in volume context"
 		}
 
+		// TODO: replace this live Get with a pod informer scoped to the local node
+		// (spec.nodeName field selector). The renewal loop fires every second per
+		// managed volume, so this generates one API call per second per pending volume.
+		// On a node with many pods awaiting certificates this can exhaust the client's
+		// default rate limit (5 QPS) and slow down gate evaluation.
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
@@ -86,10 +91,14 @@ func NewReadyToRequestFunc(client kubernetes.Interface, gates []Gate) manager.Re
 			return false, fmt.Sprintf("failed to get pod %s/%s: %v", podNamespace, podName, err)
 		}
 
+		var reasons []string
 		for _, gate := range gates {
 			if ok, reason := gate(pod); !ok {
-				return false, reason
+				reasons = append(reasons, reason)
 			}
+		}
+		if len(reasons) > 0 {
+			return false, strings.Join(reasons, "; ")
 		}
 		return true, ""
 	}
@@ -141,6 +150,18 @@ func podConditionGate(value string) (Gate, error) {
 	}
 	if wantStatus == "" {
 		wantStatus = string(corev1.ConditionTrue)
+	} else {
+		// Normalise to canonical casing so that "true", "TRUE", "True" all work.
+		switch strings.ToTitle(wantStatus[:1]) + strings.ToLower(wantStatus[1:]) {
+		case string(corev1.ConditionTrue):
+			wantStatus = string(corev1.ConditionTrue)
+		case string(corev1.ConditionFalse):
+			wantStatus = string(corev1.ConditionFalse)
+		case string(corev1.ConditionUnknown):
+			wantStatus = string(corev1.ConditionUnknown)
+		default:
+			return nil, fmt.Errorf("pod-condition: invalid status %q; must be True, False, or Unknown", wantStatus)
+		}
 	}
 	return func(pod *corev1.Pod) (bool, string) {
 		for _, c := range pod.Status.Conditions {
@@ -163,10 +184,10 @@ func podAnnotationGate(key string) (Gate, error) {
 		return nil, fmt.Errorf("pod-annotation: annotation key must not be empty")
 	}
 	return func(pod *corev1.Pod) (bool, string) {
-		if _, ok := pod.Annotations[key]; ok {
+		if val, ok := pod.Annotations[key]; ok && val != "" {
 			return true, ""
 		}
-		return false, fmt.Sprintf("pod does not yet have annotation %q", key)
+		return false, fmt.Sprintf("pod does not yet have annotation %q with a non-empty value", key)
 	}, nil
 }
 

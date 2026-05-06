@@ -82,11 +82,6 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				clientForMeta = util.ClientForMetadataTokenRequestEmptyAud(opts.RestConfig)
 			}
 
-			k8sClient, err := kubernetes.NewForConfig(opts.RestConfig)
-			if err != nil {
-				return fmt.Errorf("failed to build kubernetes client: %w", err)
-			}
-
 			gates, err := readinessgate.Parse(opts.PodReadinessGates)
 			if err != nil {
 				return err
@@ -109,6 +104,10 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				WriteKeypair:       writer.WriteKeypair,
 			}
 			if len(gates) > 0 {
+				k8sClient, err := kubernetes.NewForConfig(opts.RestConfig)
+				if err != nil {
+					return fmt.Errorf("failed to build kubernetes client: %w", err)
+				}
 				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(k8sClient, gates)
 			}
 

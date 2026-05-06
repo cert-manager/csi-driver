@@ -273,6 +273,34 @@ func Test_podConditionGate_emptyType(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// Status values from the flag must be matched case-insensitively against
+// corev1.ConditionStatus ("True", "False", "Unknown"). A user passing =true
+// or =TRUE should find the gate behaves identically to =True.
+func Test_podConditionGate_caseInsensitiveStatus(t *testing.T) {
+	tests := map[string]struct {
+		spec string
+	}{
+		"lowercase true should match corev1.ConditionTrue":  {spec: "Ready=true"},
+		"uppercase TRUE should match corev1.ConditionTrue":  {spec: "Ready=TRUE"},
+		"lowercase false should match corev1.ConditionFalse": {spec: "Degraded=false"},
+	}
+
+	conditions := []corev1.PodCondition{
+		{Type: "Ready", Status: corev1.ConditionTrue},
+		{Type: "Degraded", Status: corev1.ConditionFalse},
+	}
+	pod := &corev1.Pod{Status: corev1.PodStatus{Conditions: conditions}}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			gate, err := podConditionGate(tc.spec)
+			require.NoError(t, err)
+			ready, reason := gate(pod)
+			assert.True(t, ready, "expected gate to pass but got reason: %s", reason)
+		})
+	}
+}
+
 func Test_podAnnotationGate(t *testing.T) {
 	tests := map[string]struct {
 		key        string
@@ -285,22 +313,23 @@ func Test_podAnnotationGate(t *testing.T) {
 			annotations: map[string]string{"k8s.v1.cni.cncf.io/networks-status": "[...]"},
 			wantReady:   true,
 		},
-		"passes when annotation value is empty string": {
+		"fails when annotation key is present but value is empty": {
 			key:         "my-key",
 			annotations: map[string]string{"my-key": ""},
-			wantReady:   true,
+			wantReady:   false,
+			wantMsg:     `pod does not yet have annotation "my-key" with a non-empty value`,
 		},
 		"fails when annotation key is absent": {
 			key:         "my-key",
 			annotations: map[string]string{"other-key": "value"},
 			wantReady:   false,
-			wantMsg:     `pod does not yet have annotation "my-key"`,
+			wantMsg:     `pod does not yet have annotation "my-key" with a non-empty value`,
 		},
 		"fails when pod has no annotations": {
 			key:         "my-key",
 			annotations: nil,
 			wantReady:   false,
-			wantMsg:     `pod does not yet have annotation "my-key"`,
+			wantMsg:     `pod does not yet have annotation "my-key" with a non-empty value`,
 		},
 	}
 
@@ -323,6 +352,25 @@ func Test_podAnnotationGate(t *testing.T) {
 func Test_podAnnotationGate_emptyKey(t *testing.T) {
 	_, err := podAnnotationGate("")
 	assert.Error(t, err)
+}
+
+// Multus and some CNI plugins write the annotation key immediately with an
+// empty value and fill it in asynchronously once the interface is attached.
+// The gate must not pass until the annotation has a non-empty value.
+func Test_podAnnotationGate_emptyValueShouldNotPass(t *testing.T) {
+	gate, err := podAnnotationGate("k8s.v1.cni.cncf.io/networks-status")
+	require.NoError(t, err)
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"k8s.v1.cni.cncf.io/networks-status": "", // key present, value empty
+			},
+		},
+	}
+
+	ready, reason := gate(pod)
+	assert.False(t, ready, "gate should not pass when annotation value is empty, but got reason: %s", reason)
 }
 
 func Test_NewReadyToRequestFunc(t *testing.T) {
@@ -348,10 +396,11 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		meta      metadata.Metadata
-		pod       *corev1.Pod
-		specs     []string
-		wantReady bool
+		meta       metadata.Metadata
+		pod        *corev1.Pod
+		specs      []string
+		wantReady  bool
+		wantReason string
 	}{
 		"missing pod name in VolumeContext returns false": {
 			meta: metadata.Metadata{
@@ -431,6 +480,13 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 			specs:     []string{"pod-ip:ipv6", "pod-annotation:missing-annotation"},
 			wantReady: false,
 		},
+		"all gates fail returns all reasons": {
+			meta:  validMeta,
+			pod:   &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: podNamespace}},
+			specs: []string{"pod-ip:ipv6", "pod-annotation:missing-annotation"},
+			wantReady:  false,
+			wantReason: `pod has no ipv6 address yet; pod does not yet have annotation "missing-annotation" with a non-empty value`,
+		},
 	}
 
 	for name, tc := range tests {
@@ -446,8 +502,11 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 			require.NoError(t, err)
 
 			fn := NewReadyToRequestFunc(client, gates)
-			ready, _ := fn(tc.meta)
+			ready, reason := fn(tc.meta)
 			assert.Equal(t, tc.wantReady, ready)
+			if tc.wantReason != "" {
+				assert.Equal(t, tc.wantReason, reason)
+			}
 		})
 	}
 }
