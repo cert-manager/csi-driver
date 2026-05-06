@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The cert-manager Authors.
+Copyright 2026 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -151,13 +151,13 @@ func podConditionGate(value string) (Gate, error) {
 	if wantStatus == "" {
 		wantStatus = string(corev1.ConditionTrue)
 	} else {
-		// Normalise to canonical casing so that "true", "TRUE", "True" all work.
-		switch strings.ToTitle(wantStatus[:1]) + strings.ToLower(wantStatus[1:]) {
-		case string(corev1.ConditionTrue):
+		// Accept "true", "TRUE", "True" — normalise to the canonical Kubernetes value.
+		switch strings.ToLower(wantStatus) {
+		case "true":
 			wantStatus = string(corev1.ConditionTrue)
-		case string(corev1.ConditionFalse):
+		case "false":
 			wantStatus = string(corev1.ConditionFalse)
-		case string(corev1.ConditionUnknown):
+		case "unknown":
 			wantStatus = string(corev1.ConditionUnknown)
 		default:
 			return nil, fmt.Errorf("pod-condition: invalid status %q; must be True, False, or Unknown", wantStatus)

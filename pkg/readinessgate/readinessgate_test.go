@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The cert-manager Authors.
+Copyright 2026 The cert-manager Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ import (
 
 func Test_Parse(t *testing.T) {
 	tests := map[string]struct {
-		specs    []string
-		wantLen  int
-		wantErr  bool
+		specs   []string
+		wantLen int
+		wantErr bool
 	}{
 		"empty input returns empty gates": {
 			specs:   []string{},
@@ -177,6 +177,20 @@ func Test_podIPGate(t *testing.T) {
 			podIPs:    []corev1.PodIP{{IP: "not-an-ip"}, {IP: "10.0.0.1"}},
 			wantReady: true,
 		},
+		// IPv4-mapped IPv6 (RFC 4291, ::ffff:a.b.c.d) is the IPv4 transition
+		// representation of an IPv4 address. net.IP.To4() returns the embedded
+		// IPv4 bytes (not nil), so these addresses are classified as IPv4.
+		"ipv4-mapped IPv6 (::ffff:a.b.c.d) counts as IPv4": {
+			family:    "ipv4",
+			podIPs:    []corev1.PodIP{{IP: "::ffff:192.0.2.1"}},
+			wantReady: true,
+		},
+		"ipv4-mapped IPv6 (::ffff:a.b.c.d) does not count as IPv6": {
+			family:    "ipv6",
+			podIPs:    []corev1.PodIP{{IP: "::ffff:192.0.2.1"}},
+			wantReady: false,
+			wantMsg:   "pod has no ipv6 address yet",
+		},
 	}
 
 	for name, tc := range tests {
@@ -280,8 +294,8 @@ func Test_podConditionGate_caseInsensitiveStatus(t *testing.T) {
 	tests := map[string]struct {
 		spec string
 	}{
-		"lowercase true should match corev1.ConditionTrue":  {spec: "Ready=true"},
-		"uppercase TRUE should match corev1.ConditionTrue":  {spec: "Ready=TRUE"},
+		"lowercase true should match corev1.ConditionTrue":   {spec: "Ready=true"},
+		"uppercase TRUE should match corev1.ConditionTrue":   {spec: "Ready=TRUE"},
 		"lowercase false should match corev1.ConditionFalse": {spec: "Degraded=false"},
 	}
 
@@ -303,10 +317,10 @@ func Test_podConditionGate_caseInsensitiveStatus(t *testing.T) {
 
 func Test_podAnnotationGate(t *testing.T) {
 	tests := map[string]struct {
-		key        string
+		key         string
 		annotations map[string]string
-		wantReady  bool
-		wantMsg    string
+		wantReady   bool
+		wantMsg     string
 	}{
 		"passes when annotation key is present": {
 			key:         "k8s.v1.cni.cncf.io/networks-status",
@@ -481,9 +495,9 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 			wantReady: false,
 		},
 		"all gates fail returns all reasons": {
-			meta:  validMeta,
-			pod:   &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: podNamespace}},
-			specs: []string{"pod-ip:ipv6", "pod-annotation:missing-annotation"},
+			meta:       validMeta,
+			pod:        &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: podNamespace}},
+			specs:      []string{"pod-ip:ipv6", "pod-annotation:missing-annotation"},
 			wantReady:  false,
 			wantReason: `pod has no ipv6 address yet; pod does not yet have annotation "missing-annotation" with a non-empty value`,
 		},

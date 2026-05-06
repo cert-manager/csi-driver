@@ -8,6 +8,9 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
+# Required by --pod-readiness-gate to fetch the pod owning each volume and
+# evaluate gate conditions (e.g. PodIPs, status conditions, annotations)
+# before issuing a CertificateRequest.
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get"]
