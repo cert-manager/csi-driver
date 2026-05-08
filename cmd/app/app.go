@@ -108,7 +108,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to build kubernetes client: %w", err)
 				}
-				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(k8sClient, gates)
+				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(k8sClient, gates) //nolint:contextcheck // manager.ReadyToRequestFunc does not accept a context; context.Background() inside is intentional.
 			}
 
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{

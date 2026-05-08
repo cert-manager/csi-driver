@@ -19,13 +19,12 @@ package readinessgate
 import (
 	"testing"
 
+	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fakeclient "k8s.io/client-go/kubernetes/fake"
-
-	"github.com/cert-manager/csi-lib/metadata"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
