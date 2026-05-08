@@ -239,9 +239,9 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 		if file := attr[csiapi.KeyStorePKCS12FileKey]; len(file) == 0 {
 			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
 		}
-		if password := attr[csiapi.KeyStorePKCS12PasswordKey]; len(password) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
-		}
+		// Password is not validated here — it may be provided via nodePublishSecretRef
+		// instead of as a plaintext attribute. Handle() will error at write time if
+		// neither source provides a password.
 
 		switch enable {
 		case "false", "true":

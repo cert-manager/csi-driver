@@ -85,7 +85,7 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 	}
 
 	// Handle PKCS12 keystore attributes.
-	if err := pkcs12.Handle(attrs, files, key, chain); err != nil {
+	if err := pkcs12.Handle(meta, attrs, files, key, chain); err != nil {
 		return err
 	}
 

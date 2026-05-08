@@ -53,6 +53,11 @@ const (
 	KeyStorePKCS12EnableKey   = "csi.cert-manager.io/pkcs12-enable"
 	KeyStorePKCS12FileKey     = "csi.cert-manager.io/pkcs12-filename"
 	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/pkcs12-password" // #nosec G101: False positive, gosec thinks this is a credential.
+
+	// KeyStorePKCS12PasswordSecretKey is the key within the secret referenced by
+	// nodePublishSecretRef that holds the PKCS12 keystore password. Takes
+	// precedence over KeyStorePKCS12PasswordKey when both are provided.
+	KeyStorePKCS12PasswordSecretKey = "pkcs12-password" // #nosec G101
 )
 
 const (

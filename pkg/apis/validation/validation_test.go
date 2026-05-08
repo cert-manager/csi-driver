@@ -516,25 +516,29 @@ func Test_PKCS12Values(t *testing.T) {
 				field.NotSupported(basePath.Child("csi.cert-manager.io/pkcs12-enable"), "foo", []string{"true", "false"}),
 			},
 		},
-		"if key and password is not defined, and enabled is defined as true, expect error": {
+		"if filename is not defined and enabled is true, expect error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable": "true",
 			},
 			expErr: field.ErrorList{
 				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-filename"), "required attribute when PKCS12 KeyStore is enabled"),
-				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
 			},
 		},
-		"if key and password is defined as empty string, and enabled is defined as true, expect error": {
+		"if filename is empty string and enabled is true, expect error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
 				"csi.cert-manager.io/pkcs12-filename": "",
-				"csi.cert-manager.io/pkcs12-password": "",
 			},
 			expErr: field.ErrorList{
 				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-filename"), "required attribute when PKCS12 KeyStore is enabled"),
-				field.Required(basePath.Child("csi.cert-manager.io/pkcs12-password"), "required attribute when PKCS12 KeyStore is enabled"),
 			},
+		},
+		"if filename is defined but password is absent, expect no error (password may come from nodePublishSecretRef)": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-filename": "my-file",
+			},
+			expErr: nil,
 		},
 		"if key and password is defined, and enabled is defined as true, expect no error": {
 			attr: map[string]string{

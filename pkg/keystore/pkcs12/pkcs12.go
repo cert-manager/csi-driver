@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/cert-manager/cert-manager/pkg/util/pki"
+	"github.com/cert-manager/csi-lib/metadata"
 	"software.sslmate.com/src/go-pkcs12"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
@@ -30,13 +31,26 @@ import (
 // Handle will handle PKCS12 keystore options in the given Volume attributes.
 // If enabled, A PKCS12 keystore file will be encoded and written to the given
 // file store.
-func Handle(attributes map[string]string, files map[string][]byte, pk crypto.PrivateKey, chainPEM []byte) error {
+//
+// The PKCS12 password is resolved in order:
+//  1. meta.Secrets[KeyStorePKCS12PasswordSecretKey] (from nodePublishSecretRef)
+//  2. attributes[KeyStorePKCS12PasswordKey] (plaintext attribute, kept for
+//     backward compatibility)
+func Handle(meta metadata.Metadata, attributes map[string]string, files map[string][]byte, pk crypto.PrivateKey, chainPEM []byte) error {
 	// If PKCS12 support is not enabled, return early.
 	if attributes[csiapi.KeyStorePKCS12EnableKey] != "true" {
 		return nil
 	}
 
-	pfx, err := create(attributes[csiapi.KeyStorePKCS12PasswordKey], pk, chainPEM)
+	password, ok := meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
+	if !ok {
+		password = attributes[csiapi.KeyStorePKCS12PasswordKey]
+	}
+	if password == "" {
+		return errors.New("pkcs12 password must be provided via nodePublishSecretRef or the pkcs12-password attribute")
+	}
+
+	pfx, err := create(password, pk, chainPEM)
 	if err != nil {
 		return fmt.Errorf("failed to create pkcs12 file: %w", err)
 	}
