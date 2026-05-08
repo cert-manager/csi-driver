@@ -98,6 +98,12 @@
         "csiDataDir": {
           "$ref": "#/$defs/helm-values.app.driver.csiDataDir"
         },
+        "kubernetesAPIBurst": {
+          "$ref": "#/$defs/helm-values.app.driver.kubernetesAPIBurst"
+        },
+        "kubernetesAPIQPS": {
+          "$ref": "#/$defs/helm-values.app.driver.kubernetesAPIQPS"
+        },
         "name": {
           "$ref": "#/$defs/helm-values.app.driver.name"
         },
@@ -116,6 +122,16 @@
       "default": "/tmp/cert-manager-csi-driver",
       "description": "Configures the hostPath directory that the driver writes and mounts volumes from.",
       "type": "string"
+    },
+    "helm-values.app.driver.kubernetesAPIBurst": {
+      "default": 0,
+      "description": "The maximum burst queries-per-second of requests sent to the Kubernetes apiserver.\nA value of 0 uses client-go's default.",
+      "type": "number"
+    },
+    "helm-values.app.driver.kubernetesAPIQPS": {
+      "default": 0,
+      "description": "Indicates the maximum queries-per-second requests to the Kubernetes apiserver.\nA value of 0 uses client-go's default.",
+      "type": "number"
     },
     "helm-values.app.driver.name": {
       "default": "csi.cert-manager.io",

@@ -80,6 +80,14 @@ type Options struct {
 	// which will be served on the HTTP path '/metrics'. The value "0" will
 	// disable exposing metrics.
 	MetricsBindAddress string
+
+	// KubernetesAPIQPS is the maximum queries-per-second of requests sent
+	// to the Kubernetes apiserver.
+	KubernetesAPIQPS float32
+
+	// KubernetesAPIBurst is the maximum burst queries-per-second of requests
+	// sent to the Kubernetes apiserver.
+	KubernetesAPIBurst int
 }
 
 func New() *Options {
@@ -104,6 +112,9 @@ func (o *Options) Complete() error {
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes rest config: %s", err)
 	}
+
+	o.RestConfig.QPS = o.KubernetesAPIQPS
+	o.RestConfig.Burst = o.KubernetesAPIBurst
 
 	o.CMClient, err = cmclient.NewForConfig(o.RestConfig)
 	if err != nil {
@@ -171,4 +182,7 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 		"Continue mounting the volume even if driver is not ready to create certificate request yet. "+
 			"Useful in deferring certificate issuance until after pod initialization or until after sandbox creation. "+
 			"Pods MUST handle the absence of certificate data at startup (e.g. via init container).")
+
+	fs.Float32Var(&o.KubernetesAPIQPS, "kube-api-qps", 0, "indicates the maximum queries-per-second requests to the Kubernetes apiserver")
+	fs.IntVar(&o.KubernetesAPIBurst, "kube-api-burst", 0, "the maximum burst queries-per-second of requests sent to the Kubernetes apiserver")
 }

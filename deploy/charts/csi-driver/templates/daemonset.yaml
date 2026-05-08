@@ -97,6 +97,8 @@ spec:
             - --data-root=csi-data-dir
             - --use-token-request={{ .Values.app.driver.useTokenRequest }}
             - --continue-on-not-ready={{ .Values.app.driver.continueOnNotReady }}
+            - --kube-api-qps={{ .Values.app.driver.kubernetesAPIQPS }}
+            - --kube-api-burst={{ .Values.app.driver.kubernetesAPIBurst }}
 {{- if .Values.metrics.enabled }}
             - --metrics-bind-address=:{{ .Values.metrics.port }}
 {{- else }}
