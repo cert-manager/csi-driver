@@ -42,8 +42,14 @@ func Handle(meta metadata.Metadata, attributes map[string]string, files map[stri
 		return nil
 	}
 
-	password, ok := meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
-	if !ok {
+	var password string
+	if meta.Secrets != nil {
+		var ok bool
+		password, ok = meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
+		if !ok {
+			return fmt.Errorf("pkcs12 password key %q not found in nodePublishSecretRef", csiapi.KeyStorePKCS12PasswordSecretKey)
+		}
+	} else {
 		password = attributes[csiapi.KeyStorePKCS12PasswordKey]
 	}
 	if password == "" {
@@ -75,7 +81,7 @@ func create(password string, pk crypto.PrivateKey, chainPEM []byte) ([]byte, err
 
 	pfx, err := pkcs12.LegacyRC2.Encode(pk, chain[0], chain[1:], password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode the PKCS12 certificate chain file: %v", err)
+		return nil, fmt.Errorf("failed to encode the PKCS12 certificate chain file: %w", err)
 	}
 
 	return pfx, nil

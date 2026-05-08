@@ -77,10 +77,10 @@ func Test_Handle(t *testing.T) {
 			expFiles: []string{"crt.p12"},
 			expErr:   false,
 		},
-		"if PKCS12 enabled with password in both, secret takes precedence": {
+		"if PKCS12 enabled with nodePublishSecretRef but missing password key, expect error": {
 			meta: metadata.Metadata{
 				Secrets: map[string]string{
-					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+					"some-other-key": "value",
 				},
 			},
 			attributes: map[string]string{
@@ -90,10 +90,10 @@ func Test_Handle(t *testing.T) {
 			},
 			pk:       root.PK,
 			chainPEM: root.PEM,
-			expFiles: []string{"crt.p12"},
-			expErr:   false,
+			expFiles: []string{},
+			expErr:   true,
 		},
-		"if PKCS12 enabled with no password in attribute or secret, expect error": {
+		"if PKCS12 enabled with no nodePublishSecretRef and no attribute password, expect error": {
 			meta: metadata.Metadata{},
 			attributes: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
