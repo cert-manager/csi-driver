@@ -39,10 +39,10 @@ import (
 
 	"github.com/cert-manager/csi-driver/cmd/app/options"
 	"github.com/cert-manager/csi-driver/internal/version"
-	"github.com/cert-manager/csi-driver/pkg/readinessgate"
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
 	"github.com/cert-manager/csi-driver/pkg/keygen"
+	"github.com/cert-manager/csi-driver/pkg/readinessgate"
 	"github.com/cert-manager/csi-driver/pkg/requestgen"
 )
 
