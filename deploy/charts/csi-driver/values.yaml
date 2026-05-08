@@ -221,10 +221,10 @@ app:
     # immediately and certificate issuance is retried asynchronously.
     continueOnNotReady: false
     # Indicates the maximum queries-per-second requests to the Kubernetes apiserver.
-    # A value of 0 uses client-go's default (currently 5).
+    # A value of 0 uses client-go's default.
     kubernetesAPIQPS: 0
     # The maximum burst queries-per-second of requests sent to the Kubernetes apiserver.
-    # A value of 0 uses client-go's default (currently 10).
+    # A value of 0 uses client-go's default.
     kubernetesAPIBurst: 0
     # Configures the hostPath directory that the driver writes and mounts volumes from.
     csiDataDir: /tmp/cert-manager-csi-driver

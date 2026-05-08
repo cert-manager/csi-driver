@@ -122,12 +122,12 @@
     },
     "helm-values.app.driver.kubernetesAPIBurst": {
       "default": 0,
-      "description": "The maximum burst queries-per-second of requests sent to the Kubernetes apiserver. A value of 0 uses client-go's default.",
+      "description": "The maximum burst queries-per-second of requests sent to the Kubernetes apiserver.\nA value of 0 uses client-go's default.",
       "type": "number"
     },
     "helm-values.app.driver.kubernetesAPIQPS": {
       "default": 0,
-      "description": "Indicates the maximum queries-per-second requests to the Kubernetes apiserver. A value of 0 uses client-go's default.",
+      "description": "Indicates the maximum queries-per-second requests to the Kubernetes apiserver.\nA value of 0 uses client-go's default.",
       "type": "number"
     },
     "helm-values.app.driver.name": {

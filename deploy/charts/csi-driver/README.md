@@ -340,14 +340,16 @@ If enabled, allows NodePublishVolume to succeed even when the driver is not yet 
 > 0
 > ```
 
-Indicates the maximum queries-per-second requests to the Kubernetes apiserver. A value of 0 uses client-go's default.
+Indicates the maximum queries-per-second requests to the Kubernetes apiserver.  
+A value of 0 uses client-go's default.
 #### **app.driver.kubernetesAPIBurst** ~ `number`
 > Default value:
 > ```yaml
 > 0
 > ```
 
-The maximum burst queries-per-second of requests sent to the Kubernetes apiserver. A value of 0 uses client-go's default.
+The maximum burst queries-per-second of requests sent to the Kubernetes apiserver.  
+A value of 0 uses client-go's default.
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml
