@@ -18,6 +18,9 @@
         "global": {
           "$ref": "#/$defs/helm-values.global"
         },
+        "hostNetwork": {
+          "$ref": "#/$defs/helm-values.hostNetwork"
+        },
         "image": {
           "$ref": "#/$defs/helm-values.image"
         },
@@ -160,6 +163,11 @@
     },
     "helm-values.global": {
       "description": "Global values shared across all (sub)charts"
+    },
+    "helm-values.hostNetwork": {
+      "default": false,
+      "description": "Configure the host network setting for the csi-driver pods. SECURITY WARNING: When set to true, pods will use the host's network namespace, which grants access to all host network interfaces and allows binding to any port. Ensure this aligns with your security requirements before enabling.\n\nUse case: In some CNI configurations (e.g., Cilium), enabling hostNetwork allows the CSI driver to start before the CNI is ready, reducing pod scheduling delays.\n\nNote: When using hostNetwork, ensure ports for liveness probe and metrics (if enabled) do not conflict with other services on your nodes.",
+      "type": "boolean"
     },
     "helm-values.image": {
       "additionalProperties": false,

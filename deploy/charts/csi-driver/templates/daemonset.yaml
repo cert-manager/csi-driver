@@ -38,6 +38,7 @@ spec:
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
+      hostNetwork: {{ .Values.hostNetwork }}
       containers:
 
         - name: node-driver-registrar

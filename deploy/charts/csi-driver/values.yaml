@@ -279,6 +279,18 @@ tolerations: []
 # Optional priority class to be used for the csi-driver pods.
 priorityClassName: ""
 
+# Configure the host network setting for the csi-driver pods.
+# SECURITY WARNING: When set to true, pods will use the host's network namespace,
+# which grants access to all host network interfaces and allows binding to any port.
+# Ensure this aligns with your security requirements before enabling.
+#
+# Use case: In some CNI configurations (e.g., Cilium), enabling hostNetwork allows
+# the CSI driver to start before the CNI is ready, reducing pod scheduling delays.
+#
+# Note: When using hostNetwork, ensure ports for liveness probe and metrics (if enabled)
+# do not conflict with other services on your nodes.
+hostNetwork: false
+
 openshift:
   securityContextConstraint:
     # Include RBAC to allow the DaemonSet to "use" the specified
