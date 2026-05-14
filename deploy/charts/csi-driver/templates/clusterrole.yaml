@@ -8,6 +8,12 @@ rules:
 - apiGroups: ["cert-manager.io"]
   resources: ["certificaterequests"]
   verbs: ["watch", "create", "delete", "list"]
+# Required by --pod-readiness-gate to fetch the pod owning each volume and
+# evaluate gate conditions (e.g. PodIPs, status conditions, annotations)
+# before issuing a CertificateRequest.
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get"]
 
 {{- /* If openshift.securityContextConstraint.enabled is set to "detect" then we 
        need to check if its an OpenShift cluster. If it is an OpenShift cluster

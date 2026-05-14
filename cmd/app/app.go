@@ -32,6 +32,7 @@ import (
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -41,6 +42,7 @@ import (
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 	"github.com/cert-manager/csi-driver/pkg/filestore"
 	"github.com/cert-manager/csi-driver/pkg/keygen"
+	"github.com/cert-manager/csi-driver/pkg/readinessgate"
 	"github.com/cert-manager/csi-driver/pkg/requestgen"
 )
 
@@ -80,25 +82,42 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				clientForMeta = util.ClientForMetadataTokenRequestEmptyAud(opts.RestConfig)
 			}
 
+			gates, err := readinessgate.Parse(opts.PodReadinessGates)
+			if err != nil {
+				return err
+			}
+			if len(gates) > 0 && !opts.ContinueOnNotReady {
+				return fmt.Errorf("--pod-readiness-gate requires --continue-on-not-ready=true")
+			}
+
 			mngrlog := opts.Logr.WithName("manager")
+			mgrOpts := manager.Options{
+				Client:             opts.CMClient,
+				ClientForMetadata:  clientForMeta,
+				MetadataReader:     store,
+				Clock:              clock.RealClock{},
+				Log:                &mngrlog,
+				NodeID:             opts.NodeID,
+				GeneratePrivateKey: keyGenerator.KeyForMetadata,
+				GenerateRequest:    requestgen.RequestForMetadata,
+				SignRequest:        signRequest,
+				WriteKeypair:       writer.WriteKeypair,
+			}
+			if len(gates) > 0 {
+				k8sClient, err := kubernetes.NewForConfig(opts.RestConfig)
+				if err != nil {
+					return fmt.Errorf("failed to build kubernetes client: %w", err)
+				}
+				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(k8sClient, gates) //nolint:contextcheck // manager.ReadyToRequestFunc does not accept a context; context.Background() inside is intentional.
+			}
+
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
 				DriverName:         opts.DriverName,
 				DriverVersion:      version.AppVersion,
 				NodeID:             opts.NodeID,
 				Store:              store,
 				ContinueOnNotReady: opts.ContinueOnNotReady,
-				Manager: manager.NewManagerOrDie(manager.Options{
-					Client:             opts.CMClient,
-					ClientForMetadata:  clientForMeta,
-					MetadataReader:     store,
-					Clock:              clock.RealClock{},
-					Log:                &mngrlog,
-					NodeID:             opts.NodeID,
-					GeneratePrivateKey: keyGenerator.KeyForMetadata,
-					GenerateRequest:    requestgen.RequestForMetadata,
-					SignRequest:        signRequest,
-					WriteKeypair:       writer.WriteKeypair,
-				}),
+				Manager:            manager.NewManagerOrDie(mgrOpts),
 			})
 			if err != nil {
 				return fmt.Errorf("failed to setup driver: %w", err)

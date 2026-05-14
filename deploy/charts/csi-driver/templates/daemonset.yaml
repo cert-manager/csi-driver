@@ -99,6 +99,9 @@ spec:
             - --continue-on-not-ready={{ .Values.app.driver.continueOnNotReady }}
             - --kube-api-qps={{ .Values.app.driver.kubernetesAPIQPS }}
             - --kube-api-burst={{ .Values.app.driver.kubernetesAPIBurst }}
+{{- range .Values.app.driver.podReadinessGates }}
+            - --pod-readiness-gate={{ . }}
+{{- end }}
 {{- if .Values.metrics.enabled }}
             - --metrics-bind-address=:{{ .Values.metrics.port }}
 {{- else }}

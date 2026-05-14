@@ -107,6 +107,9 @@
         "name": {
           "$ref": "#/$defs/helm-values.app.driver.name"
         },
+        "podReadinessGates": {
+          "$ref": "#/$defs/helm-values.app.driver.podReadinessGates"
+        },
         "useTokenRequest": {
           "$ref": "#/$defs/helm-values.app.driver.useTokenRequest"
         }
@@ -137,6 +140,12 @@
       "default": "csi.cert-manager.io",
       "description": "Name of the driver to be registered with Kubernetes.",
       "type": "string"
+    },
+    "helm-values.app.driver.podReadinessGates": {
+      "default": [],
+      "description": "Defer certificate issuance until all specified pod readiness gates pass. Each entry has the form \"<type>:<value>\". Supported types:\n  pod-ip:<family>                   family: any | ipv4 | ipv6\n  pod-condition:<Type>[=<Status>]   Status defaults to True\n  pod-annotation:<key>              annotation key must be present\nAll gates must pass (AND semantics). Must be combined with continueOnNotReady: true to avoid blocking NodePublishVolume.\nExamples:\n  - \"pod-ip:ipv6\"\n  - \"pod-condition:NetworkAttached=True\"\n  - \"pod-annotation:k8s.v1.cni.cncf.io/networks-status\"",
+      "items": {},
+      "type": "array"
     },
     "helm-values.app.driver.useTokenRequest": {
       "default": false,
