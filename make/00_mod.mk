@@ -22,7 +22,12 @@ build_names := manager
 go_manager_main_dir := ./cmd
 go_manager_mod_dir := .
 go_manager_ldflags := -X $(repo_name)/internal/version.AppVersion=$(VERSION) -X $(repo_name)/internal/version.GitCommit=$(GITCOMMIT)
-oci_manager_base_image_flavor := csi-static
+# Pin the csi-static base image locally to avoid bot-driven SHA bumps in
+# make/_shared/oci-build/00_mod.mk re-introducing a libeconf/util-linux 2.41
+# combo that fails at startup on read-only /etc (mkdir /etc/systemd/system.conf.d).
+# Last known-good SHA — same as released in v0.14.0.
+oci_manager_base_image_flavor := custom
+oci_manager_base_image := quay.io/jetstack/base-static-csi@sha256:e8c56285c3bd5bb98f8c0b3d30c5b28d81c087e333b6f9e3296c2eb51faca47e
 oci_manager_image_name := quay.io/jetstack/cert-manager-csi-driver
 oci_manager_image_tag := $(VERSION)
 oci_manager_image_name_development := cert-manager.local/cert-manager-csi-driver

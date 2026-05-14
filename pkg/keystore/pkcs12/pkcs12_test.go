@@ -77,7 +77,39 @@ func Test_Handle(t *testing.T) {
 			expFiles: []string{"crt.p12"},
 			expErr:   false,
 		},
-		"if PKCS12 enabled with nodePublishSecretRef but missing password key, expect error": {
+		"if both attribute and secret have a password, the attribute wins": {
+			meta: metadata.Metadata{
+				Secrets: map[string]string{
+					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+				},
+			},
+			attributes: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-password": "attr-password",
+				"csi.cert-manager.io/pkcs12-filename": "crt.p12",
+			},
+			pk:       root.PK,
+			chainPEM: root.PEM,
+			expFiles: []string{"crt.p12"},
+			expErr:   false,
+		},
+		"if attribute password is empty, fall back to the secret password": {
+			meta: metadata.Metadata{
+				Secrets: map[string]string{
+					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+				},
+			},
+			attributes: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":   "true",
+				"csi.cert-manager.io/pkcs12-password": "",
+				"csi.cert-manager.io/pkcs12-filename": "crt.p12",
+			},
+			pk:       root.PK,
+			chainPEM: root.PEM,
+			expFiles: []string{"crt.p12"},
+			expErr:   false,
+		},
+		"if nodePublishSecretRef lacks the password key and no attribute password is set, expect error": {
 			meta: metadata.Metadata{
 				Secrets: map[string]string{
 					"some-other-key": "value",
@@ -85,7 +117,6 @@ func Test_Handle(t *testing.T) {
 			},
 			attributes: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
-				"csi.cert-manager.io/pkcs12-password": "attr-password",
 				"csi.cert-manager.io/pkcs12-filename": "crt.p12",
 			},
 			pk:       root.PK,

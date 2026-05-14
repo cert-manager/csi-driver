@@ -32,28 +32,23 @@ import (
 // If enabled, A PKCS12 keystore file will be encoded and written to the given
 // file store.
 //
-// The PKCS12 password is resolved in order:
-//  1. meta.Secrets[KeyStorePKCS12PasswordSecretKey] (from nodePublishSecretRef)
-//  2. attributes[KeyStorePKCS12PasswordKey] (plaintext attribute, kept for
-//     backward compatibility)
+// The PKCS12 password is resolved in order, with later sources used as a
+// fallback when an earlier one is absent or empty:
+//  1. attributes[KeyStorePKCS12PasswordKey] (plaintext attribute — explicit
+//     overrides win)
+//  2. meta.Secrets[KeyStorePKCS12PasswordSecretKey] (from nodePublishSecretRef)
 func Handle(meta metadata.Metadata, attributes map[string]string, files map[string][]byte, pk crypto.PrivateKey, chainPEM []byte) error {
 	// If PKCS12 support is not enabled, return early.
 	if attributes[csiapi.KeyStorePKCS12EnableKey] != "true" {
 		return nil
 	}
 
-	var password string
-	if meta.Secrets != nil {
-		var ok bool
-		password, ok = meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
-		if !ok {
-			return fmt.Errorf("pkcs12 password key %q not found in nodePublishSecretRef", csiapi.KeyStorePKCS12PasswordSecretKey)
-		}
-	} else {
-		password = attributes[csiapi.KeyStorePKCS12PasswordKey]
+	password := attributes[csiapi.KeyStorePKCS12PasswordKey]
+	if password == "" {
+		password = meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
 	}
 	if password == "" {
-		return errors.New("pkcs12 password must be provided via nodePublishSecretRef or the pkcs12-password attribute")
+		return errors.New("pkcs12 password must be provided via the pkcs12-password attribute or nodePublishSecretRef")
 	}
 
 	pfx, err := create(password, pk, chainPEM)
