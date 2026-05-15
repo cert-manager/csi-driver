@@ -22,12 +22,14 @@ build_names := manager
 go_manager_main_dir := ./cmd
 go_manager_mod_dir := .
 go_manager_ldflags := -X $(repo_name)/internal/version.AppVersion=$(VERSION) -X $(repo_name)/internal/version.GitCommit=$(GITCOMMIT)
-# Pin the csi-static base image locally to avoid bot-driven SHA bumps in
-# make/_shared/oci-build/00_mod.mk re-introducing a libeconf/util-linux 2.41
-# combo that fails at startup on read-only /etc (mkdir /etc/systemd/system.conf.d).
-# Last known-good SHA — same as released in v0.14.0.
+# Pin the csi-static base image locally. Newer base-static-csi releases
+# (Alpine 3.23, libeconf-0.8.3, util-linux-2.41) crash at startup because
+# libmount loads libeconf which calls mkdir on /etc/systemd/system.conf.d/
+# and the container's /etc is read-only. This SHA is the base image used
+# by upstream v0.13.0 (Alpine 3.21, libeconf-0.6.3, util-linux-2.40.4) —
+# verified not to exhibit the bug.
 oci_manager_base_image_flavor := custom
-oci_manager_base_image := quay.io/jetstack/base-static-csi@sha256:e8c56285c3bd5bb98f8c0b3d30c5b28d81c087e333b6f9e3296c2eb51faca47e
+oci_manager_base_image := quay.io/jetstack/base-static-csi@sha256:05ec9b9d5798fdd80680a54eab9eb69134d3cdaae948935bb1af07dadeb6e9be
 oci_manager_image_name := quay.io/jetstack/cert-manager-csi-driver
 oci_manager_image_tag := $(VERSION)
 oci_manager_image_name_development := cert-manager.local/cert-manager-csi-driver
