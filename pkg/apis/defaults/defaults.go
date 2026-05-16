@@ -107,7 +107,7 @@ func setDefaultIfEmpty(attr map[string]string, k, v string) {
 // in the attributes at all. If the other attributes are present, then a
 // validation error will be picked up by validation.
 func setDefaultKeyStorePKCS12(attr map[string]string) {
-	if _, ok := attr[csiapi.KeyStorePKCS12EnableKey]; ok {
+	if attr[csiapi.KeyStorePKCS12EnableKey] == "true" {
 		setDefaultIfEmpty(attr, csiapi.KeyStorePKCS12FileKey, "keystore.p12")
 	}
 }
