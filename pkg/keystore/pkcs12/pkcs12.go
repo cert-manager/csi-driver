@@ -36,7 +36,9 @@ import (
 // fallback when an earlier one is absent or empty:
 //  1. attributes[KeyStorePKCS12PasswordKey] (plaintext attribute — explicit
 //     overrides win)
-//  2. meta.Secrets[KeyStorePKCS12PasswordSecretKey] (from nodePublishSecretRef)
+//  2. meta.Secrets[<key>] (from nodePublishSecretRef). The key name is taken
+//     from attributes[KeyStorePKCS12PasswordSecretKeyKey], defaulting to
+//     DefaultKeyStorePKCS12PasswordSecretKey when unset.
 func Handle(meta metadata.Metadata, attributes map[string]string, files map[string][]byte, pk crypto.PrivateKey, chainPEM []byte) error {
 	// If PKCS12 support is not enabled, return early.
 	if attributes[csiapi.KeyStorePKCS12EnableKey] != "true" {
@@ -45,7 +47,11 @@ func Handle(meta metadata.Metadata, attributes map[string]string, files map[stri
 
 	password := attributes[csiapi.KeyStorePKCS12PasswordKey]
 	if password == "" {
-		password = meta.Secrets[csiapi.KeyStorePKCS12PasswordSecretKey]
+		secretKey := attributes[csiapi.KeyStorePKCS12PasswordSecretKeyKey]
+		if secretKey == "" {
+			secretKey = csiapi.DefaultKeyStorePKCS12PasswordSecretKey
+		}
+		password = meta.Secrets[secretKey]
 	}
 	if password == "" {
 		return errors.New("pkcs12 password must be provided via the pkcs12-password attribute or nodePublishSecretRef")

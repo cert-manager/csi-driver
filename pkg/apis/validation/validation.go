@@ -261,6 +261,11 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordKey), password,
 				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
 		}
+
+		if secretKey, ok := attr[csiapi.KeyStorePKCS12PasswordSecretKeyKey]; ok {
+			el = append(el, field.Invalid(path.Child(csiapi.KeyStorePKCS12PasswordSecretKeyKey), secretKey,
+				fmt.Sprintf("cannot use attribute without %q set to %q or %q", csiapi.KeyStorePKCS12EnableKey, "true", "false")))
+		}
 	}
 
 	if len(el) > 0 {

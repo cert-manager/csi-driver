@@ -54,10 +54,16 @@ const (
 	KeyStorePKCS12FileKey     = "csi.cert-manager.io/pkcs12-filename"
 	KeyStorePKCS12PasswordKey = "csi.cert-manager.io/pkcs12-password" // #nosec G101: False positive, gosec thinks this is a credential.
 
-	// KeyStorePKCS12PasswordSecretKey is the key within the secret referenced by
-	// nodePublishSecretRef that holds the PKCS12 keystore password. Takes
-	// precedence over KeyStorePKCS12PasswordKey when both are provided.
-	KeyStorePKCS12PasswordSecretKey = "pkcs12-password" // #nosec G101
+	// KeyStorePKCS12PasswordSecretKeyKey is the volume attribute that selects
+	// which key within the secret referenced by nodePublishSecretRef holds the
+	// PKCS12 keystore password. Defaults to DefaultKeyStorePKCS12PasswordSecretKey
+	// when unset.
+	KeyStorePKCS12PasswordSecretKeyKey = "csi.cert-manager.io/pkcs12-password-secret-key" // #nosec G101
+
+	// DefaultKeyStorePKCS12PasswordSecretKey is the default key within the
+	// secret referenced by nodePublishSecretRef that holds the PKCS12 keystore
+	// password when KeyStorePKCS12PasswordSecretKeyKey is not set.
+	DefaultKeyStorePKCS12PasswordSecretKey = "pkcs12-password" // #nosec G101
 )
 
 const (

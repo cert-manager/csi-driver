@@ -65,7 +65,7 @@ func Test_Handle(t *testing.T) {
 		"if PKCS12 enabled with password in secret, expect file written": {
 			meta: metadata.Metadata{
 				Secrets: map[string]string{
-					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+					csiapi.DefaultKeyStorePKCS12PasswordSecretKey: "secret-password",
 				},
 			},
 			attributes: map[string]string{
@@ -80,7 +80,7 @@ func Test_Handle(t *testing.T) {
 		"if both attribute and secret have a password, the attribute wins": {
 			meta: metadata.Metadata{
 				Secrets: map[string]string{
-					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+					csiapi.DefaultKeyStorePKCS12PasswordSecretKey: "secret-password",
 				},
 			},
 			attributes: map[string]string{
@@ -96,7 +96,7 @@ func Test_Handle(t *testing.T) {
 		"if attribute password is empty, fall back to the secret password": {
 			meta: metadata.Metadata{
 				Secrets: map[string]string{
-					csiapi.KeyStorePKCS12PasswordSecretKey: "secret-password",
+					csiapi.DefaultKeyStorePKCS12PasswordSecretKey: "secret-password",
 				},
 			},
 			attributes: map[string]string{
@@ -118,6 +118,38 @@ func Test_Handle(t *testing.T) {
 			attributes: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "true",
 				"csi.cert-manager.io/pkcs12-filename": "crt.p12",
+			},
+			pk:       root.PK,
+			chainPEM: root.PEM,
+			expFiles: []string{},
+			expErr:   true,
+		},
+		"if PKCS12 enabled with custom secret key, expect password read from that key": {
+			meta: metadata.Metadata{
+				Secrets: map[string]string{
+					"my-custom-key": "secret-password",
+				},
+			},
+			attributes: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":             "true",
+				"csi.cert-manager.io/pkcs12-password-secret-key": "my-custom-key",
+				"csi.cert-manager.io/pkcs12-filename":           "crt.p12",
+			},
+			pk:       root.PK,
+			chainPEM: root.PEM,
+			expFiles: []string{"crt.p12"},
+			expErr:   false,
+		},
+		"if custom secret key is set but missing from secret, expect error": {
+			meta: metadata.Metadata{
+				Secrets: map[string]string{
+					"pkcs12-password": "default-password",
+				},
+			},
+			attributes: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable":             "true",
+				"csi.cert-manager.io/pkcs12-password-secret-key": "my-custom-key",
+				"csi.cert-manager.io/pkcs12-filename":           "crt.p12",
 			},
 			pk:       root.PK,
 			chainPEM: root.PEM,
