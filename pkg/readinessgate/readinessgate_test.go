@@ -24,10 +24,25 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakeclient "k8s.io/client-go/kubernetes/fake"
+	corev1listers "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/tools/cache"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
+
+// newPodLister returns a PodLister backed by an in-memory indexer, optionally
+// pre-populated with the given pod. Used in place of the live informer to
+// exercise the readiness function's behaviour against the lister API.
+func newPodLister(t *testing.T, pod *corev1.Pod) corev1listers.PodLister {
+	t.Helper()
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{
+		cache.NamespaceIndex: cache.MetaNamespaceIndexFunc,
+	})
+	if pod != nil {
+		require.NoError(t, indexer.Add(pod))
+	}
+	return corev1listers.NewPodLister(indexer)
+}
 
 func Test_Parse(t *testing.T) {
 	tests := map[string]struct {
@@ -435,11 +450,12 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 			specs:     []string{"pod-ip:ipv6"},
 			wantReady: false,
 		},
-		"pod not found returns false": {
-			meta:      validMeta,
-			pod:       nil, // not registered in fake client
-			specs:     []string{"pod-ip:ipv6"},
-			wantReady: false,
+		"pod not yet in informer cache returns false with informer-miss reason": {
+			meta:       validMeta,
+			pod:        nil, // not added to indexer — simulates pre-sync state
+			specs:      []string{"pod-ip:ipv6"},
+			wantReady:  false,
+			wantReason: `pod my-namespace/my-pod not yet observed by informer`,
 		},
 		"single gate passes": {
 			meta:      validMeta,
@@ -504,17 +520,12 @@ func Test_NewReadyToRequestFunc(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			var client *fakeclient.Clientset
-			if tc.pod != nil {
-				client = fakeclient.NewSimpleClientset(tc.pod)
-			} else {
-				client = fakeclient.NewSimpleClientset()
-			}
+			podLister := newPodLister(t, tc.pod)
 
 			gates, err := Parse(tc.specs)
 			require.NoError(t, err)
 
-			fn := NewReadyToRequestFunc(client, gates)
+			fn := NewReadyToRequestFunc(podLister, gates)
 			ready, reason := fn(tc.meta)
 			assert.Equal(t, tc.wantReady, ready)
 			if tc.wantReason != "" {

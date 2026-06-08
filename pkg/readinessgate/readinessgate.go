@@ -26,17 +26,15 @@ limitations under the License.
 package readinessgate
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/cert-manager/csi-lib/manager"
 	"github.com/cert-manager/csi-lib/metadata"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	corev1listers "k8s.io/client-go/listers/core/v1"
 
 	csiapi "github.com/cert-manager/csi-driver/pkg/apis/v1alpha1"
 )
@@ -66,12 +64,16 @@ func Parse(specs []string) ([]Gate, error) {
 	return gates, nil
 }
 
-// NewReadyToRequestFunc builds a manager.ReadyToRequestFunc that fetches the
-// pod owning the volume and evaluates all gates against it. All gates must
-// pass (AND semantics). Intended to be paired with --continue-on-not-ready=true
-// so that NodePublishVolume succeeds immediately and cert issuance is retried
-// asynchronously until all gates pass.
-func NewReadyToRequestFunc(client kubernetes.Interface, gates []Gate) manager.ReadyToRequestFunc {
+// NewReadyToRequestFunc builds a manager.ReadyToRequestFunc that reads the pod
+// owning the volume from the provided node-scoped pod lister and evaluates all
+// gates against it. All gates must pass (AND semantics). Intended to be paired
+// with --continue-on-not-ready=true so that NodePublishVolume succeeds
+// immediately and cert issuance is retried asynchronously until all gates pass.
+//
+// The lister is expected to be backed by a shared informer scoped to the local
+// node via a spec.nodeName field selector. Reading from the informer cache
+// avoids a per-evaluation apiserver call.
+func NewReadyToRequestFunc(podLister corev1listers.PodLister, gates []Gate) manager.ReadyToRequestFunc {
 	return func(meta metadata.Metadata) (bool, string) {
 		podName := meta.VolumeContext[csiapi.K8sVolumeContextKeyPodName]
 		podNamespace := meta.VolumeContext[csiapi.K8sVolumeContextKeyPodNamespace]
@@ -79,16 +81,15 @@ func NewReadyToRequestFunc(client kubernetes.Interface, gates []Gate) manager.Re
 			return false, "pod name or namespace not present in volume context"
 		}
 
-		// TODO: replace this live Get with a pod informer scoped to the local node
-		// (spec.nodeName field selector). The renewal loop fires every second per
-		// managed volume, so this generates one API call per second per pending volume.
-		// On a node with many pods awaiting certificates this can exhaust the client's
-		// default rate limit (5 QPS) and slow down gate evaluation.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
+		pod, err := podLister.Pods(podNamespace).Get(podName)
 		if err != nil {
-			return false, fmt.Sprintf("failed to get pod %s/%s: %v", podNamespace, podName, err)
+			if apierrors.IsNotFound(err) {
+				// Pod is not yet in the informer cache. This is normal in the
+				// brief window between NodePublishVolume and the informer
+				// observing the new pod. csi-lib's renewal loop will retry.
+				return false, fmt.Sprintf("pod %s/%s not yet observed by informer", podNamespace, podName)
+			}
+			return false, fmt.Sprintf("failed to read pod %s/%s from informer: %v", podNamespace, podName, err)
 		}
 
 		var reasons []string
