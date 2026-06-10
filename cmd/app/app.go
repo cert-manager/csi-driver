@@ -32,7 +32,11 @@ import (
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -108,7 +112,27 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to build kubernetes client: %w", err)
 				}
-				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(k8sClient, gates) //nolint:contextcheck // manager.ReadyToRequestFunc does not accept a context; context.Background() inside is intentional.
+
+				// Scope the informer to pods on this node so cache memory is
+				// bounded to the local pod count. The driver runs as a
+				// DaemonSet, so a node-scoped informer is the right granularity.
+				nodeSelector := fields.OneTermEqualSelector("spec.nodeName", opts.NodeID).String()
+				podInformerFactory := informers.NewSharedInformerFactoryWithOptions(
+					k8sClient,
+					0, // no periodic resync; informer events are sufficient
+					informers.WithTweakListOptions(func(o *metav1.ListOptions) {
+						o.FieldSelector = nodeSelector
+					}),
+				)
+				podLister := podInformerFactory.Core().V1().Pods().Lister()
+
+				podInformerFactory.Start(ctx.Done())
+				if !cache.WaitForCacheSync(ctx.Done(), podInformerFactory.Core().V1().Pods().Informer().HasSynced) {
+					return fmt.Errorf("failed to sync pod informer cache")
+				}
+				log.Info("pod informer cache synced", "node", opts.NodeID)
+
+				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(podLister, gates)
 			}
 
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
