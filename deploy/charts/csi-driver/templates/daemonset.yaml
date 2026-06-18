@@ -82,10 +82,15 @@ spec:
               mountPath: /plugin
 
         - name: cert-manager-csi-driver
-          {{- with .Values.securityContext }}
+          # This container mounts pods-mount-dir and csi-data-dir with
+          # mountPropagation: Bidirectional, which Kubernetes only permits for
+          # privileged containers, so it must run privileged. See
+          # https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            runAsUser: 0
+            privileged: true
+            capabilities: { drop: [ "ALL" ] }
+            readOnlyRootFilesystem: true
           image: "{{ template "cert-manager-csi-driver.image" (tuple .Values.image .Values.imageRegistry .Values.imageNamespace (printf ":%s" $.Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args :

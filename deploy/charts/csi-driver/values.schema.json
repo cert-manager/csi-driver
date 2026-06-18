@@ -69,9 +69,6 @@
         "resources": {
           "$ref": "#/$defs/helm-values.resources"
         },
-        "securityContext": {
-          "$ref": "#/$defs/helm-values.securityContext"
-        },
         "tolerations": {
           "$ref": "#/$defs/helm-values.tolerations"
         }
@@ -585,20 +582,6 @@
     "helm-values.resources": {
       "default": {},
       "description": "Kubernetes pod resources requests/limits for cert-manager-csi-driver.\n\nFor example:\nresources:\n  limits:\n    cpu: 100m\n    memory: 128Mi\n  requests:\n    cpu: 100m\n    memory: 128Mi",
-      "type": "object"
-    },
-    "helm-values.securityContext": {
-      "default": {
-        "capabilities": {
-          "drop": [
-            "ALL"
-          ]
-        },
-        "privileged": true,
-        "readOnlyRootFilesystem": true,
-        "runAsUser": 0
-      },
-      "description": "Container security context for the cert-manager-csi-driver container.\n\nNOTE: privileged is required by default because this container mounts pods-mount-dir and csi-data-dir with mountPropagation: Bidirectional, which. Kubernetes only permits for privileged containers. Setting privileged: false without also changing the mount propagation will prevent the driver pods from starting. See https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation",
       "type": "object"
     },
     "helm-values.tolerations": {

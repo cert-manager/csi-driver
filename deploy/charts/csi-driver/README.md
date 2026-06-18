@@ -416,21 +416,6 @@ Optional additional labels to add to the csi-driver pods.
 
 Pod-level security context for the csi-driver DaemonSet pods. For more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
 
-#### **securityContext** ~ `object`
-> Default value:
-> ```yaml
-> capabilities:
->   drop:
->     - ALL
-> privileged: true
-> readOnlyRootFilesystem: true
-> runAsUser: 0
-> ```
-
-Container security context for the cert-manager-csi-driver container.  
-  
-NOTE: privileged is required by default because this container mounts pods-mount-dir and csi-data-dir with mountPropagation: Bidirectional, which. Kubernetes only permits for privileged containers. Setting privileged: false without also changing the mount propagation will prevent the driver pods from starting. See https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation
-
 #### **nodeDriverRegistrarSecurityContext** ~ `object`
 > Default value:
 > ```yaml

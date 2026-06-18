@@ -32,25 +32,16 @@ tests:
           path: spec.template.spec.securityContext.seccompProfile.type
           value: RuntimeDefault
 
-  - it: lets operators opt into a non-privileged context with CAP_SYS_ADMIN
+  - it: lets operators override a sidecar securityContext
     set:
-      securityContext:
-        runAsUser: 0
-        privileged: false
+      nodeDriverRegistrarSecurityContext:
+        runAsUser: 1000
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: true
-        capabilities:
-          add:
-            - SYS_ADMIN
-          drop:
-            - ALL
     asserts:
       - equal:
-          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.privileged
-          value: false
-      - contains:
-          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.capabilities.add
-          content: SYS_ADMIN
+          path: spec.template.spec.containers[?(@.name=="node-driver-registrar")].securityContext.runAsUser
+          value: 1000
 
   - it: lets operators override the pod-level securityContext
     set:
@@ -66,10 +57,3 @@ tests:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
           value: 1000
-
-  - it: omits the container securityContext entirely when set to null
-    set:
-      securityContext: null
-    asserts:
-      - notExists:
-          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext
