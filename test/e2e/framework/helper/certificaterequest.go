@@ -48,7 +48,7 @@ func (h *Helper) WaitForCertificateRequestsReady(ctx context.Context, pod *corev
 		crs, err = h.findCertificateRequests(crList.Items, pod.UID)
 		if err != nil {
 			log.Logf("Cannot find CertificateRequests for pod, waiting...")
-			return false, nil // nolint:nilerr // We want to ignore this error and wait for the CRs to be created
+			return false, nil //nolint:nilerr // CRDs may not exist yet during safe-start; retry until they are created.
 		}
 
 		for _, cr := range crs {
