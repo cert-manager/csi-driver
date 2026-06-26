@@ -365,6 +365,26 @@ Examples:
   - "pod-ip:ipv6"  
   - "pod-condition:NetworkAttached=True"  
   - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
+#### **app.driver.gateBackoff.duration** ~ `string`
+> Default value:
+> ```yaml
+> 1s
+> ```
+#### **app.driver.gateBackoff.factor** ~ `number`
+> Default value:
+> ```yaml
+> 2
+> ```
+#### **app.driver.gateBackoff.jitter** ~ `number`
+> Default value:
+> ```yaml
+> 0.5
+> ```
+#### **app.driver.gateBackoff.cap** ~ `string`
+> Default value:
+> ```yaml
+> 10s
+> ```
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml

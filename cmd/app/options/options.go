@@ -19,6 +19,7 @@ package options
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	cmclient "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	"github.com/go-logr/logr"
@@ -98,6 +99,24 @@ type Options struct {
 	// KubernetesAPIBurst is the maximum burst queries-per-second of requests
 	// sent to the Kubernetes apiserver.
 	KubernetesAPIBurst int
+
+	// GateBackoffDuration is the base backoff applied when ReadyToRequestFunc
+	// (i.e. the readiness gates) reports the driver is not yet ready to issue.
+	// Gate-pending is a wait state, not a failure, and warrants a much faster
+	// retry cadence than the renewal backoff used for issuance errors. Defaults
+	// mirror csi-lib's defaults for GateBackoffConfig.
+	GateBackoffDuration time.Duration
+
+	// GateBackoffFactor multiplies GateBackoffDuration after each failed
+	// gate-pending attempt.
+	GateBackoffFactor float64
+
+	// GateBackoffJitter applies +/- this fraction of the duration to each
+	// gate-pending wait.
+	GateBackoffJitter float64
+
+	// GateBackoffCap is the maximum duration between gate-pending retries.
+	GateBackoffCap time.Duration
 }
 
 func New() *Options {
@@ -204,4 +223,17 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 			"  pod-condition:<Type>[=<Status>]    Status defaults to True\n"+
 			"  pod-annotation:<key>               annotation key must be present\n"+
 			"Must be combined with --continue-on-not-ready=true to avoid blocking NodePublishVolume.")
+
+	// Gate-pending backoff: applied between readiness-gate checks while the gate
+	// is not yet met. Distinct from the renewal backoff used for issuance errors,
+	// which is configured by csi-lib's defaults. Defaults below mirror csi-lib's
+	// own defaults for GateBackoffConfig so leaving them unset is a no-op.
+	fs.DurationVar(&o.GateBackoffDuration, "gate-backoff-duration", time.Second,
+		"Base duration between gate-pending retries when --pod-readiness-gate is set.")
+	fs.Float64Var(&o.GateBackoffFactor, "gate-backoff-factor", 2.0,
+		"Multiplier applied to gate-backoff-duration after each failed gate check.")
+	fs.Float64Var(&o.GateBackoffJitter, "gate-backoff-jitter", 0.5,
+		"Random jitter (+/- fraction of duration) applied to each gate-pending wait.")
+	fs.DurationVar(&o.GateBackoffCap, "gate-backoff-cap", 10*time.Second,
+		"Maximum duration between gate-pending retries.")
 }
