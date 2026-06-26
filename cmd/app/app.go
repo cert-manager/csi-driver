@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"math"
 	"net/http"
 
 	"github.com/cert-manager/csi-lib/driver"
@@ -34,6 +35,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -133,6 +135,17 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				log.Info("pod informer cache synced", "node", opts.NodeID)
 
 				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(podLister, gates)
+
+				// Gate-pending backoff applies only when ReadyToRequestFunc can
+				// return false, which is only true when readiness gates are set.
+				// Flag defaults mirror csi-lib's own defaults for GateBackoffConfig.
+				mgrOpts.GateBackoffConfig = &wait.Backoff{
+					Duration: opts.GateBackoffDuration,
+					Factor:   opts.GateBackoffFactor,
+					Jitter:   opts.GateBackoffJitter,
+					Cap:      opts.GateBackoffCap,
+					Steps:    math.MaxInt32,
+				}
 			}
 
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{

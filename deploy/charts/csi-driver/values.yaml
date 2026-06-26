@@ -238,6 +238,17 @@ app:
     #   - "pod-condition:NetworkAttached=True"
     #   - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
     podReadinessGates: []
+    # Backoff applied between gate-pending retries (i.e. when ReadyToRequest
+    # reports a readiness gate is not yet met). Distinct from csi-lib's
+    # renewal backoff, which protects against signer failures and is left at
+    # csi-lib's defaults. Values below mirror csi-lib's own defaults for
+    # GateBackoffConfig; override to tune polling cadence for slower or
+    # faster gate-resolution profiles.
+    gateBackoff:
+      duration: 1s
+      factor: 2.0
+      jitter: 0.5
+      cap: 60s
     # Configures the hostPath directory that the driver writes and mounts volumes from.
     csiDataDir: /tmp/cert-manager-csi-driver
   # Options for the liveness container.

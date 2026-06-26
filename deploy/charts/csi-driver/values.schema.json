@@ -98,6 +98,9 @@
         "csiDataDir": {
           "$ref": "#/$defs/helm-values.app.driver.csiDataDir"
         },
+        "gateBackoff": {
+          "$ref": "#/$defs/helm-values.app.driver.gateBackoff"
+        },
         "kubernetesAPIBurst": {
           "$ref": "#/$defs/helm-values.app.driver.kubernetesAPIBurst"
         },
@@ -125,6 +128,40 @@
       "default": "/tmp/cert-manager-csi-driver",
       "description": "Configures the hostPath directory that the driver writes and mounts volumes from.",
       "type": "string"
+    },
+    "helm-values.app.driver.gateBackoff": {
+      "additionalProperties": false,
+      "properties": {
+        "cap": {
+          "$ref": "#/$defs/helm-values.app.driver.gateBackoff.cap"
+        },
+        "duration": {
+          "$ref": "#/$defs/helm-values.app.driver.gateBackoff.duration"
+        },
+        "factor": {
+          "$ref": "#/$defs/helm-values.app.driver.gateBackoff.factor"
+        },
+        "jitter": {
+          "$ref": "#/$defs/helm-values.app.driver.gateBackoff.jitter"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.driver.gateBackoff.cap": {
+      "default": "10s",
+      "type": "string"
+    },
+    "helm-values.app.driver.gateBackoff.duration": {
+      "default": "1s",
+      "type": "string"
+    },
+    "helm-values.app.driver.gateBackoff.factor": {
+      "default": 2,
+      "type": "number"
+    },
+    "helm-values.app.driver.gateBackoff.jitter": {
+      "default": 0.5,
+      "type": "number"
     },
     "helm-values.app.driver.kubernetesAPIBurst": {
       "default": 0,
