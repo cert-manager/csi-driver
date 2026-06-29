@@ -383,7 +383,7 @@ Examples:
 #### **app.driver.gateBackoff.cap** ~ `string`
 > Default value:
 > ```yaml
-> 10s
+> 60s
 > ```
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:

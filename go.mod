@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/cert-manager/cert-manager v1.20.3
-	github.com/cert-manager/csi-lib v0.10.1-0.20260624100922-4eeba3e02d4e
+	github.com/cert-manager/csi-lib v0.11.0
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
