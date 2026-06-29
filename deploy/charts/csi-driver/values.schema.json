@@ -36,11 +36,17 @@
         "livenessProbeImage": {
           "$ref": "#/$defs/helm-values.livenessProbeImage"
         },
+        "livenessProbeSecurityContext": {
+          "$ref": "#/$defs/helm-values.livenessProbeSecurityContext"
+        },
         "metrics": {
           "$ref": "#/$defs/helm-values.metrics"
         },
         "nodeDriverRegistrarImage": {
           "$ref": "#/$defs/helm-values.nodeDriverRegistrarImage"
+        },
+        "nodeDriverRegistrarSecurityContext": {
+          "$ref": "#/$defs/helm-values.nodeDriverRegistrarSecurityContext"
         },
         "nodeSelector": {
           "$ref": "#/$defs/helm-values.nodeSelector"
@@ -53,6 +59,9 @@
         },
         "podLabels": {
           "$ref": "#/$defs/helm-values.podLabels"
+        },
+        "podSecurityContext": {
+          "$ref": "#/$defs/helm-values.podSecurityContext"
         },
         "priorityClassName": {
           "$ref": "#/$defs/helm-values.priorityClassName"
@@ -320,6 +329,20 @@
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
+    "helm-values.livenessProbeSecurityContext": {
+      "default": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true,
+        "runAsUser": 0
+      },
+      "description": "Container security context for the liveness-probe container.",
+      "type": "object"
+    },
     "helm-values.metrics": {
       "additionalProperties": false,
       "properties": {
@@ -481,6 +504,20 @@
       "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
       "type": "string"
     },
+    "helm-values.nodeDriverRegistrarSecurityContext": {
+      "default": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true,
+        "runAsUser": 0
+      },
+      "description": "Container security context for the node-driver-registrar container.",
+      "type": "object"
+    },
     "helm-values.nodeSelector": {
       "default": {
         "kubernetes.io/os": "linux"
@@ -526,6 +563,15 @@
     "helm-values.podLabels": {
       "default": {},
       "description": "Optional additional labels to add to the csi-driver pods.",
+      "type": "object"
+    },
+    "helm-values.podSecurityContext": {
+      "default": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "description": "Pod-level security context for the csi-driver DaemonSet pods. For more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).",
       "type": "object"
     },
     "helm-values.priorityClassName": {
