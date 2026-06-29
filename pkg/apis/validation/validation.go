@@ -236,19 +236,18 @@ func pkcs12Values(path *field.Path, attr map[string]string) field.ErrorList {
 	var el field.ErrorList
 
 	if enable := attr[csiapi.KeyStorePKCS12EnableKey]; len(enable) > 0 {
-		if file := attr[csiapi.KeyStorePKCS12FileKey]; len(file) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
-		}
-		if password := attr[csiapi.KeyStorePKCS12PasswordKey]; len(password) == 0 {
-			el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
-		}
-
 		switch enable {
-		case "false", "true":
+		case "true":
+			if file := attr[csiapi.KeyStorePKCS12FileKey]; len(file) == 0 {
+				el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12FileKey), "required attribute when PKCS12 KeyStore is enabled"))
+			}
+			if password := attr[csiapi.KeyStorePKCS12PasswordKey]; len(password) == 0 {
+				el = append(el, field.Required(path.Child(csiapi.KeyStorePKCS12PasswordKey), "required attribute when PKCS12 KeyStore is enabled"))
+			}
+		case "false":
 		default:
 			el = append(el, field.NotSupported(path.Child(csiapi.KeyStorePKCS12EnableKey), enable, []string{"true", "false"}))
 		}
-
 	} else {
 		// No PKCS12 attributes should be defined when PKCS12 is not defined.
 
