@@ -148,7 +148,7 @@
       "type": "object"
     },
     "helm-values.app.driver.gateBackoff.cap": {
-      "default": "10s",
+      "default": "60s",
       "type": "string"
     },
     "helm-values.app.driver.gateBackoff.duration": {
