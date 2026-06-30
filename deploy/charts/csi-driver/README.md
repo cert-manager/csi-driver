@@ -370,21 +370,29 @@ Examples:
 > ```yaml
 > 1s
 > ```
+
+Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt.
 #### **app.driver.gateBackoff.factor** ~ `number`
 > Default value:
 > ```yaml
 > 2
 > ```
+
+Multiplier applied to the previous wait after each failed gate check. Must be >= 1. With factor=1, the wait stays constant at `duration`.
 #### **app.driver.gateBackoff.jitter** ~ `number`
 > Default value:
 > ```yaml
 > 0.5
 > ```
+
+Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1]. With jitter=0, retries are deterministic.
 #### **app.driver.gateBackoff.cap** ~ `string`
 > Default value:
 > ```yaml
-> 60s
+> 10s
 > ```
+
+Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`.
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml

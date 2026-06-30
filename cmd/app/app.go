@@ -95,6 +95,11 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			if len(gates) > 0 && !opts.ContinueOnNotReady {
 				return fmt.Errorf("--pod-readiness-gate requires --continue-on-not-ready=true")
 			}
+			if len(gates) > 0 {
+				if err := validateGateBackoff(opts); err != nil {
+					return err
+				}
+			}
 
 			mngrlog := opts.Logr.WithName("manager")
 			mgrOpts := manager.Options{
@@ -242,4 +247,24 @@ func signRequest(_ metadata.Metadata, key crypto.PrivateKey, request *x509.Certi
 		Type:  "CERTIFICATE REQUEST",
 		Bytes: csrDer,
 	}), nil
+}
+
+// validateGateBackoff sanity-checks the --gate-backoff-* flag values so a
+// misconfigured operator gets a clear startup error rather than a runtime
+// retry storm (e.g. Duration=0 → infinite no-wait spin, Jitter>1 → undefined
+// behaviour in wait.Backoff).
+func validateGateBackoff(opts *options.Options) error {
+	if opts.GateBackoffDuration <= 0 {
+		return fmt.Errorf("--gate-backoff-duration must be > 0, got %s", opts.GateBackoffDuration)
+	}
+	if opts.GateBackoffFactor < 1 {
+		return fmt.Errorf("--gate-backoff-factor must be >= 1, got %v", opts.GateBackoffFactor)
+	}
+	if opts.GateBackoffJitter < 0 || opts.GateBackoffJitter > 1 {
+		return fmt.Errorf("--gate-backoff-jitter must be in [0, 1], got %v", opts.GateBackoffJitter)
+	}
+	if opts.GateBackoffCap < opts.GateBackoffDuration {
+		return fmt.Errorf("--gate-backoff-cap (%s) must be >= --gate-backoff-duration (%s)", opts.GateBackoffCap, opts.GateBackoffDuration)
+	}
+	return nil
 }
