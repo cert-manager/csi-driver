@@ -148,24 +148,16 @@
       "type": "object"
     },
     "helm-values.app.driver.gateBackoff.cap": {
-      "default": "10s",
-      "description": "Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`.",
-      "type": "string"
+      "description": "Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`. Unset defers to csi-lib's default."
     },
     "helm-values.app.driver.gateBackoff.duration": {
-      "default": "1s",
-      "description": "Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt.",
-      "type": "string"
+      "description": "Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt. Unset defers to csi-lib's default."
     },
     "helm-values.app.driver.gateBackoff.factor": {
-      "default": 2,
-      "description": "Multiplier applied to the previous wait after each failed gate check. Must be >= 1. With factor=1, the wait stays constant at `duration`.",
-      "type": "number"
+      "description": "Multiplier applied to the previous wait after each failed gate check. Must be >= 1. With factor=1, the wait stays constant at `duration`.\nUnset defers to csi-lib's default."
     },
     "helm-values.app.driver.gateBackoff.jitter": {
-      "default": 0.5,
-      "description": "Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1]. With jitter=0, retries are deterministic.",
-      "type": "number"
+      "description": "Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1]. With jitter=0, retries are deterministic. Unset defers to csi-lib's default."
     },
     "helm-values.app.driver.kubernetesAPIBurst": {
       "default": 0,

@@ -365,34 +365,35 @@ Examples:
   - "pod-ip:ipv6"  
   - "pod-condition:NetworkAttached=True"  
   - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
-#### **app.driver.gateBackoff.duration** ~ `string`
+#### **app.driver.gateBackoff.duration** ~ `unknown`
 > Default value:
 > ```yaml
-> 1s
+> null
 > ```
 
-Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt.
-#### **app.driver.gateBackoff.factor** ~ `number`
+Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt. Unset defers to csi-lib's default.
+#### **app.driver.gateBackoff.factor** ~ `unknown`
 > Default value:
 > ```yaml
-> 2
+> null
 > ```
 
-Multiplier applied to the previous wait after each failed gate check. Must be >= 1. With factor=1, the wait stays constant at `duration`.
-#### **app.driver.gateBackoff.jitter** ~ `number`
+Multiplier applied to the previous wait after each failed gate check. Must be >= 1. With factor=1, the wait stays constant at `duration`.  
+Unset defers to csi-lib's default.
+#### **app.driver.gateBackoff.jitter** ~ `unknown`
 > Default value:
 > ```yaml
-> 0.5
+> null
 > ```
 
-Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1]. With jitter=0, retries are deterministic.
-#### **app.driver.gateBackoff.cap** ~ `string`
+Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1]. With jitter=0, retries are deterministic. Unset defers to csi-lib's default.
+#### **app.driver.gateBackoff.cap** ~ `unknown`
 > Default value:
 > ```yaml
-> 10s
+> null
 > ```
 
-Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`.
+Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`. Unset defers to csi-lib's default.
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml

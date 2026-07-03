@@ -141,15 +141,24 @@ func NewCommand(ctx context.Context) *cobra.Command {
 
 				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(podLister, gates)
 
-				// Gate-pending backoff applies only when ReadyToRequestFunc can
-				// return false, which is only true when readiness gates are set.
-				// Flag defaults mirror csi-lib's own defaults for GateBackoffConfig.
-				mgrOpts.GateBackoffConfig = &wait.Backoff{
-					Duration: opts.GateBackoffDuration,
-					Factor:   opts.GateBackoffFactor,
-					Jitter:   opts.GateBackoffJitter,
-					Cap:      opts.GateBackoffCap,
-					Steps:    math.MaxInt32,
+				// Only build GateBackoffConfig if the operator explicitly set
+				// one of the --gate-backoff-* flags. Our flag defaults happen
+				// to mirror csi-lib's own GateBackoffConfig defaults today, but
+				// hardcoding them here would silently pin csi-driver to stale
+				// values if csi-lib ever changes its defaults. Leaving
+				// GateBackoffConfig nil lets csi-lib apply its own (possibly
+				// updated) defaults.
+				if fs := cmd.Flags(); fs.Changed("gate-backoff-duration") ||
+					fs.Changed("gate-backoff-factor") ||
+					fs.Changed("gate-backoff-jitter") ||
+					fs.Changed("gate-backoff-cap") {
+					mgrOpts.GateBackoffConfig = &wait.Backoff{
+						Duration: opts.GateBackoffDuration,
+						Factor:   opts.GateBackoffFactor,
+						Jitter:   opts.GateBackoffJitter,
+						Cap:      opts.GateBackoffCap,
+						Steps:    math.MaxInt32,
+					}
 				}
 			}
 
