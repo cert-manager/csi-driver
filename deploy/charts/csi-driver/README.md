@@ -393,7 +393,8 @@ Random jitter applied as +/- this fraction of the current wait. Must be in [0, 1
 > null
 > ```
 
-Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`. Unset defers to csi-lib's default.
+Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be 0 (uncapped) or >=  
+`duration`. Unset defers to csi-lib's default.
 #### **app.driver.csiDataDir** ~ `string`
 > Default value:
 > ```yaml

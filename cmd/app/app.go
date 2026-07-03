@@ -272,8 +272,13 @@ func validateGateBackoff(opts *options.Options) error {
 	if opts.GateBackoffJitter < 0 || opts.GateBackoffJitter > 1 {
 		return fmt.Errorf("--gate-backoff-jitter must be in [0, 1], got %v", opts.GateBackoffJitter)
 	}
-	if opts.GateBackoffCap < opts.GateBackoffDuration {
-		return fmt.Errorf("--gate-backoff-cap (%s) must be >= --gate-backoff-duration (%s)", opts.GateBackoffCap, opts.GateBackoffDuration)
+	// wait.Backoff treats Cap == 0 as "no cap" (see its delay() implementation:
+	// the cap is only applied when cap > 0), so it's a valid way to request
+	// unbounded exponential growth. Any other non-positive or sub-duration cap
+	// is nonsensical, since it would either immediately cap every step to
+	// less than the base duration or be silently negative.
+	if opts.GateBackoffCap != 0 && opts.GateBackoffCap < opts.GateBackoffDuration {
+		return fmt.Errorf("--gate-backoff-cap (%s) must be 0 (uncapped) or >= --gate-backoff-duration (%s)", opts.GateBackoffCap, opts.GateBackoffDuration)
 	}
 	return nil
 }

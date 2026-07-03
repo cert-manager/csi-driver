@@ -84,7 +84,24 @@ func TestValidateGateBackoff(t *testing.T) {
 				GateBackoffFactor:   1,
 				GateBackoffCap:      10 * time.Second,
 			},
-			wantErr: "--gate-backoff-cap (10s) must be >= --gate-backoff-duration (30s)",
+			wantErr: "--gate-backoff-cap (10s) must be 0 (uncapped) or >= --gate-backoff-duration (30s)",
+		},
+		"cap zero is uncapped and valid": {
+			opts: options.Options{
+				GateBackoffDuration: 30 * time.Second,
+				GateBackoffFactor:   2,
+				GateBackoffJitter:   0.5,
+				GateBackoffCap:      0,
+			},
+		},
+		"cap negative is invalid": {
+			opts: options.Options{
+				GateBackoffDuration: time.Second,
+				GateBackoffFactor:   2,
+				GateBackoffJitter:   0.5,
+				GateBackoffCap:      -time.Second,
+			},
+			wantErr: "--gate-backoff-cap (-1s) must be 0 (uncapped) or >= --gate-backoff-duration (1s)",
 		},
 	}
 

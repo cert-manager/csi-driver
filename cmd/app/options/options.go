@@ -238,5 +238,5 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	fs.Float64Var(&o.GateBackoffJitter, "gate-backoff-jitter", 0.5,
 		"Random jitter (+/- fraction of duration) applied to each gate-pending wait.")
 	fs.DurationVar(&o.GateBackoffCap, "gate-backoff-cap", 10*time.Second,
-		"Maximum duration between gate-pending retries.")
+		"Maximum duration between gate-pending retries. A value of 0 disables the cap, allowing unbounded exponential growth.")
 }
