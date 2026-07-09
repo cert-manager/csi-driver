@@ -148,7 +148,7 @@
       "type": "object"
     },
     "helm-values.app.driver.gateBackoff.cap": {
-      "description": "Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be >= `duration`. Unset defers to csi-lib's default."
+      "description": "Upper bound on the wait between gate-pending retries; the exponential growth from `factor` is capped here. Must be 0 (uncapped) or >=\n`duration`. Unset defers to csi-lib's default."
     },
     "helm-values.app.driver.gateBackoff.duration": {
       "description": "Base duration between gate-pending retries. The wait between the first failed gate check and the next attempt. Unset defers to csi-lib's default."
