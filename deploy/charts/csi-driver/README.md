@@ -407,6 +407,14 @@ Optional additional annotations to add to the csi-driver pods.
 > ```
 
 Optional additional labels to add to the csi-driver pods.
+#### **automountServiceAccountToken** ~ `bool`
+> Default value:
+> ```yaml
+> true
+> ```
+
+Automounting API credentials for the csi-driver pod.
+
 #### **resources** ~ `object`
 > Default value:
 > ```yaml

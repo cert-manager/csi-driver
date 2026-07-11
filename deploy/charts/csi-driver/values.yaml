@@ -256,6 +256,10 @@ podAnnotations: {}
 # Optional additional labels to add to the csi-driver pods.
 podLabels: {}
 
+# Automounting API credentials for the csi-driver pod.
+# +docs:property
+automountServiceAccountToken: true
+
 # Kubernetes pod resources requests/limits for cert-manager-csi-driver.
 #
 # For example:
