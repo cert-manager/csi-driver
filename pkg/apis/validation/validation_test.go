@@ -506,6 +506,12 @@ func Test_PKCS12Values(t *testing.T) {
 			},
 			expErr: nil,
 		},
+		"if key and password are not defined, and enabled is defined as false, expect no error": {
+			attr: map[string]string{
+				"csi.cert-manager.io/pkcs12-enable": "false",
+			},
+			expErr: nil,
+		},
 		"if key and password is defined, but enabled is defined as foo, expect error": {
 			attr: map[string]string{
 				"csi.cert-manager.io/pkcs12-enable":   "foo",
