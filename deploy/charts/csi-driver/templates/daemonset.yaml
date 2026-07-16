@@ -27,8 +27,10 @@ spec:
           {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
+      {{- with .Values.podSecurityContext }}
       securityContext:
-        seccompProfile: { type: RuntimeDefault }
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -42,11 +44,10 @@ spec:
       containers:
 
         - name: node-driver-registrar
+          {{- with .Values.nodeDriverRegistrarSecurityContext }}
           securityContext:
-            runAsUser: 0
-            allowPrivilegeEscalation: false
-            capabilities: { drop: [ "ALL" ] }
-            readOnlyRootFilesystem: true
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ template "cert-manager-csi-driver.image" (tuple .Values.nodeDriverRegistrarImage .Values.imageRegistry .Values.imageNamespace .Values.nodeDriverRegistrarImage._defaultReference) }}"
           imagePullPolicy: {{ .Values.nodeDriverRegistrarImage.pullPolicy }}
           args:
@@ -65,11 +66,10 @@ spec:
               mountPath: /registration
 
         - name: liveness-probe
+          {{- with .Values.livenessProbeSecurityContext }}
           securityContext:
-            runAsUser: 0
-            allowPrivilegeEscalation: false
-            capabilities: { drop: [ "ALL" ] }
-            readOnlyRootFilesystem: true
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           image: "{{ template "cert-manager-csi-driver.image" (tuple .Values.livenessProbeImage .Values.imageRegistry .Values.imageNamespace .Values.livenessProbeImage._defaultReference) }}"
           imagePullPolicy: {{ .Values.livenessProbeImage.pullPolicy }}
           args:
@@ -82,6 +82,10 @@ spec:
               mountPath: /plugin
 
         - name: cert-manager-csi-driver
+          # This container mounts pods-mount-dir and csi-data-dir with
+          # mountPropagation: Bidirectional, which Kubernetes only permits for
+          # privileged containers, so it must run privileged. See
+          # https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation
           securityContext:
             runAsUser: 0
             privileged: true

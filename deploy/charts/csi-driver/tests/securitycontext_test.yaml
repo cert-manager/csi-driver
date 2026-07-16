@@ -1,0 +1,59 @@
+suite: securityContext configurability
+templates:
+  - daemonset.yaml
+tests:
+  - it: preserves the default securityContext on the cert-manager-csi-driver container
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.privileged
+          value: true
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.runAsUser
+          value: 0
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.readOnlyRootFilesystem
+          value: true
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="cert-manager-csi-driver")].securityContext.capabilities.drop
+          content: ALL
+
+  - it: preserves the default securityContext on the sidecar containers
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="node-driver-registrar")].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="liveness-probe")].securityContext.allowPrivilegeEscalation
+          value: false
+
+  - it: preserves the default pod-level securityContext
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+
+  - it: lets operators override a sidecar securityContext
+    set:
+      nodeDriverRegistrarSecurityContext:
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="node-driver-registrar")].securityContext.runAsUser
+          value: 1000
+
+  - it: lets operators override the pod-level securityContext
+    set:
+      podSecurityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1000
