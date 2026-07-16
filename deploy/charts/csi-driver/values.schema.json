@@ -9,6 +9,9 @@
         "app": {
           "$ref": "#/$defs/helm-values.app"
         },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/helm-values.automountServiceAccountToken"
+        },
         "commonLabels": {
           "$ref": "#/$defs/helm-values.commonLabels"
         },
@@ -175,6 +178,11 @@
       "default": 1,
       "description": "Verbosity of cert-manager-csi-driver logging.",
       "type": "number"
+    },
+    "helm-values.automountServiceAccountToken": {
+      "default": true,
+      "description": "Automounting API credentials for the csi-driver pod.",
+      "type": "boolean"
     },
     "helm-values.commonLabels": {
       "default": {},
