@@ -99,10 +99,8 @@ spec:
             - --continue-on-not-ready={{ .Values.app.driver.continueOnNotReady }}
             - --kube-api-qps={{ .Values.app.driver.kubernetesAPIQPS }}
             - --kube-api-burst={{ .Values.app.driver.kubernetesAPIBurst }}
-{{- if .Values.app.driver.podReadinessGates }}
 {{- range .Values.app.driver.podReadinessGates }}
             - --pod-readiness-gate={{ . }}
-{{- end }}
 {{- end }}
 {{- /*
 Only render the flags an operator actually set. csi-driver only builds a

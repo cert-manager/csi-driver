@@ -32,6 +32,7 @@ import (
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -140,26 +141,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				log.Info("pod informer cache synced", "node", opts.NodeID)
 
 				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(podLister, gates)
-
-				// Only build GateBackoffConfig if the operator explicitly set
-				// one of the --gate-backoff-* flags. Our flag defaults happen
-				// to mirror csi-lib's own GateBackoffConfig defaults today, but
-				// hardcoding them here would silently pin csi-driver to stale
-				// values if csi-lib ever changes its defaults. Leaving
-				// GateBackoffConfig nil lets csi-lib apply its own (possibly
-				// updated) defaults.
-				if fs := cmd.Flags(); fs.Changed("gate-backoff-duration") ||
-					fs.Changed("gate-backoff-factor") ||
-					fs.Changed("gate-backoff-jitter") ||
-					fs.Changed("gate-backoff-cap") {
-					mgrOpts.GateBackoffConfig = &wait.Backoff{
-						Duration: opts.GateBackoffDuration,
-						Factor:   opts.GateBackoffFactor,
-						Jitter:   opts.GateBackoffJitter,
-						Cap:      opts.GateBackoffCap,
-						Steps:    math.MaxInt32,
-					}
-				}
+				mgrOpts.GateBackoffConfig = gateBackoffConfigFromFlags(cmd.Flags(), opts)
 			}
 
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
@@ -281,4 +263,39 @@ func validateGateBackoff(opts *options.Options) error {
 		return fmt.Errorf("--gate-backoff-cap (%s) must be 0 (uncapped) or >= --gate-backoff-duration (%s)", opts.GateBackoffCap, opts.GateBackoffDuration)
 	}
 	return nil
+}
+
+// gateBackoffConfigFromFlags builds the wait.Backoff passed to csi-lib's
+// manager.Options.GateBackoffConfig, or returns nil if the operator hasn't
+// touched any --gate-backoff-* flag at all, so csi-lib applies its own
+// (possibly newer) defaults instead of a stale copy of them.
+//
+// NOTE: this is all-or-nothing, not per-field. If *any* one of the four
+// flags was explicitly set (fs.Changed), the resulting struct pins *all
+// four* fields to their current CLI values -- including the three left
+// untouched, which just hold pflag's registered defaults. Those defaults
+// happen to mirror csi-lib's own GateBackoffConfig defaults today, but
+// aren't dynamically sourced from it, so a future csi-lib default bump
+// won't be picked up for the untouched fields once any one flag is set.
+// True per-field deferral would require csi-lib itself to merge partial
+// overrides against its own defaults field-by-field (it currently only
+// checks whether the whole GateBackoffConfig is nil), which is out of
+// scope for this repo. Until then, operators who override one gate-backoff
+// flag should be aware they are implicitly pinning the rest to the CLI's
+// current defaults, not deferring them to csi-lib.
+func gateBackoffConfigFromFlags(fs *pflag.FlagSet, opts *options.Options) *wait.Backoff {
+	if !fs.Changed("gate-backoff-duration") &&
+		!fs.Changed("gate-backoff-factor") &&
+		!fs.Changed("gate-backoff-jitter") &&
+		!fs.Changed("gate-backoff-cap") {
+		return nil
+	}
+
+	return &wait.Backoff{
+		Duration: opts.GateBackoffDuration,
+		Factor:   opts.GateBackoffFactor,
+		Jitter:   opts.GateBackoffJitter,
+		Cap:      opts.GateBackoffCap,
+		Steps:    math.MaxInt32,
+	}
 }

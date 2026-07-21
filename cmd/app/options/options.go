@@ -227,10 +227,17 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	// Gate-pending backoff: applied between readiness-gate checks while the gate
 	// is not yet met. Distinct from the renewal backoff used for issuance errors,
 	// which is configured by csi-lib's defaults. Defaults below mirror csi-lib's
-	// own defaults for GateBackoffConfig; app.go only builds a GateBackoffConfig
-	// when one of these flags was actually set (via FlagSet.Changed), so leaving
-	// them at these defaults is a true no-op rather than a value that shadows a
-	// future csi-lib default change.
+	// own defaults for GateBackoffConfig. app.go's gateBackoffConfigFromFlags
+	// only builds a GateBackoffConfig if at least one of these flags was
+	// explicitly set (via FlagSet.Changed), so leaving *all* of them untouched
+	// is a true no-op that defers entirely to csi-lib's defaults.
+	//
+	// NOTE this is all-or-nothing, not per-field: setting any *one* of these
+	// flags pins all four fields (including the ones left at these defaults)
+	// to their current CLI values for the lifetime of the process. If csi-lib
+	// later changes its own defaults, an operator who only overrode e.g.
+	// gate-backoff-duration will keep today's factor/jitter/cap values rather
+	// than picking up the new ones. See gateBackoffConfigFromFlags for details.
 	fs.DurationVar(&o.GateBackoffDuration, "gate-backoff-duration", time.Second,
 		"Base duration between gate-pending retries when --pod-readiness-gate is set.")
 	fs.Float64Var(&o.GateBackoffFactor, "gate-backoff-factor", 2.0,

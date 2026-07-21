@@ -241,10 +241,17 @@ app:
     # Backoff applied between gate-pending retries (i.e. when ReadyToRequest
     # reports a readiness gate is not yet met). Distinct from csi-lib's
     # renewal backoff, which protects against signer failures and is left at
-    # csi-lib's defaults. Leave any of the fields below unset (null) to defer
-    # to csi-lib's own GateBackoffConfig defaults instead of pinning to a
-    # copy of them here — only set a field to override csi-lib's tuning for
-    # slower or faster gate-resolution profiles.
+    # csi-lib's defaults. Leave *all* of the fields below unset (null) to
+    # defer entirely to csi-lib's own GateBackoffConfig defaults instead of
+    # pinning to a copy of them here.
+    #
+    # NOTE this is all-or-nothing, not per-field: setting *any one* field
+    # below pins all four fields (including any left null, which fall back to
+    # the CLI's own defaults, not csi-lib's) to the CLI's current values for
+    # the driver's lifetime. Only set a field here to intentionally override
+    # csi-lib's tuning for a slower or faster gate-resolution profile; be
+    # aware that doing so also freezes the other three fields at today's CLI
+    # defaults even if csi-lib's own defaults change in a future release.
     gateBackoff:
       # Base duration between gate-pending retries. The wait between the first
       # failed gate check and the next attempt. Unset defers to csi-lib's default.
