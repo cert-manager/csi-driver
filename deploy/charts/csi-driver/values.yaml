@@ -238,6 +238,49 @@ app:
     #   - "pod-condition:NetworkAttached=True"
     #   - "pod-annotation:k8s.v1.cni.cncf.io/networks-status"
     podReadinessGates: []
+    # Base duration between gate-pending retries. The wait between the first
+    # failed gate check and the next attempt.
+    # +docs:property=app.driver.gateBackoff.duration
+    # duration: 1s
+
+    # Multiplier applied to the previous wait after each failed gate check.
+    # Must be >= 1. With factor=1, the wait stays constant at `duration`.
+    # +docs:property=app.driver.gateBackoff.factor
+    # factor: 2.0
+
+    # Random jitter applied as +/- this fraction of the current wait. Must be
+    # in [0, 1]. With jitter=0, retries are deterministic. NOTE: jitter=0
+    # cannot be set via this chart (the template only renders the flag when
+    # truthy, so 0 is indistinguishable from unset here); use --gate-backoff-jitter=0
+    # directly on the binary if you need this.
+    # +docs:property=app.driver.gateBackoff.jitter
+    # jitter: 0.5
+
+    # Upper bound on the wait between gate-pending retries; the exponential
+    # growth from `factor` is capped here. Must be 0 (uncapped) or >=
+    # `duration`. NOTE: cap=0 (uncapped) cannot be set via this chart (the
+    # template only renders the flag when truthy, so 0 is indistinguishable
+    # from unset here); use --gate-backoff-cap=0 directly on the binary if
+    # you need this.
+    # +docs:property=app.driver.gateBackoff.cap
+    # cap: 10s
+
+    # Backoff applied between gate-pending retries (i.e. when ReadyToRequest
+    # reports a readiness gate is not yet met). Distinct from csi-lib's
+    # renewal backoff, which protects against signer failures and is left at
+    # csi-lib's defaults. Leave *all* four fields above commented out to
+    # defer entirely to csi-lib's own GateBackoffConfig defaults instead of
+    # pinning to a copy of them here.
+    #
+    # NOTE this is all-or-nothing, not per-field: uncommenting *any one*
+    # field above pins all four fields (including any left commented out,
+    # which fall back to the CLI's own defaults, not csi-lib's) to the CLI's
+    # current values for the driver's lifetime. Only set a field here to
+    # intentionally override csi-lib's tuning for a slower or faster
+    # gate-resolution profile; be aware that doing so also freezes the other
+    # three fields at today's CLI defaults even if csi-lib's own defaults
+    # change in a future release.
+    gateBackoff: {}
     # Configures the hostPath directory that the driver writes and mounts volumes from.
     csiDataDir: /tmp/cert-manager-csi-driver
   # Options for the liveness container.

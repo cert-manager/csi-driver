@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"math"
 	"net/http"
 
 	"github.com/cert-manager/csi-lib/driver"
@@ -31,9 +32,11 @@ import (
 	"github.com/cert-manager/csi-lib/metadata"
 	"github.com/cert-manager/csi-lib/storage"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -93,6 +96,11 @@ func NewCommand(ctx context.Context) *cobra.Command {
 			if len(gates) > 0 && !opts.ContinueOnNotReady {
 				return fmt.Errorf("--pod-readiness-gate requires --continue-on-not-ready=true")
 			}
+			if len(gates) > 0 {
+				if err := validateGateBackoff(opts); err != nil {
+					return err
+				}
+			}
 
 			mngrlog := opts.Logr.WithName("manager")
 			mgrOpts := manager.Options{
@@ -133,6 +141,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 				log.Info("pod informer cache synced", "node", opts.NodeID)
 
 				mgrOpts.ReadyToRequest = readinessgate.NewReadyToRequestFunc(podLister, gates)
+				mgrOpts.GateBackoffConfig = gateBackoffConfigFromFlags(cmd.Flags(), opts)
 			}
 
 			d, err := driver.New(ctx, opts.Endpoint, opts.Logr.WithName("driver"), driver.Options{
@@ -229,4 +238,64 @@ func signRequest(_ metadata.Metadata, key crypto.PrivateKey, request *x509.Certi
 		Type:  "CERTIFICATE REQUEST",
 		Bytes: csrDer,
 	}), nil
+}
+
+// validateGateBackoff sanity-checks the --gate-backoff-* flag values so a
+// misconfigured operator gets a clear startup error rather than a runtime
+// retry storm (e.g. Duration=0 → infinite no-wait spin, Jitter>1 → undefined
+// behaviour in wait.Backoff).
+func validateGateBackoff(opts *options.Options) error {
+	if opts.GateBackoffDuration <= 0 {
+		return fmt.Errorf("--gate-backoff-duration must be > 0, got %s", opts.GateBackoffDuration)
+	}
+	if opts.GateBackoffFactor < 1 {
+		return fmt.Errorf("--gate-backoff-factor must be >= 1, got %v", opts.GateBackoffFactor)
+	}
+	if opts.GateBackoffJitter < 0 || opts.GateBackoffJitter > 1 {
+		return fmt.Errorf("--gate-backoff-jitter must be in [0, 1], got %v", opts.GateBackoffJitter)
+	}
+	// wait.Backoff treats Cap == 0 as "no cap" (see its delay() implementation:
+	// the cap is only applied when cap > 0), so it's a valid way to request
+	// unbounded exponential growth. Any other non-positive or sub-duration cap
+	// is nonsensical, since it would either immediately cap every step to
+	// less than the base duration or be silently negative.
+	if opts.GateBackoffCap != 0 && opts.GateBackoffCap < opts.GateBackoffDuration {
+		return fmt.Errorf("--gate-backoff-cap (%s) must be 0 (uncapped) or >= --gate-backoff-duration (%s)", opts.GateBackoffCap, opts.GateBackoffDuration)
+	}
+	return nil
+}
+
+// gateBackoffConfigFromFlags builds the wait.Backoff passed to csi-lib's
+// manager.Options.GateBackoffConfig, or returns nil if the operator hasn't
+// touched any --gate-backoff-* flag at all, so csi-lib applies its own
+// (possibly newer) defaults instead of a stale copy of them.
+//
+// NOTE: this is all-or-nothing, not per-field. If *any* one of the four
+// flags was explicitly set (fs.Changed), the resulting struct pins *all
+// four* fields to their current CLI values -- including the three left
+// untouched, which just hold pflag's registered defaults. Those defaults
+// happen to mirror csi-lib's own GateBackoffConfig defaults today, but
+// aren't dynamically sourced from it, so a future csi-lib default bump
+// won't be picked up for the untouched fields once any one flag is set.
+// True per-field deferral would require csi-lib itself to merge partial
+// overrides against its own defaults field-by-field (it currently only
+// checks whether the whole GateBackoffConfig is nil), which is out of
+// scope for this repo. Until then, operators who override one gate-backoff
+// flag should be aware they are implicitly pinning the rest to the CLI's
+// current defaults, not deferring them to csi-lib.
+func gateBackoffConfigFromFlags(fs *pflag.FlagSet, opts *options.Options) *wait.Backoff {
+	if !fs.Changed("gate-backoff-duration") &&
+		!fs.Changed("gate-backoff-factor") &&
+		!fs.Changed("gate-backoff-jitter") &&
+		!fs.Changed("gate-backoff-cap") {
+		return nil
+	}
+
+	return &wait.Backoff{
+		Duration: opts.GateBackoffDuration,
+		Factor:   opts.GateBackoffFactor,
+		Jitter:   opts.GateBackoffJitter,
+		Cap:      opts.GateBackoffCap,
+		Steps:    math.MaxInt32,
+	}
 }

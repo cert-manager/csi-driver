@@ -102,6 +102,24 @@ spec:
 {{- range .Values.app.driver.podReadinessGates }}
             - --pod-readiness-gate={{ . }}
 {{- end }}
+{{- /*
+Only render the flags an operator actually set. csi-driver only builds a
+GateBackoffConfig when one of these flags is present on argv (see
+cmd/app/app.go's use of FlagSet.Changed), deferring to csi-lib's own
+defaults otherwise.
+*/}}
+{{- if .Values.app.driver.gateBackoff.duration }}
+            - --gate-backoff-duration={{ .Values.app.driver.gateBackoff.duration }}
+{{- end }}
+{{- if .Values.app.driver.gateBackoff.factor }}
+            - --gate-backoff-factor={{ .Values.app.driver.gateBackoff.factor }}
+{{- end }}
+{{- if .Values.app.driver.gateBackoff.jitter }}
+            - --gate-backoff-jitter={{ .Values.app.driver.gateBackoff.jitter }}
+{{- end }}
+{{- if .Values.app.driver.gateBackoff.cap }}
+            - --gate-backoff-cap={{ .Values.app.driver.gateBackoff.cap }}
+{{- end }}
 {{- if .Values.metrics.enabled }}
             - --metrics-bind-address=:{{ .Values.metrics.port }}
 {{- else }}
