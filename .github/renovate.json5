@@ -3,4 +3,18 @@
   extends: [
     'github>cert-manager/makefile-modules:renovate-config.json5',
   ],
+  customManagers: [
+    // Update the sidecar image tags in make/00_mod.mk, matching the three-line pattern:
+    //   <x>_image_name_source := <registry>/<image>
+    //   <x>_image_name := <mirror>
+    //   <x>_image_tag := <version>
+    {
+      customType: 'regex',
+      managerFilePatterns: ['make/00_mod.mk'],
+      matchStrings: [
+        '_image_name_source := (?<depName>\\S+)\\n[a-z_]+_image_name := \\S+\\n[a-z_]+_image_tag := (?<currentValue>v[\\d.]+)',
+      ],
+      datasourceTemplate: 'docker',
+    },
+  ],
 }
