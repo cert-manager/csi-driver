@@ -10,7 +10,7 @@
     //   <x>_image_tag := <version>
     {
       customType: 'regex',
-      managerFilePatterns: ['make/00_mod.mk'],
+      managerFilePatterns: ['/(^|/)make/00_mod\\.mk$/'],
       matchStrings: [
         '_image_name_source := (?<depName>\\S+)\\n[a-z_]+_image_name := \\S+\\n[a-z_]+_image_tag := (?<currentValue>v[\\d.]+)',
       ],
