@@ -82,6 +82,26 @@ endif
 $(docker_tarball_targets): docker-tarball-%: oci-build-%__local | $(NEEDS_GO) $(NEEDS_IMAGE-TOOL)
 	$(IMAGE-TOOL) convert-to-docker-tar $(CURDIR)/$(oci_layout_path_$*).local $(docker_tarball_path_$*) $(oci_$*_image_name_development):$(oci_$*_image_tag)
 
+# Run "trivy image $2 $(trivy_scan_flags)" and print the report to stdout.
+# When running in GitHub Actions (detected by GITHUB_STEP_SUMMARY being set;
+# some repos using this module run CI on GitLab instead) the report is also
+# appended to the job summary under the heading $1, because trivy's table
+# format is hard to read in the raw job log.
+#
+# $1 - summary heading
+# $2 - trivy image arguments (an image reference or --input <tarball>)
+define trivy_scan
+report=$$(mktemp); \
+$(TRIVY) image $2 $(trivy_scan_flags) --output $$report; \
+code=$$?; \
+cat $$report; \
+if [ -n "$${GITHUB_STEP_SUMMARY:-}" ]; then \
+	{ echo "### $1"; echo '```'; cat $$report; echo '```'; echo; } >> "$$GITHUB_STEP_SUMMARY"; \
+fi; \
+rm -f $$report; \
+exit $$code
+endef
+
 .PHONY: $(oci_scan_targets)
 ## Scan the OCI image (local architecture) for OS and library
 ## vulnerabilities which have a known fix and a severity of
@@ -89,9 +109,8 @@ $(docker_tarball_targets): docker-tarball-%: oci-build-%__local | $(NEEDS_GO) $(
 ## (https://github.com/aquasecurity/trivy).
 ## @category [shared] Build
 $(oci_scan_targets): oci-scan-%: docker-tarball-% | $(NEEDS_TRIVY)
-	$(TRIVY) image \
-		--input $(docker_tarball_path_$*) \
-		$(trivy_scan_flags)
+	@echo "Scanning $(oci_$*_image_name_development):$(oci_$*_image_tag)"
+	@$(call trivy_scan,$(oci_$*_image_name_development):$(oci_$*_image_tag),--input $(docker_tarball_path_$*))
 
 .PHONY: oci-scan-extra-images
 ## Scan the images listed in oci_scan_extra_images (e.g. third party sidecar
@@ -101,7 +120,15 @@ $(oci_scan_targets): oci-scan-%: docker-tarball-% | $(NEEDS_TRIVY)
 oci-scan-extra-images: | $(NEEDS_TRIVY)
 	@for image in $(oci_scan_extra_images); do \
 		echo "Scanning $$image"; \
-		$(TRIVY) image $$image $(trivy_scan_flags) || exit 1; \
+		report=$$(mktemp); \
+		$(TRIVY) image $$image $(trivy_scan_flags) --output $$report; \
+		code=$$?; \
+		cat $$report; \
+		if [ -n "$${GITHUB_STEP_SUMMARY:-}" ]; then \
+			{ echo "### $$image"; echo '```'; cat $$report; echo '```'; echo; } >> "$$GITHUB_STEP_SUMMARY"; \
+		fi; \
+		rm -f $$report; \
+		[ $$code -eq 0 ] || exit $$code; \
 	done
 
 .PHONY: oci-security-scan
