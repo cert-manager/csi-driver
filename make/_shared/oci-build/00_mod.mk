@@ -32,6 +32,22 @@ CGO_ENABLED ?= 0
 GOEXPERIMENT ?=  # empty by default
 oci_platforms ?= linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le
 
+# Extra images (e.g. third party sidecar images which are deployed alongside
+# the images built by this repository) to be scanned by oci-security-scan,
+# for example:
+#   oci_scan_extra_images := registry.k8s.io/sig-storage/livenessprobe:v2.18.0
+oci_scan_extra_images ?=
+
+# The trivy policy applied by the oci-scan-* targets: report only
+# vulnerabilities which have a known fix and a severity of MEDIUM, HIGH or
+# CRITICAL, and fail if any are found. The secret scanner is disabled because
+# it is slow.
+trivy_scan_flags ?= \
+	--scanners vuln \
+	--severity MEDIUM,HIGH,CRITICAL \
+	--ignore-unfixed \
+	--exit-code 1
+
 # Default variables per build_names entry
 #
 # $1 - build_name

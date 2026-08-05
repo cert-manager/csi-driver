@@ -91,13 +91,22 @@ $(docker_tarball_targets): docker-tarball-%: oci-build-%__local | $(NEEDS_GO) $(
 $(oci_scan_targets): oci-scan-%: docker-tarball-% | $(NEEDS_TRIVY)
 	$(TRIVY) image \
 		--input $(docker_tarball_path_$*) \
-		--scanners vuln \
-		--severity MEDIUM,HIGH,CRITICAL \
-		--ignore-unfixed \
-		--exit-code 1
+		$(trivy_scan_flags)
+
+.PHONY: oci-scan-extra-images
+## Scan the images listed in oci_scan_extra_images (e.g. third party sidecar
+## images which are deployed alongside the images built by this repository)
+## for known vulnerabilities, using trivy.
+## @category [shared] Build
+oci-scan-extra-images: | $(NEEDS_TRIVY)
+	@for image in $(oci_scan_extra_images); do \
+		echo "Scanning $$image"; \
+		$(TRIVY) image $$image $(trivy_scan_flags) || exit 1; \
+	done
 
 .PHONY: oci-security-scan
-## Scan all the OCI images for known vulnerabilities, failing if any
+## Scan all the OCI images built by this repository, and any extra images
+## listed in oci_scan_extra_images, for known vulnerabilities; failing if any
 ## fixable vulnerabilities of severity MEDIUM, HIGH or CRITICAL are found.
 ## @category [shared] Build
-oci-security-scan: $(oci_scan_targets)
+oci-security-scan: $(oci_scan_targets) oci-scan-extra-images
