@@ -118,18 +118,18 @@ $(oci_scan_targets): oci-scan-%: docker-tarball-% | $(NEEDS_TRIVY)
 ## for known vulnerabilities, using trivy.
 ## @category [shared] Build
 oci-scan-extra-images: | $(NEEDS_TRIVY)
-	@for image in $(oci_scan_extra_images); do \
+	@failed=0; \
+	for image in $(oci_scan_extra_images); do \
 		echo "Scanning $$image"; \
 		report=$$(mktemp); \
-		$(TRIVY) image $$image $(trivy_scan_flags) --output $$report; \
-		code=$$?; \
+		$(TRIVY) image $$image $(trivy_scan_flags) --output $$report || failed=1; \
 		cat $$report; \
 		if [ -n "$${GITHUB_STEP_SUMMARY:-}" ]; then \
 			{ echo "### $$image"; echo '```'; cat $$report; echo '```'; echo; } >> "$$GITHUB_STEP_SUMMARY"; \
 		fi; \
 		rm -f $$report; \
-		[ $$code -eq 0 ] || exit $$code; \
-	done
+	done; \
+	exit $$failed
 
 .PHONY: oci-security-scan
 ## Scan all the OCI images built by this repository, and any extra images

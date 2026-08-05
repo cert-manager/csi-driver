@@ -30,7 +30,7 @@ targets:
     - folder_name: go
       repo_url: https://github.com/wallrj/makefile-modules.git
       repo_ref: oci-security-scan
-      repo_hash: 049ae805adc020f43e98f2fd5760ccc51dfa4598
+      repo_hash: 9f38f78fc9d3e9cdd00f57dc3202e82f9be2d123
       repo_path: modules/go
     - folder_name: helm
       repo_url: https://github.com/cert-manager/makefile-modules.git
@@ -60,7 +60,7 @@ targets:
     - folder_name: oci-build
       repo_url: https://github.com/wallrj/makefile-modules.git
       repo_ref: oci-security-scan
-      repo_hash: 049ae805adc020f43e98f2fd5760ccc51dfa4598
+      repo_hash: 9f38f78fc9d3e9cdd00f57dc3202e82f9be2d123
       repo_path: modules/oci-build
     - folder_name: oci-publish
       repo_url: https://github.com/cert-manager/makefile-modules.git
