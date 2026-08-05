@@ -41,6 +41,8 @@ helm_labels_template_name := cert-manager-csi-driver.labels
 
 golangci_lint_config := .golangci.yaml
 
+# The image tags below are kept up to date by Renovate
+# (see the customManagers in .github/renovate.json5).
 livenessprobe_image_name_source := registry.k8s.io/sig-storage/livenessprobe
 livenessprobe_image_name := quay.io/jetstack/livenessprobe
 livenessprobe_image_tag := v2.18.0
