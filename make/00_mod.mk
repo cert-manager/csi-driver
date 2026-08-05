@@ -49,7 +49,7 @@ livenessprobe_image_tag := v2.19.0
 
 nodedriverregistrar_image_name_source := registry.k8s.io/sig-storage/csi-node-driver-registrar
 nodedriverregistrar_image_name := quay.io/jetstack/csi-node-driver-registrar
-nodedriverregistrar_image_tag := v2.16.0
+nodedriverregistrar_image_tag := v2.17.0
 
 define helm_values_mutation_function
 $(YQ) \
