@@ -120,10 +120,12 @@ $(foreach build_name,$(build_names),$(eval $(call check_per_build_variables,$(bu
 # - oci-build-$(build_name)__local = build the oci directory (local arch: linux/$(HOST_ARCH))
 # - oci-load-$(build_name) = load the image into docker using the oci_$(build_name)_image_name_development variable
 # - docker-tarball-$(build_name) = build a "docker load" compatible tarball of the image
+# - oci-scan-$(build_name) = scan the image for known vulnerabilities using trivy
 oci_build_targets := $(build_names:%=oci-build-%)
 oci_build_targets += $(build_names:%=oci-build-%__local)
 oci_load_targets := $(build_names:%=oci-load-%)
 docker_tarball_targets := $(build_names:%=docker-tarball-%)
+oci_scan_targets := $(build_names:%=oci-scan-%)
 
 # Derive config based on user config
 # 

@@ -58,9 +58,9 @@ targets:
       repo_hash: 556e163a14c92f872d674703243b03a0dc404bcc
       repo_path: modules/licenses
     - folder_name: oci-build
-      repo_url: https://github.com/cert-manager/makefile-modules.git
-      repo_ref: main
-      repo_hash: 556e163a14c92f872d674703243b03a0dc404bcc
+      repo_url: https://github.com/wallrj/makefile-modules.git
+      repo_ref: oci-security-scan
+      repo_hash: 368e7fd864e8f399e3209216e3329c1936f51bbe
       repo_path: modules/oci-build
     - folder_name: oci-publish
       repo_url: https://github.com/cert-manager/makefile-modules.git

@@ -81,3 +81,41 @@ endif
 .PHONY: $(docker_tarball_targets)
 $(docker_tarball_targets): docker-tarball-%: oci-build-%__local | $(NEEDS_GO) $(NEEDS_IMAGE-TOOL)
 	$(IMAGE-TOOL) convert-to-docker-tar $(CURDIR)/$(oci_layout_path_$*).local $(docker_tarball_path_$*) $(oci_$*_image_name_development):$(oci_$*_image_tag)
+
+.PHONY: $(oci_scan_targets)
+## Scan the OCI image (local architecture) for OS and library
+## vulnerabilities which have a known fix and a severity of
+## MEDIUM, HIGH or CRITICAL, using trivy
+## (https://github.com/aquasecurity/trivy).
+## @category [shared] Build
+$(oci_scan_targets): oci-scan-%: docker-tarball-% | $(NEEDS_TRIVY)
+	$(TRIVY) image \
+		--input $(docker_tarball_path_$*) \
+		--severity MEDIUM,HIGH,CRITICAL \
+		--ignore-unfixed \
+		--exit-code 1
+
+.PHONY: oci-security-scan
+## Scan all the OCI images for known vulnerabilities, failing if any
+## fixable vulnerabilities of severity MEDIUM, HIGH or CRITICAL are found.
+## @category [shared] Build
+oci-security-scan: $(oci_scan_targets)
+
+ifndef dont_generate_oci_security_scan
+
+oci_security_scan_base_dir := $(dir $(lastword $(MAKEFILE_LIST)))/base/
+
+.PHONY: generate-oci-security-scan
+## Generate the scheduled GitHub Actions workflow which periodically runs
+## oci-security-scan against the release branches and the latest release tag.
+## @category [shared] Generate/ Verify
+generate-oci-security-scan:
+	cp -r $(oci_security_scan_base_dir)/. ./
+	cd $(oci_security_scan_base_dir) && \
+		find . -type f | while read file; do \
+			sed "s|{{REPLACE:GH-REPOSITORY}}|$(repo_name:github.com/%=%)|g" "$$file" > "$(CURDIR)/$$file"; \
+		done
+
+shared_generate_targets += generate-oci-security-scan
+
+endif # dont_generate_oci_security_scan
