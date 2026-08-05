@@ -32,6 +32,22 @@ CGO_ENABLED ?= 0
 GOEXPERIMENT ?=  # empty by default
 oci_platforms ?= linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le
 
+# Extra images (e.g. third party sidecar images which are deployed alongside
+# the images built by this repository) to be scanned by oci-security-scan,
+# for example:
+#   oci_scan_extra_images := registry.k8s.io/sig-storage/livenessprobe:v2.18.0
+oci_scan_extra_images ?=
+
+# The trivy policy applied by the oci-scan-* targets: report only
+# vulnerabilities which have a known fix and a severity of MEDIUM, HIGH or
+# CRITICAL, and fail if any are found. The secret scanner is disabled because
+# it is slow.
+trivy_scan_flags ?= \
+	--scanners vuln \
+	--severity MEDIUM,HIGH,CRITICAL \
+	--ignore-unfixed \
+	--exit-code 1
+
 # Default variables per build_names entry
 #
 # $1 - build_name
@@ -120,10 +136,12 @@ $(foreach build_name,$(build_names),$(eval $(call check_per_build_variables,$(bu
 # - oci-build-$(build_name)__local = build the oci directory (local arch: linux/$(HOST_ARCH))
 # - oci-load-$(build_name) = load the image into docker using the oci_$(build_name)_image_name_development variable
 # - docker-tarball-$(build_name) = build a "docker load" compatible tarball of the image
+# - oci-scan-$(build_name) = scan the image for known vulnerabilities using trivy
 oci_build_targets := $(build_names:%=oci-build-%)
 oci_build_targets += $(build_names:%=oci-build-%__local)
 oci_load_targets := $(build_names:%=oci-load-%)
 docker_tarball_targets := $(build_names:%=docker-tarball-%)
+oci_scan_targets := $(build_names:%=oci-scan-%)
 
 # Derive config based on user config
 # 
