@@ -45,7 +45,7 @@ golangci_lint_config := .golangci.yaml
 # (see the customManagers in .github/renovate.json5).
 livenessprobe_image_name_source := registry.k8s.io/sig-storage/livenessprobe
 livenessprobe_image_name := quay.io/jetstack/livenessprobe
-livenessprobe_image_tag := v2.18.0
+livenessprobe_image_tag := v2.19.0
 
 nodedriverregistrar_image_name_source := registry.k8s.io/sig-storage/csi-node-driver-registrar
 nodedriverregistrar_image_name := quay.io/jetstack/csi-node-driver-registrar
