@@ -99,6 +99,8 @@ github.com/prometheus/procfs,Apache-2.0
 github.com/spf13/cobra,Apache-2.0
 github.com/spf13/pflag,BSD-3-Clause
 github.com/stretchr/testify/assert,MIT
+github.com/stretchr/testify/internal/difflib,BSD-3-Clause
+github.com/stretchr/testify/internal/spew,ISC
 github.com/x448/float16,MIT
 github.com/xlab/treeprint,MIT
 go.opentelemetry.io/otel,Apache-2.0
