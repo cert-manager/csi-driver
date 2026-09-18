@@ -447,7 +447,12 @@ func Test_WriteKeypair(t *testing.T) {
 				pk, cert, cas, err := pkcs12.DecodeChain(files[pkcs12File], test.meta.VolumeContext["csi.cert-manager.io/pkcs12-password"])
 				require.NoError(t, err)
 
-				assert.Equal(t, test.testBundle.pk, pk)
+				// Compare with Equal, not assert.Equal. Since Go 1.24 an
+				// rsa.PrivateKey holds an unexported FIPS key whose
+				// precomputed values are fixed-width when generated but
+				// minimal-width when parsed, so reflect.DeepEqual fails
+				// whenever one of them has a leading zero byte.
+				assert.True(t, test.testBundle.pk.Equal(pk), "decoded private key does not match")
 				assert.Equal(t, test.testBundle.cert, cert)
 				assert.Empty(t, cas)
 
