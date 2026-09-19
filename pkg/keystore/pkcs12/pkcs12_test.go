@@ -122,7 +122,10 @@ func Test_create(t *testing.T) {
 				pk, cert, cas, err := pkcs12.DecodeChain(resp, "test-password")
 				require.NoError(t, err)
 
-				assert.Equal(t, test.expPK, pk)
+				// Compare with Equal, not assert.Equal. See the comment in
+				// pkg/filestore/writer_test.go for why reflect.DeepEqual is
+				// flaky for rsa.PrivateKey.
+				assert.True(t, test.expPK.(interface{ Equal(crypto.PrivateKey) bool }).Equal(pk), "decoded private key does not match")
 				assert.Equal(t, test.expCert, cert)
 				assert.Equal(t, test.expCAs, cas)
 			}
