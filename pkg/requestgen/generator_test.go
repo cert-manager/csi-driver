@@ -244,6 +244,11 @@ func Test_parseDNSNames(t *testing.T) {
 			expDNSNames: []string{"my-dns"},
 			expErr:      nil,
 		},
+		"a quoted entry containing a comma should be kept as one name": {
+			csv:         `"my,dns",my-second-dns`,
+			expDNSNames: []string{"my,dns", "my-second-dns"},
+			expErr:      nil,
+		},
 		"a csv with multiple entries should expect those entries returned": {
 			csv:         "my-dns,my-second-dns,my-third-dns",
 			expDNSNames: []string{"my-dns", "my-second-dns", "my-third-dns"},
@@ -317,7 +322,7 @@ func Test_URIs(t *testing.T) {
 		"a csv with a bad URI should return an error": {
 			csv:     "spiffe://foo.bar,\n\nx\n,foo://foo\nbar,file://hello-world/1234,1234",
 			expURIs: nil,
-			expErr:  errors.New(`parse "x": invalid URI for request, parse "foo://foo\nbar": net/url: invalid control character in URL, parse "1234": invalid URI for request`),
+			expErr:  errors.New(`parse "x": invalid URI for request, parse "foo://foo bar": invalid character " " in host name, parse "1234": invalid URI for request`),
 		},
 		"a single csv which uses variables should be substituted correctly": {
 			csv: `foo://$POD_NAME-my-dns-${POD_NAMESPACE}-${POD_UID}`,
@@ -332,6 +337,16 @@ func Test_URIs(t *testing.T) {
 			csv:     `$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID-${Foo}`,
 			expURIs: nil,
 			expErr:  errors.New(`undefined variable "Foo", known variables: [POD_NAME POD_NAMESPACE POD_UID SERVICE_ACCOUNT_NAME]`),
+		},
+		"a quoted entry containing a comma should be kept as one URI": {
+			csv: `"spiffe://foo.bar/a,b",spiffe://foo.bar/c`,
+			expURIs: func(t *testing.T) []*url.URL {
+				return []*url.URL{
+					mustParse(t, "spiffe://foo.bar/a,b"),
+					mustParse(t, "spiffe://foo.bar/c"),
+				}
+			},
+			expErr: nil,
 		},
 		"a csv containing multiple entries which uses variables should be substituted correctly": {
 			csv: `spiffe://$POD_NAME-my-dns-${POD_NAMESPACE}-$POD_UID,spiffe://$POD_NAME,file://${POD_NAME}.$POD_NAMESPACE,foo://$POD_NAME.$POD_NAMESPACE.svc,spiffe://$POD_UID`,
@@ -404,5 +419,57 @@ func baseMetadata() metadata.Metadata {
 			"csi.storage.k8s.io/serviceAccount.name": "my-service-account",
 			"csi.storage.k8s.io/ephemeral":           "true",
 		},
+	}
+}
+
+func Test_splitList(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value   string
+		expList []string
+		expErr  string
+	}{
+		"a single value is returned as one element": {
+			value:   "foo",
+			expList: []string{"foo"},
+		},
+		"values are split on commas": {
+			value:   "foo,bar,baz",
+			expList: []string{"foo", "bar", "baz"},
+		},
+		"space around each value is trimmed": {
+			value:   "foo,   bar,\tbaz  ",
+			expList: []string{"foo", "bar", "baz"},
+		},
+		"newlines are treated as space, not as a new record": {
+			value:   "foo,\n \t bar,\nbaz",
+			expList: []string{"foo", "bar", "baz"},
+		},
+		"a quoted value may contain a comma": {
+			value:   `"foo,bar",baz`,
+			expList: []string{"foo,bar", "baz"},
+		},
+		"a quoted value may contain a quote": {
+			value:   `"foo""bar",baz`,
+			expList: []string{`foo"bar`, "baz"},
+		},
+		"an unterminated quote is an error": {
+			value:  `"foo,bar`,
+			expErr: `failed to parse "\"foo,bar" as CSV: parse error on line 1, column 9: extraneous or missing " in quoted-field`,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := splitList(test.value)
+			if test.expErr != "" {
+				assert.EqualError(t, err, test.expErr)
+				assert.Nil(t, got)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.expList, got)
+		})
 	}
 }
