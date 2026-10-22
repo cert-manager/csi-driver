@@ -217,7 +217,7 @@
     },
     "helm-values.commonLabels": {
       "default": {},
-      "description": "Labels to apply to all resources.",
+      "description": "Labels to apply to all resources.\nOn a key collision these win over the chart's own labels, except on the csi-driver Pods, where \"app\", app.kubernetes.io/name and app.kubernetes.io/instance are matched by the DaemonSet and PodMonitor selectors and so cannot be overridden. They are still applied to every other resource.",
       "type": "object"
     },
     "helm-values.daemonSetAnnotations": {
@@ -564,7 +564,7 @@
     },
     "helm-values.podLabels": {
       "default": {},
-      "description": "Optional additional labels to add to the csi-driver pods.",
+      "description": "Optional additional labels to add to the csi-driver pods. On a key collision these win over commonLabels, except for the selector labels listed under commonLabels, which cannot be overridden.",
       "type": "object"
     },
     "helm-values.priorityClassName": {
