@@ -9,11 +9,17 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 {{- end }}
   labels:
-    {{- include "cert-manager-csi-driver.labels" . | nindent 4 }}
-    prometheus: {{ .Values.metrics.podmonitor.prometheusInstance }}
-    {{- with .Values.metrics.podmonitor.labels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- /*
+      Merged as one map so no key can be emitted twice, keeping the precedence
+      the concatenated form had: the prometheus instance label and
+      .Values.metrics.podmonitor.labels still win over .Values.commonLabels.
+    */}}
+    {{- $labels := mergeOverwrite
+          (include "cert-manager-csi-driver.labels" . | fromYaml)
+          (dict "prometheus" .Values.metrics.podmonitor.prometheusInstance)
+          (.Values.metrics.podmonitor.labels | default dict)
+    -}}
+    {{- toYaml $labels | nindent 4 }}
 {{- with .Values.metrics.podmonitor.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
