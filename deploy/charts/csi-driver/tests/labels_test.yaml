@@ -1,0 +1,118 @@
+suite: Labels merge as a map without duplicate keys
+templates:
+  - templates/daemonset.yaml
+  - templates/serviceaccount.yaml
+  - templates/podmonitor.yaml
+release:
+  name: rel
+  namespace: cert-manager
+tests:
+  - it: commonLabels wins over a chart-owned label
+    set:
+      commonLabels:
+        app.kubernetes.io/managed-by: argocd
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: argocd
+        template: templates/serviceaccount.yaml
+
+  - it: label keys that YAML 1.1 would read as booleans stay strings
+    set:
+      commonLabels:
+        "on": alpha
+        "no": beta
+    asserts:
+      - equal:
+          path: metadata.labels["on"]
+          value: alpha
+        template: templates/serviceaccount.yaml
+      - equal:
+          path: metadata.labels["no"]
+          value: beta
+        template: templates/serviceaccount.yaml
+
+  - it: the pod template keeps the DaemonSet selector's app label
+    set:
+      commonLabels:
+        app: from-common
+      podLabels:
+        app: from-pod
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: cert-manager-csi-driver
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.metadata.labels.app
+          value: cert-manager-csi-driver
+        template: templates/daemonset.yaml
+
+  - it: the pod template keeps the two labels the PodMonitor selects on
+    set:
+      commonLabels:
+        app.kubernetes.io/name: from-common
+        app.kubernetes.io/instance: from-common
+      podLabels:
+        app.kubernetes.io/name: from-pod
+      metrics:
+        enabled: true
+        podmonitor:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/name"]
+          value: cert-manager-csi-driver
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/instance"]
+          value: rel
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: cert-manager-csi-driver
+        template: templates/podmonitor.yaml
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/instance"]
+          value: rel
+        template: templates/podmonitor.yaml
+
+  - it: podLabels wins over commonLabels, even when its value is empty
+    set:
+      commonLabels:
+        tier: db
+        empties: from-common
+      podLabels:
+        tier: web
+        empties: ""
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.tier
+          value: web
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.metadata.labels.empties
+          value: ""
+        template: templates/daemonset.yaml
+
+  - it: podmonitor.labels and the prometheus label still win over commonLabels
+    set:
+      commonLabels:
+        team: from-common
+        prometheus: from-common
+      metrics:
+        enabled: true
+        podmonitor:
+          enabled: true
+          prometheusInstance: default
+          labels:
+            team: from-podmonitor
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: from-podmonitor
+        template: templates/podmonitor.yaml
+      - equal:
+          path: metadata.labels.prometheus
+          value: default
+        template: templates/podmonitor.yaml
