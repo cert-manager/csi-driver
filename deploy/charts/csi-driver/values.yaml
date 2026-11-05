@@ -110,6 +110,11 @@ image:
 imagePullSecrets: []
 
 # Labels to apply to all resources.
+# On a key collision these win over the chart's own labels, except on the
+# csi-driver Pods, where "app", app.kubernetes.io/name and
+# app.kubernetes.io/instance are matched by the DaemonSet and PodMonitor
+# selectors and so cannot be overridden. They are still applied to every
+# other resource.
 commonLabels: {}
 
 nodeDriverRegistrarImage:
@@ -297,6 +302,8 @@ daemonSetAnnotations: {}
 podAnnotations: {}
 
 # Optional additional labels to add to the csi-driver pods.
+# On a key collision these win over commonLabels, except for the selector
+# labels listed under commonLabels, which cannot be overridden.
 podLabels: {}
 
 # Kubernetes pod resources requests/limits for cert-manager-csi-driver.

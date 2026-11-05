@@ -16,11 +16,29 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ include "cert-manager-csi-driver.name" . }}
-        {{- include "cert-manager-csi-driver.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- /*
+          Merged as one map so no key can be emitted twice. Sources are listed
+          lowest precedence first, so .Values.podLabels wins over
+          .Values.commonLabels, and the selector labels win over both:
+
+          - "app" is matched by this DaemonSet's own selector, and a pod
+            template that does not match it is rejected by the API server.
+          - app.kubernetes.io/name and app.kubernetes.io/instance are matched
+            by the PodMonitor's selector, so overriding either would silently
+            stop metrics being scraped.
+
+          mergeOverwrite, not merge: merge skips empty source values, so an
+          intentionally empty podLabels value would lose to commonLabels.
+        */}}
+        {{- $podLabels := mergeOverwrite
+              (include "cert-manager-csi-driver.labels" . | fromYaml)
+              (.Values.podLabels | default dict)
+              (dict
+                "app" (include "cert-manager-csi-driver.name" .)
+                "app.kubernetes.io/name" (include "cert-manager-csi-driver.name" .)
+                "app.kubernetes.io/instance" .Release.Name)
+        -}}
+        {{- toYaml $podLabels | nindent 8 }}
       annotations:
         kubectl.kubernetes.io/default-container: cert-manager-csi-driver
         {{- if .Values.podAnnotations }}

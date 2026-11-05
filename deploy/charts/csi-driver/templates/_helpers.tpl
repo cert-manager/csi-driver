@@ -15,18 +15,31 @@ Create chart name and version as used by the chart label.
 
 {{/*
 Common labels
+
+Labels are merged as a map, not concatenated as YAML text, so a key in
+.Values.commonLabels cannot produce a duplicate key. On conflict
+.Values.commonLabels wins.
+
+Note that the PodMonitor selects Pods on app.kubernetes.io/name and
+app.kubernetes.io/instance, both of which are set here. The pod template
+therefore re-applies those two at a higher precedence, so that overriding
+them cannot leave the PodMonitor matching nothing.
+
+IMPORTANT: This function is standardized across all charts in the cert-manager GH organization.
+Any changes to this function should also be made in cert-manager, trust-manager, approver-policy, ...
+See https://github.com/cert-manager/cert-manager/issues/9348 for a list of linked PRs.
 */}}
 {{- define "cert-manager-csi-driver.labels" -}}
-app.kubernetes.io/name: {{ include "cert-manager-csi-driver.name" . }}
-helm.sh/chart: {{ include "cert-manager-csi-driver.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- $labels := dict
+  "app.kubernetes.io/name" (include "cert-manager-csi-driver.name" .)
+  "helm.sh/chart" (include "cert-manager-csi-driver.chart" .)
+  "app.kubernetes.io/instance" .Release.Name
+  "app.kubernetes.io/managed-by" .Release.Service
+-}}
 {{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- $labels = set $labels "app.kubernetes.io/version" .Chart.AppVersion }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.commonLabels}}
-{{ toYaml .Values.commonLabels }}
-{{- end }}
+{{- toYaml (mergeOverwrite $labels (.Values.commonLabels | default dict)) }}
 {{- end -}}
 
 {{/*

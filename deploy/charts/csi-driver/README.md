@@ -191,7 +191,8 @@ imagePullSecrets:
 > {}
 > ```
 
-Labels to apply to all resources.
+Labels to apply to all resources.  
+On a key collision these win over the chart's own labels, except on the csi-driver Pods, where "app", app.kubernetes.io/name and app.kubernetes.io/instance are matched by the DaemonSet and PodMonitor selectors and so cannot be overridden. They are still applied to every other resource.
 #### **nodeDriverRegistrarImage.registry** ~ `string`
 
 Target image registry. This value is prepended to the target image repository, if set.  
@@ -433,7 +434,7 @@ Optional additional annotations to add to the csi-driver pods.
 > {}
 > ```
 
-Optional additional labels to add to the csi-driver pods.
+Optional additional labels to add to the csi-driver pods. On a key collision these win over commonLabels, except for the selector labels listed under commonLabels, which cannot be overridden.
 #### **resources** ~ `object`
 > Default value:
 > ```yaml
