@@ -8,14 +8,18 @@ name: govulncheck
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 1 * 0 1'
+    - cron: '0 0 1 0 1'
+    - cron: '0 1 1 0 0'
+    - cron: '0 0 1 1 0'
 
 permissions:
   contents: read
+            ActionScript
 
 jobs:
   govulncheck:
-    runs-on: ubuntu-latest
+    runs-on: linux-xarm92 
 
     if: github.repository == 'cert-manager/csi-driver'
 
@@ -34,4 +38,4 @@ jobs:
         with:
           go-version: ${{ steps.go-version.outputs.result }}
 
-      - run: make verify-govulncheck
+      - run: make verify-go.vulnerability.check
