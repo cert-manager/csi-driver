@@ -19,6 +19,7 @@ package requestgen
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"net"
@@ -116,6 +117,11 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		return nil, fmt.Errorf("%q: %w", csiapi.URISANsKey, err)
 	}
 
+	usages, err := keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey])
+	if err != nil {
+		return nil, fmt.Errorf("%q: %w", csiapi.KeyUsagesKey, err)
+	}
+
 	annotations := make(map[string]string)
 	for key, val := range attrs {
 		group, _, found := strings.Cut(key, "/")
@@ -134,7 +140,7 @@ func RequestForMetadata(meta metadata.Metadata) (*manager.CertificateRequestBund
 		IsCA:      strings.ToLower(attrs[csiapi.IsCAKey]) == "true",
 		Namespace: attrs[csiapi.K8sVolumeContextKeyPodNamespace],
 		Duration:  duration,
-		Usages:    keyUsagesFromAttributes(attrs[csiapi.KeyUsagesKey]),
+		Usages:    usages,
 		IssuerRef: cmmeta.IssuerReference{
 			Name:  attrs[csiapi.IssuerNameKey],
 			Kind:  attrs[csiapi.IssuerKindKey],
@@ -154,7 +160,7 @@ func parseDNSNames(meta metadata.Metadata, dnsNames string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return splitList(dns), nil
+	return splitList(dns)
 }
 
 // parseIPAddresses parses a csi.cert-manager.io/ip-sans value, and returns the
@@ -164,9 +170,14 @@ func parseIPAddresses(ipCSV string) ([]net.IP, error) {
 		return nil, nil
 	}
 
+	ipStrs, err := splitList(ipCSV)
+	if err != nil {
+		return nil, err
+	}
+
 	var ips []net.IP
 	var errs []string
-	for _, ipStr := range splitList(ipCSV) {
+	for _, ipStr := range ipStrs {
 		ip := net.ParseIP(ipStr)
 		if ip == nil {
 			errs = append(errs, ipStr)
@@ -194,10 +205,15 @@ func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
 		return nil, err
 	}
 
+	rawURIs, err := splitList(csv)
+	if err != nil {
+		return nil, err
+	}
+
 	var uris []*url.URL
 	var errs []string
 
-	for _, rawURI := range splitList(csv) {
+	for _, rawURI := range rawURIs {
 		uri, err := url.ParseRequestURI(rawURI)
 		if err != nil {
 			errs = append(errs, err.Error())
@@ -215,17 +231,22 @@ func parseURIs(meta metadata.Metadata, uriCSV string) ([]*url.URL, error) {
 }
 
 // keyUsagesFromAttributes returns the set of key usages from the given CSV.
-func keyUsagesFromAttributes(usagesCSV string) []cmapi.KeyUsage {
+func keyUsagesFromAttributes(usagesCSV string) ([]cmapi.KeyUsage, error) {
 	if len(usagesCSV) == 0 {
-		return nil
+		return nil, nil
+	}
+
+	usages, err := splitList(usagesCSV)
+	if err != nil {
+		return nil, err
 	}
 
 	var keyUsages []cmapi.KeyUsage
-	for _, usage := range splitList(usagesCSV) {
+	for _, usage := range usages {
 		keyUsages = append(keyUsages, cmapi.KeyUsage(usage))
 	}
 
-	return keyUsages
+	return keyUsages, nil
 }
 
 // expand executes os.Expand on the given csv with volume context variables
@@ -257,11 +278,30 @@ func expand(meta metadata.Metadata, csv string) (string, error) {
 	return exp, nil
 }
 
-// splitList returns the given csv as a slice. Trims space of each element.
-func splitList(csv string) []string {
-	var list []string
-	for s := range strings.SplitSeq(csv, ",") {
-		list = append(list, strings.TrimSpace(s))
+// splitList returns the given csv as a slice, trimming space around each
+// element.
+//
+// The value is read as a single CSV record, so an element that needs to
+// contain a comma can be quoted: `"a,b",c` gives ["a,b", "c"]. Plain values
+// are unaffected.
+func splitList(value string) ([]string, error) {
+	// These values are often spread over several lines in a manifest, where
+	// the newlines are only formatting. Fold them into spaces so the reader
+	// sees a single record rather than several.
+	folded := strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ").Replace(value)
+
+	reader := csv.NewReader(strings.NewReader(folded))
+	reader.TrimLeadingSpace = true
+	reader.FieldsPerRecord = -1
+
+	list, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse %q as CSV: %w", value, err)
 	}
-	return list
+
+	for i, s := range list {
+		list[i] = strings.TrimSpace(s)
+	}
+
+	return list, nil
 }
