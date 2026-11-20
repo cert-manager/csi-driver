@@ -116,8 +116,10 @@ func (w *Writer) WriteKeypair(meta metadata.Metadata, key crypto.PrivateKey, cha
 //
 // The volume attribute `csi.cert-manager.io/renew-before` can be used to
 // overwrite the default behaviour with a custom renew time. If this duration
-// results in a renew time before the NotBefore of the signed certificate
-// itself, it will fall back to returning 2/3rds the certificate lifetime.
+// results in a renew time outside the certificate's validity window (before its
+// NotBefore when the duration exceeds the lifetime, or at/after its NotAfter
+// when the duration is zero or negative), it will fall back to returning 2/3rds
+// the certificate lifetime.
 func calculateNextIssuanceTime(attrs map[string]string, chain []byte) (time.Time, error) {
 	block, _ := pem.Decode(chain)
 	crt, err := x509.ParseCertificate(block.Bytes)
@@ -137,10 +139,14 @@ func calculateNextIssuanceTime(attrs map[string]string, chain []byte) (time.Time
 			return time.Time{}, fmt.Errorf("parsing requested renew-before duration %q: %w", csiapi.RenewBeforeKey, err)
 		}
 
-		// If the requested renewBefore would cause the certificate to be
-		// immediately re-issued, ignore the requested renew before and renew
-		// 2/3rds of the way through its lifetime.
-		if crt.NotBefore.Add(renewBeforeDuration).Before(crt.NotAfter) {
+		// Only honour the requested renewBefore when it places the renewal
+		// time strictly inside the certificate's validity window, i.e. after
+		// NotBefore and before NotAfter. A non-positive duration would push the
+		// renewal to at or after NotAfter (so the certificate would never be
+		// renewed before it expires), and a duration longer than the lifetime
+		// would move it before NotBefore (immediate re-issuance). In either
+		// case fall back to renewing 2/3rds of the way through the lifetime.
+		if renewBeforeDuration > 0 && crt.NotBefore.Add(renewBeforeDuration).Before(crt.NotAfter) {
 			renewBeforeNotAfter = renewBeforeDuration
 		}
 	}

@@ -128,6 +128,20 @@ func Test_calculateNextIssuanceTime(t *testing.T) {
 			expTime: notBefore.AddDate(0, 0, 2),
 			expErr:  false,
 		},
+		"if renew before is negative, return 2/3rds rather than a renew time after NotAfter": {
+			attrs: map[string]string{
+				"csi.cert-manager.io/renew-before": "-24h",
+			},
+			expTime: notBefore.AddDate(0, 0, 2),
+			expErr:  false,
+		},
+		"if renew before is zero, return 2/3rds rather than a renew time at NotAfter": {
+			attrs: map[string]string{
+				"csi.cert-manager.io/renew-before": "0s",
+			},
+			expTime: notBefore.AddDate(0, 0, 2),
+			expErr:  false,
+		},
 		"if renew before present but given a bad string, return error": {
 			attrs: map[string]string{
 				"csi.cert-manager.io/renew-before": "bad-duration",
